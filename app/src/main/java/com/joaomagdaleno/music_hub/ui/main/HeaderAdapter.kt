@@ -37,10 +37,11 @@ class HeaderAdapter(
         val holder = ViewHolder(parent)
         val binding = holder.binding
         val parentFragmentManager = fragment.parentFragmentManager
-        binding.extensionsCont.setOnClickListener {
-            ExtensionsListBottomSheet.newInstance(ExtensionType.MUSIC)
-                .show(parentFragmentManager, null)
-        }
+//        binding.extensionsCont.setOnClickListener {
+//            ExtensionsListBottomSheet.newInstance(ExtensionType.MUSIC)
+//                .show(parentFragmentManager, null)
+//        }
+        binding.extensionsCont.visibility = View.GONE
 
         binding.accountsCont.setOnClickListener {
             SettingsBottomSheet().show(parentFragmentManager, null)
@@ -64,14 +65,14 @@ class HeaderAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) = with(holder.binding) {
         super.onBindViewHolder(holder, position)
         val context = root.context
-        title.text = extension?.name ?: context.getString(R.string.app_name)
-        extensions.loadBigIcon(extension?.metadata?.icon, R.drawable.ic_extension_32dp)
-        extensionsCont.setLoopedLongClick(
-            viewModel.extensionLoader.music.value.filter { it.isEnabled },
-            { viewModel.extensionLoader.current.value }
-        ) {
-            viewModel.extensionLoader.setupMusicExtension(it, true)
-        }
+        title.text = context.getString(R.string.app_name)
+//        extensions.loadBigIcon(extension?.metadata?.icon, R.drawable.ic_extension_32dp)
+//        extensionsCont.setLoopedLongClick(
+//            viewModel.extensionLoader.music.value.filter { it.isEnabled },
+//            { viewModel.extensionLoader.current.value }
+//        ) {
+//            viewModel.extensionLoader.setupMusicExtension(it, true)
+//        }
 
         val (ext, isLoginClient, all) = triple
         accounts.loadBigIcon(

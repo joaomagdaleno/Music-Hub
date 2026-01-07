@@ -4,6 +4,8 @@ import com.joaomagdaleno.music_hub.download.DownloadWorker
 import com.joaomagdaleno.music_hub.download.Downloader
 import com.joaomagdaleno.music_hub.download.db.DownloadDatabase
 import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
+import com.joaomagdaleno.music_hub.extensions.builtin.internal.InternalDownloadSource
+import com.joaomagdaleno.music_hub.extensions.builtin.internal.InternalMusicSource
 import com.joaomagdaleno.music_hub.playback.PlayerService
 import com.joaomagdaleno.music_hub.playback.PlayerState
 import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler
@@ -36,6 +38,8 @@ object DI {
     private val baseModule = module {
         single { androidApplication().getSettings() }
         singleOf(::App)
+        singleOf(::InternalMusicSource)
+        single { InternalDownloadSource(androidApplication()) }
     }
 
     private val extensionModule = module {

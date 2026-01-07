@@ -61,8 +61,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val uiViewModel by activityViewModel<UiViewModel>()
         observe(uiViewModel.navigationReselected) {
             if (it != 0) return@observe
-            ExtensionsListBottomSheet.newInstance(ExtensionType.MUSIC)
-                .show(parentFragmentManager, null)
+            // Removed extension selection logic to keep a native feel
+            binding.recyclerView.smoothScrollToPosition(0)
         }
         observe(
             uiViewModel.navigation.combine(feedData.backgroundImageFlow) { a, b -> a to b }

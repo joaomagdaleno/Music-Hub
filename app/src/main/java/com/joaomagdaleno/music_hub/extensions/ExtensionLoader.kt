@@ -28,6 +28,8 @@ import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.get
 import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getOrThrow
 import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.inject
+import com.joaomagdaleno.music_hub.extensions.builtin.internal.InternalDownloadSource
+import com.joaomagdaleno.music_hub.extensions.builtin.internal.InternalMusicSource
 import com.joaomagdaleno.music_hub.extensions.builtin.offline.OfflineExtension
 import com.joaomagdaleno.music_hub.extensions.builtin.unified.UnifiedExtension
 import com.joaomagdaleno.music_hub.extensions.db.ExtensionDatabase
@@ -53,6 +55,8 @@ import java.io.File
 class ExtensionLoader(
     val app: App,
     val cache: SimpleCache,
+    val internalSource: InternalMusicSource,
+    val internalDownloadSource: InternalDownloadSource,
 ) {
     val parser = ExtensionParser(app.context)
     val scope = CoroutineScope(Dispatchers.IO)
@@ -77,6 +81,8 @@ class ExtensionLoader(
     private val repository = CombinedRepository(
         scope, app.context, fileIgnoreFlow, parser,
         UnifiedExtension.metadata to unified,
+        InternalMusicSource.metadata to lazy { internalSource },
+        InternalDownloadSource.metadata to lazy { internalDownloadSource },
         OfflineExtension.metadata to lazy { OfflineExtension(app.context) },
 //        TestExtension.metadata to lazy { TestExtension() },
 //        DownloadExtension.metadata to lazy { DownloadExtension(app.context) }
@@ -92,9 +98,10 @@ class ExtensionLoader(
 
     val current = MutableStateFlow<MusicExtension?>(null)
     private fun setCurrentExtension() {
-        val last = settings.getString(LAST_EXTENSION_KEY, null)
+        val last = settings.getString(LAST_EXTENSION_KEY, null) ?: InternalMusicSource.INTERNAL_ID
         val list = music.value
         val extension = list.find { it.id == last && it.isEnabled }
+            ?: list.find { it.id == InternalMusicSource.INTERNAL_ID && it.isEnabled }
             ?: list.firstOrNull { it.isEnabled }
             ?: return
         setupMusicExtension(extension, false)

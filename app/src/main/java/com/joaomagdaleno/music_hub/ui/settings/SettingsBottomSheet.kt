@@ -185,12 +185,14 @@ class SettingsBottomSheet : BottomSheetDialogFragment(R.layout.dialog_settings) 
             requireActivity().openLink("https://github.com/brahmkshatriya")
         }
 
-        configureBottomBar(binding.extensionBar)
-        binding.extensionsCont.setOnClickListener {
-            dismiss()
-            ExtensionsListBottomSheet.newInstance(ExtensionType.MUSIC)
-                .show(parentFragmentManager, null)
-        }
+//        configureBottomBar(binding.extensionBar)
+//        binding.extensionsCont.setOnClickListener {
+//            dismiss()
+//            ExtensionsListBottomSheet.newInstance(ExtensionType.MUSIC)
+//                .show(parentFragmentManager, null)
+//        }
+        binding.extensionBar.isVisible = false // Hide the switcher bar
+        binding.extensionsCont.isVisible = false
 
         observe(viewModel.extensionLoader.current) { ext ->
             viewModel.currentExtension.value = ext
@@ -201,13 +203,13 @@ class SettingsBottomSheet : BottomSheetDialogFragment(R.layout.dialog_settings) 
                     null, ExtensionInfoFragment.getBundle(ext)
                 )
             }
-            binding.extensions.loadBigIcon(ext?.metadata?.icon, R.drawable.ic_extension_32dp)
-            binding.extensionsCont.setLoopedLongClick(
-                viewModel.extensionLoader.music.value.filter { it.isEnabled },
-                { viewModel.extensionLoader.current.value }
-            ) {
-                viewModel.extensionLoader.setupMusicExtension(it, true)
-            }
+//            binding.extensions.loadBigIcon(ext?.metadata?.icon, R.drawable.ic_extension_32dp)
+//            binding.extensionsCont.setLoopedLongClick(
+//                viewModel.extensionLoader.music.value.filter { it.isEnabled },
+//                { viewModel.extensionLoader.current.value }
+//            ) {
+//                viewModel.extensionLoader.setupMusicExtension(it, true)
+//            }
         }
 
         binding.currentAccountName.setOnClickListener {
