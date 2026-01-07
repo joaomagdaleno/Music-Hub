@@ -5,6 +5,7 @@ import com.joaomagdaleno.music_hub.common.clients.AlbumClient
 import com.joaomagdaleno.music_hub.common.clients.ArtistClient
 import com.joaomagdaleno.music_hub.common.clients.ExtensionClient
 import com.joaomagdaleno.music_hub.common.clients.HomeFeedClient
+import com.joaomagdaleno.music_hub.common.clients.LibraryFeedClient
 import com.joaomagdaleno.music_hub.common.clients.LyricsClient
 import com.joaomagdaleno.music_hub.common.clients.SearchFeedClient
 import com.joaomagdaleno.music_hub.common.clients.TrackClient
@@ -21,7 +22,7 @@ import com.joaomagdaleno.music_hub.common.settings.Settings
  * Built-in extension that provides internal music sources.
  * This represents the "Fake Extension" pattern to transition to a built-in logic model.
  */
-class InternalMusicSource : ExtensionClient, SearchFeedClient, TrackClient, AlbumClient, ArtistClient, HomeFeedClient, LyricsClient {
+class InternalMusicSource : ExtensionClient, SearchFeedClient, TrackClient, AlbumClient, ArtistClient, HomeFeedClient, LibraryFeedClient, LyricsClient {
 
     companion object {
         const val INTERNAL_ID = "internal_source"
@@ -310,7 +311,7 @@ class InternalMusicSource : ExtensionClient, SearchFeedClient, TrackClient, Albu
                 Track(
                     id = videoId,
                     title = res.title ?: "Unknown",
-                    artists = listOf(artist),
+                    artists = listOf(Artist(id = res.uploaderUrl?.substringAfterLast("/")?.let { "youtube_channel:$it" } ?: "unknown", name = res.uploaderName ?: "Unknown")),
                     cover = res.thumbnail?.let { ImageHolder.NetworkRequestImageHolder(NetworkRequest(it), false) },
                     duration = res.duration?.times(1000),
                     isPlayable = Track.Playable.Yes,
@@ -384,6 +385,12 @@ class InternalMusicSource : ExtensionClient, SearchFeedClient, TrackClient, Albu
         }
         Feed.Data(PagedData.Single { shelves })
     }
+
+    // --- LibraryFeedClient ---
+    override suspend fun loadLibraryFeed(): Feed<Shelf> = Feed(
+        tabs = emptyList(),
+        getPagedData = { Feed.Data(PagedData.Single { emptyList<Shelf>() }) }
+    )
 
     // --- LyricsClient ---
     override suspend fun searchTrackLyrics(clientId: String, track: Track): Feed<Lyrics> {
