@@ -5,13 +5,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import com.joaomagdaleno.music_hub.common.Extension
-import com.joaomagdaleno.music_hub.common.clients.TrackerClient
-import com.joaomagdaleno.music_hub.common.clients.TrackerMarkClient
 import com.joaomagdaleno.music_hub.common.models.TrackDetails
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtension
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.runIf
+import com.joaomagdaleno.music_hub.data.repository.MusicRepository
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.context
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.extensionId
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.track
@@ -35,13 +30,13 @@ import kotlinx.coroutines.withContext
 class TrackingListener(
     private val player: Player,
     private val scope: CoroutineScope,
-    extensions: ExtensionLoader,
+    private val repository: MusicRepository,
     private val currentFlow: MutableStateFlow<PlayerState.Current?>,
     private val throwableFlow: MutableSharedFlow<Throwable>
 ) : Player.Listener {
 
-    private val musicList = extensions.music
-    private val trackerList = extensions.tracker
+    // In monolithic mode, trackers are stubbed
+    // TODO: Implement local history tracking via repository
 
     private var current: MediaItem? = null
     private var previousId: String? = null
@@ -54,19 +49,13 @@ class TrackingListener(
     }
 
     private fun trackMedia(
-        block: suspend TrackerClient.(extension: Extension<*>, details: TrackDetails?) -> Unit
+        block: suspend (details: TrackDetails?) -> Unit
     ) {
         scope.launch {
             val details = getDetails()
-            val prevExtension = previousId?.takeIf { details?.extensionId != it }
-                ?.let { musicList.getExtension(it) }
-            val extension = musicList.getExtension(details?.extensionId)
-            val trackers = trackerList.value.filter { it.isEnabled }
-            prevExtension?.runIf<TrackerClient>(throwableFlow) { block(prevExtension, null) }
-            extension?.runIf<TrackerClient>(throwableFlow) { block(extension, details) }
-            trackers.forEach {
-                launch { it.runIf<TrackerClient>(throwableFlow) { block(it, details) } }
-            }
+            // In monolithic mode, just call the block with details
+            // Tracker extensions are no longer used
+            block(details)
         }
     }
 
@@ -80,20 +69,11 @@ class TrackingListener(
                 timers.forEach { (_, timer) -> timer.pause() }
                 timers.clear()
             }
-            trackMedia { extension, details ->
-                onTrackChanged(details)
+            trackMedia { details ->
+                // Stubbed: onTrackChanged for local history
+                // TODO: Save to local history via repository
                 details ?: return@trackMedia
-                val duration = (this as? TrackerMarkClient)?.getMarkAsPlayedDuration(details)
-                    ?: return@trackMedia
-                mutex.withLock {
-                    timers[extension.id] = PauseTimer(scope, duration) {
-                        scope.launch {
-                            extension.runIf<TrackerMarkClient>(throwableFlow) {
-                                onMarkAsPlayed(details)
-                            }
-                        }
-                    }
-                }
+                // Mark as played timer stubbed
             }
         }
     }
@@ -141,8 +121,9 @@ class TrackingListener(
                         else timer.pause()
                     }
                 }
-                trackMedia { _, details ->
-                    onPlayingStateChanged(details, isPlaying)
+                trackMedia { details ->
+                    // Stubbed: onPlayingStateChanged for local history
+                    // TODO: Update play state in local history
                 }
             }
         }

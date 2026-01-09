@@ -55,22 +55,15 @@
     <string name="search">অনুসন্ধান</string>
     <string name="library">লাইব্রেরি</string>
     <string name="more">আরও</string>
-    <string name="extension">এক্সটেনশন</string>
     <string name="downloading_x">%1$s ডাউনলোড হচ্ছে</string>
-    <string name="cancel_all">সব বাতিল করুন</string>
     <string name="download_progress">ডাউনলোড অগ্রগতি</string>
     <string name="downloads">ডাউনলোড</string>
     <string name="downloaded_x">%1$s ডাউনলোড হয়েছে</string>
     <string name="logout_and_login">লগআউট এবং লগইন</string>
     <string name="login">লগইন</string>
     <string name="view">দেখুন</string>
-    <string name="extension_out_of_date">পুরনো</string>
     <string name="no_internet">ইন্টারনেট নেই</string>
-    <string name="error_loading_extension_from_x">%1$s থেকে এক্সটেনশন লোড করতে ত্রুটি</string>
-    <string name="extension_x_not_found">এক্সটেনশন %1$s পাওয়া যায়নি</string>
-    <string name="required_extensions_missing_x">প্রয়োজনীয় এক্সটেনশন অনুপস্থিত: %1$s</string>
     <string name="x_login_required">%1$s লগইন প্রয়োজন</string>
-    <string name="x_is_not_supported_in_x">%1$s, %2$s এ সমর্থিত নয়</string>
     <string name="account_session_expired_in_x">%1$s এ অ্যাকাউন্ট সেশন মেয়াদ শেষ</string>
     <string name="error_x">ত্রুটি: %1$s</string>
     <string name="str_copy">কপি</string>
@@ -96,7 +89,6 @@
     <string name="equalizer_summary">ডিভাইস ইকুয়ালাইজার সেটিংস খুলুন</string>
     <string name="stream_quality">স্ট্রিম কোয়ালিটি</string>
     <string name="stream_quality_summary">স্ট্রিমের ডিফল্ট কোয়ালিটি নির্বাচন করুন</string>
-    <string name="x_specific_quality_summary">%1$s নির্দিষ্ট স্ট্রিম কোয়ালিটি, ডিফল্ট স্ট্রিম কোয়ালিটি নির্বাচন ওভাররাইড করবে</string>
     <string-array name="stream_qualities">
         <item>সর্বোচ্চ</item>
         <item>মাঝারি</item>
@@ -123,23 +115,13 @@
     <string name="install">ইনস্টল</string>
     <string name="app">অ্যাপ</string>
     <string name="file">ফাইল</string>
-    <string name="installation_type">ইনস্টলেশন প্রকার</string>
-    <string name="installation_type_summary">অ্যাপ ইনস্টলেশন নিম্নলিখিত লিঙ্কগুলি Echo তে খুলতে অনুমতি দেবে:</string>
-    <string name="installation_type_warning">ফাইল হিসাবে এক্সটেনশন ইনস্টল করলে উপলব্ধ নয়।</string>
     <string name="could_not_find_the_file">ফাইল খুঁজে পাওয়া যায়নি।</string>
-    <string name="extension_installer">এক্সটেনশন ইনস্টলার</string>
-    <string name="extension_installed_successfully">এক্সটেনশন সফলভাবে ইনস্টল হয়েছে।</string>
-    <string name="extension_uninstalled_successfully">এক্সটেনশন সফলভাবে আনইনস্টল হয়েছে।</string>
     <string name="allow_opening_links">লিঙ্ক খোলার অনুমতি দিন</string>
     <string name="open_links_instruction">এই লিঙ্কগুলি খোলার অনুমতি দিতে, আপনাকে:\n- নিচে স্ক্রোল করুন এবং \"ডিফল্টভাবে খুলুন\" ক্লিক করুন\n- \"+ লিঙ্ক যোগ করুন\" ক্লিক করুন</string>
     <string name="downloading_update_for_x">%1$s এর জন্য আপডেট ডাউনলোড হচ্ছে</string>
-    <string name="extension_updated_successfully">%1$s সফলভাবে আপডেট হয়েছে</string>
     <string name="link">লিঙ্ক</string>
     <string name="link_or_code">লিঙ্ক বা কোড</string>
     <string name="list_is_empty">তালিকা খালি</string>
-    <string name="extension_installed">%1$s (ইনস্টল করা)</string>
-    <string name="add_extensions">এক্সটেনশন যোগ করুন</string>
-    <string name="invalid_extension_list">অবৈধ এক্সটেনশন তালিকা</string>
     <string name="checking_for_updates">আপডেট চেক করা হচ্ছে</string>
     <string name="look_and_feel">চেহারা এবং অনুভূতি</string>
     <string name="ui">UI</string>
@@ -177,14 +159,10 @@
     <string name="tracker">ট্র্যাকার</string>
     <string name="lyrics">লিরিক্স</string>
     <string name="misc">বিবিধ</string>
-    <string name="x_extensions">%1$s এক্সটেনশন</string>
-    <string name="x_extension">%1$s এক্সটেনশন</string>
     <string name="enabled">সক্রিয়</string>
     <string name="disabled">নিষ্ক্রিয়</string>
-    <string name="error_updating_extension">আপডেট করার সময় ত্রুটি</string>
     <string name="no_user_found">কোন ব্যবহারকারী পাওয়া যায়নি</string>
     <string name="select_x_account">%1$s অ্যাকাউন্ট নির্বাচন করুন</string>
-    <string name="add_extension">এক্সটেনশন যোগ করুন</string>
     <string name="webview">ওয়েবভিউ</string>
     <string name="logout">লগআউট</string>
     <string name="switch_account">অ্যাকাউন্ট পরিবর্তন করুন</string>
@@ -337,7 +315,6 @@
     <string name="adding_x">%1$s যোগ করা হচ্ছে</string>
     <string name="moving_x">%1$s সরানো হচ্ছে</string>
     <string name="removing_x">%1$s সরানো হচ্ছে</string>
-    <string name="no_download_extension">কোন ডাউনলোড এক্সটেনশন পাওয়া যায়নি, এটি পেতে \"echodown\" কোড ব্যবহার করুন।</string>
     <string name="nothing_to_download_in_x">%1$s এ ডাউনলোড করার কিছু নেই</string>
     <string name="download_started">ডাউনলোড শুরু হয়েছে</string>
     <string name="merging_x">%1$s মার্জ করা হচ্ছে</string>

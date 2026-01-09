@@ -13,7 +13,7 @@ import com.joaomagdaleno.music_hub.playback.listener.EffectsListener.Companion.d
 import com.joaomagdaleno.music_hub.playback.listener.EffectsListener.Companion.globalFx
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyContentInsets
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
-import com.joaomagdaleno.music_hub.ui.extensions.login.LoginFragment.Companion.bind
+
 import com.joaomagdaleno.music_hub.ui.player.audiofx.AudioEffectsBottomSheet.Companion.bind
 import com.joaomagdaleno.music_hub.ui.player.audiofx.AudioEffectsBottomSheet.Companion.onEqualizerClicked
 import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
@@ -33,7 +33,7 @@ class AudioEffectsFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        binding.bind(this)
+        binding.toolBar.setNavigationOnClickListener { requireActivity().onBackPressed() }
         binding.extensionIcon.isVisible = false
         binding.toolBar.title = getString(R.string.audio_fx)
         childFragmentManager.beginTransaction().replace(R.id.genericFragmentContainer, fragment)

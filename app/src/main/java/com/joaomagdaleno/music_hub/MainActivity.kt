@@ -14,14 +14,12 @@ import com.google.android.material.color.DynamicColors
 import com.google.android.material.color.DynamicColorsOptions
 import com.google.android.material.navigation.NavigationBarView
 import com.joaomagdaleno.music_hub.databinding.ActivityMainBinding
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
 import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.setupExceptionHandler
 import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.setupIntents
 import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler.Companion.setupSnackBar
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.setupNavBarAndInsets
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.setupPlayerBehavior
-import com.joaomagdaleno.music_hub.ui.extensions.ExtensionsViewModel.Companion.configureExtensionsUpdater
 import com.joaomagdaleno.music_hub.ui.main.MainFragment
 import com.joaomagdaleno.music_hub.ui.player.PlayerFragment
 import com.joaomagdaleno.music_hub.ui.player.PlayerFragment.Companion.PLAYER_COLOR
@@ -37,7 +35,6 @@ open class MainActivity : AppCompatActivity() {
 
     val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
     private val uiViewModel by viewModel<UiViewModel>()
-    private val extensionLoader by inject<ExtensionLoader>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,8 +54,7 @@ open class MainActivity : AppCompatActivity() {
         setupNavBarAndInsets(uiViewModel, binding.root, binding.navView as NavigationBarView)
         setupPlayerBehavior(uiViewModel, binding.playerFragmentContainer)
         setupExceptionHandler(setupSnackBar(uiViewModel, binding.root))
-        checkAppPermissions { extensionLoader.setPermGranted() }
-        configureExtensionsUpdater()
+        checkAppPermissions { }
         supportFragmentManager.commit {
             if (savedInstanceState != null) return@commit
             add<MainFragment>(R.id.navHostFragment, "main")

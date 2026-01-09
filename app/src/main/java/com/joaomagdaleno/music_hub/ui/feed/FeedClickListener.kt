@@ -70,7 +70,7 @@ open class FeedClickListener(
         tracks: List<Track>?,
         shuffle: Boolean
     ): Boolean {
-        if (extensionId == null) return notFoundSnack(R.string.extension)
+        if (extensionId == null) return notFoundSnack(R.string.sources)
         val vm by fragment.activityViewModels<PlayerViewModel>()
         if (tracks != null) {
             if (tracks.isEmpty()) return notFoundSnack(R.string.tracks)
@@ -96,7 +96,7 @@ open class FeedClickListener(
         val fragment = fragmentManager.findFragmentById(containerId)
             ?: return notFoundSnack(R.string.view)
         val vm by fragment.activityViewModels<FeedFragment.VM>()
-        vm.extensionId = extensionId ?: return notFoundSnack(R.string.extension)
+        vm.extensionId = extensionId ?: return notFoundSnack(R.string.sources)
         vm.feedId = feedId ?: return notFoundSnack(R.string.item)
         vm.feed = feed ?: return notFoundSnack(R.string.feed)
         fragment.openFragment<FeedFragment>(view, FeedFragment.getBundle(title.orEmpty(), subtitle))
@@ -113,7 +113,7 @@ open class FeedClickListener(
     open fun onMediaClicked(
         view: View?, extensionId: String?, item: EchoMediaItem?, context: EchoMediaItem?
     ): Boolean {
-        if (extensionId == null) return notFoundSnack(R.string.extension)
+        if (extensionId == null) return notFoundSnack(R.string.sources)
         if (item == null) return notFoundSnack(R.string.item)
         return when (item) {
             is Radio -> {
@@ -136,7 +136,7 @@ open class FeedClickListener(
         view: View?, extensionId: String?, item: EchoMediaItem?, context: EchoMediaItem?,
         tabId: String?, index: Int
     ): Boolean {
-        if (extensionId == null) return notFoundSnack(R.string.extension)
+        if (extensionId == null) return notFoundSnack(R.string.sources)
         if (item == null) return notFoundSnack(R.string.item)
         MediaMoreBottomSheet.newInstance(
             containerId, extensionId, item, false,
@@ -152,7 +152,7 @@ open class FeedClickListener(
         tracks: List<Track>?,
         pos: Int
     ): Boolean {
-        if (extensionId == null) return notFoundSnack(R.string.extension)
+        if (extensionId == null) return notFoundSnack(R.string.sources)
         if (tracks.isNullOrEmpty()) return notFoundSnack(R.string.tracks)
         val vm by fragment.activityViewModels<PlayerViewModel>()
         vm.setQueue(extensionId, tracks, pos, context)
@@ -163,7 +163,7 @@ open class FeedClickListener(
     open fun onTrackSwiped(
         view: View?, extensionId: String?, track: Track?,
     ): Boolean {
-        if (extensionId == null) return notFoundSnack(R.string.extension)
+        if (extensionId == null) return notFoundSnack(R.string.sources)
         if (track == null) return notFoundSnack(R.string.track)
         val vm by fragment.activityViewModels<PlayerViewModel>()
         vm.addToNext(extensionId, track, false)

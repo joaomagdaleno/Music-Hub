@@ -14,7 +14,7 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.di.App
-import com.joaomagdaleno.music_hub.extensions.MediaState
+import com.joaomagdaleno.music_hub.common.models.MediaState
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.state
 import com.joaomagdaleno.music_hub.playback.PlayerCommands.likeCommand
 import com.joaomagdaleno.music_hub.playback.PlayerCommands.repeatCommand

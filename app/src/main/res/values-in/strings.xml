@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="cancel">Batal</string>
-    <string name="extension_x_not_found">Ekstensi %1$s tidak ditemukan</string>
     <string name="no_internet">Tidak ada internet</string>
     <string name="link_or_code">Tautan atau kode</string>
     <string name="stop_player_summary">Hentikan musik ketika aplikasi ditutup</string>
@@ -43,22 +42,17 @@
     <string name="bass_boost_desc">Nilai yang tinggi mungkin akan merusak suara.</string>
     <string name="downloading_x">Mengunduh %1$s</string>
     <string name="more">Lebih banyak</string>
-    <string name="cancel_all">Batalkan semua</string>
     <string name="download_progress">Unduhan berlangsung</string>
     <string name="downloads">Unduhan</string>
     <string name="library">Perpustakaan</string>
     <string name="downloaded_x">Terunduh %1$s</string>
     <string name="login">Masuk</string>
-    <string name="extension_out_of_date">Kadaluarsa</string>
-    <string name="error_loading_extension_from_x">Eror memuat ekstensi dari %1$s</string>
     <string name="str_copy">Salin</string>
     <string name="choose_a_color">Pilih warna</string>
-    <string name="required_extensions_missing_x">Ekstensi yang diperlukan tidak ada: %1$s</string>
     <string name="x_login_required">Perlu masuk %1$s</string>
     <string name="error_x">Eror: %1$s</string>
     <string name="extensions">Ekstensi</string>
     <string name="random">Acak</string>
-    <string name="x_is_not_supported_in_x">%1$s tidak didukung dalam %2$s</string>
     <string name="account_session_expired_in_x">Sesi akun kadaluarsa %1$s</string>
     <string name="add">Tambah</string>
     <string name="value">Nilai</string>
@@ -84,15 +78,10 @@
     <string name="system">Sistem</string>
     <string name="install">Pasang</string>
     <string name="app">Aplikasi</string>
-    <string name="installation_type_warning">Tidak tersedia jika Anda menginstal ekstensi sebagai file.</string>
-    <string name="extension_installer">Pemasang ekstensi</string>
     <string name="back">Kembali</string>
-    <string name="extension_uninstalled_successfully">Ekstensi berhasil di-uninstall.</string>
     <string name="allow_opening_links">Perbolehkan membuka tautan</string>
     <string name="open_links_instruction">Untuk membuka tautan ini, kamu harus:\n- Scroll kebawah kemudian klik \"Buka\" \n- Klik pada \"+ Tambahkan tautan\"</string>
-    <string name="extension_updated_successfully">%1$s berhasil diperbarui</string>
     <string name="list_is_empty">Daftar kosong</string>
-    <string name="add_extensions">Tambahkan Ekstensi</string>
     <string name="custom_theme_color">Racik warna tema</string>
     <string name="add_color">Tambah warna</string>
     <string name="custom_colors">Warna Kustom</string>
@@ -107,14 +96,10 @@
     <string name="lyrics">Lirik</string>
     <string name="tracker">Tracker</string>
     <string name="misc">Pengaturan Lainnya</string>
-    <string name="x_extensions">%1$sEkstensi</string>
-    <string name="x_extension">%1$sEkstensi</string>
     <string name="enabled">Diaktifkan</string>
     <string name="disabled">Dimatikan</string>
     <string name="no_user_found">Pengguna tidak ditemukan</string>
     <string name="select_x_account">Pilih akun %1$s</string>
-    <string name="add_extension">Tambah Ekstensi</string>
-    <string name="error_updating_extension">Eror ketika memperbarui</string>
     <string name="webview">WebView</string>
     <string name="logout">Keluar</string>
     <string name="switch_account">Ganti akun</string>
@@ -201,7 +186,6 @@
     <string name="remove">Hapus</string>
     <string name="playlist_liked_desc">Lagu yang disukai</string>
     <string name="repeat_one">Ulang sekali</string>
-    <string name="extension">Ekstensi</string>
     <string name="notifications">Notifikasi</string>
     <string name="playlist_liked">Disukai</string>
     <string name="home">Beranda</string>
@@ -222,14 +206,12 @@
     <string name="repeat_off">Tidak ada perulangan</string>
     <string name="repeat_all">Ulangi semua</string>
     <string name="audio_fx_desc">Ubah efek suara pada lagu ini.</string>
-    <string name="installation_type">Tipe pemasangan</string>
     <string name="view">Lihat</string>
     <string name="cache_size_summary">Ukuran cache video dan audio dalam MB</string>
     <string name="logout_and_login">Keluar dan masuk</string>
     <string name="value_not_set">Tidak diatur</string>
     <string name="amoled_summary">Ganti warna latar belakang dengan hitam pekat. Berguna untuk layar AMOLED untuk mengurangi pengurasan baterai dan mencegah layar terbakar</string>
     <string name="_30min">30 menit</string>
-    <string name="extension_installed">%1$s (Telah Terpasang)</string>
     <string name="unknown_quality">Kualitas tidak diketahui</string>
     <string name="animation">Animasi</string>
     <string name="not_logged_in">Tidak ada akun</string>
@@ -242,7 +224,6 @@
     <string name="downloading_update_for_x">Mengunduh pembaruan untuk %1$s</string>
     <string name="link">Tautan</string>
     <string name="deleting_x">Menghapus %1$s</string>
-    <string name="invalid_extension_list">Daftar ekstensi tidak valid</string>
     <string name="sleep_timer">Waktu tidur</string>
     <string name="_45min">45 menit</string>
     <string name="x_disabled">%1$s (Dimatikan)</string>
@@ -259,7 +240,6 @@
     <string name="audio_selection">Pilihan Audio</string>
     <string name="quality_selection">Pilihan Kualitas</string>
     <string name="unfollow">Berhenti mengikuti</string>
-    <string name="no_download_extension">Ekstensi untuk mengunduh tidak ada, gunakan kode \"echodown\" untuk mendapatkannya.</string>
     <string name="delete_playlist">Hapus daftar putar</string>
     <string name="liked_x">Disukai %1$s</string>
     <string name="sort_date">Tanggal</string>
@@ -272,12 +252,10 @@
     <string name="loading_x">Memuat %1s</string>
     <string name="download_started">Unduhan dimulai</string>
     <string name="cache_playlist_warning">Fitur percobaan. Semua kecuali mendengarkan ini tidak terdukung.</string>
-    <string name="installation_type_summary">Pemasangan melalui aplikasi akan memungkinkan link berikut terbuka di Echo:</string>
     <string name="animations_summary">Puyeng? Coba matiin ini</string>
     <string name="reset">Mulai ulang</string>
     <string name="ui">UI</string>
     <string name="loading_radio_for_x">Memuat radio untuk %1$s</string>
-    <string name="extension_installed_successfully">Ekstensi berhasil terpasang.</string>
     <string name="file">File</string>
     <string name="look_and_feel">Tampilan dan Nuansa</string>
     <string name="sleep_timer_cancelled">Waktu tidur dibatalkan</string>
@@ -293,7 +271,6 @@
     <plurals name="number_items">
         <item quantity="other">%1$d Barang</item>
     </plurals>
-    <string name="x_specific_quality_summary">%1$s kualitas aliran tertentu, akan menimpa seleksi kualitas aliran default</string>
     <string name="unmetered_stream_quality">Kualitas Aliran Tidak Terukur</string>
     <string name="unmetered_stream_quality_summary">Kualitas aliran ketika terhubung ke jaringan unmetered. Ini akan mengesampingkan kualitas aliran default.</string>
     <string name="select_language">Pilih Bahasa</string>

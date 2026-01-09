@@ -5,13 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.joaomagdaleno.music_hub.common.models.Feed
 import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.di.App
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.merge
 
 class FeedViewModel(
     val app: App,
-    private val extensionLoader: ExtensionLoader,
+    private val repository: com.joaomagdaleno.music_hub.data.repository.MusicRepository,
 ) : ViewModel() {
     val feedDataMap = hashMapOf<String, FeedData>()
     fun getFeedData(
@@ -19,15 +18,15 @@ class FeedViewModel(
         buttons: Feed.Buttons = Feed.Buttons(),
         noVideos: Boolean = false,
         vararg extraLoadFlow: Flow<*>,
-        cached: suspend ExtensionLoader.() -> FeedData.State<Feed<Shelf>>? = { null },
-        loader: suspend ExtensionLoader.() -> FeedData.State<Feed<Shelf>>?
+        cached: suspend com.joaomagdaleno.music_hub.data.repository.MusicRepository.() -> FeedData.State<Feed<Shelf>>? = { null },
+        loader: suspend com.joaomagdaleno.music_hub.data.repository.MusicRepository.() -> FeedData.State<Feed<Shelf>>?
     ): FeedData {
         return feedDataMap.getOrPut(id) {
             FeedData(
                 feedId = id,
                 scope = viewModelScope,
                 app = app,
-                extensionLoader = extensionLoader,
+                repository = repository,
                 cached = cached,
                 load = loader,
                 defaultButtons = buttons,

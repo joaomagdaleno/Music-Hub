@@ -26,19 +26,10 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionToken
 import com.joaomagdaleno.music_hub.MainActivity.Companion.getMainActivity
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.models.ExtensionType
 import com.joaomagdaleno.music_hub.common.models.Streamable
 import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.download.Downloader
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.extensionPrefId
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.prefs
-import com.joaomagdaleno.music_hub.playback.listener.AudioFocusListener
-import com.joaomagdaleno.music_hub.playback.listener.EffectsListener
-import com.joaomagdaleno.music_hub.playback.listener.MediaSessionServiceListener
-import com.joaomagdaleno.music_hub.playback.listener.PlayerEventListener
-import com.joaomagdaleno.music_hub.playback.listener.PlayerRadio
-import com.joaomagdaleno.music_hub.playback.listener.TrackingListener
+import com.joaomagdaleno.music_hub.playback.listener.*
 import com.joaomagdaleno.music_hub.playback.renderer.PlayerBitmapLoader
 import com.joaomagdaleno.music_hub.playback.renderer.RenderersFactory
 import com.joaomagdaleno.music_hub.playback.source.StreamableMediaSource
@@ -54,8 +45,6 @@ import java.io.File
 
 class PlayerService : MediaLibraryService() {
 
-    private val extensionLoader by inject<ExtensionLoader>()
-    private val extensions by lazy { extensionLoader }
     private val exoPlayer by lazy { createExoplayer() }
 
     private var mediaSession: MediaLibrarySession? = null
@@ -92,7 +81,7 @@ class PlayerService : MediaLibraryService() {
         }
 
         val callback = PlayerCallback(
-            app, scope, app.throwFlow, extensions, state.radio, downloadFlow
+            app, scope, app.throwFlow, repository, state.radio, downloadFlow
         )
 
         val session = MediaLibrarySession.Builder(this, player, callback)
@@ -102,15 +91,15 @@ class PlayerService : MediaLibraryService() {
 
         player.addListener(AudioFocusListener(this, player))
         player.addListener(
-            PlayerEventListener(this, scope, session, state.current, extensions, app.throwFlow)
+            PlayerEventListener(this, scope, session, state.current, repository, app.throwFlow)
         )
         player.addListener(
             PlayerRadio(
-                app, scope, player, app.throwFlow, state.radio, extensions.music, downloadFlow
+                app, scope, player, app.throwFlow, state.radio, repository, downloadFlow
             )
         )
         player.addListener(
-            TrackingListener(player, scope, extensions, state.current, app.throwFlow)
+            TrackingListener(player, scope, repository, state.current, app.throwFlow)
         )
         player.addListener(effects)
         app.settings.registerOnSharedPreferenceChangeListener(listener)
@@ -146,18 +135,20 @@ class PlayerService : MediaLibraryService() {
             .setIsSpeedChangeSupportRequired(true)
             .build()
 
+    private val repository by inject<com.joaomagdaleno.music_hub.data.repository.MusicRepository>()
+
     @OptIn(UnstableApi::class)
     private fun createExoplayer() = run {
         val audioAttributes = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
             .build()
-
+        
         val audioOffloadPreferences =
             offloadPreferences(app.settings.getBoolean(MORE_BRAIN_CAPACITY, false))
 
         val factory = StreamableMediaSource.Factory(
-            app, scope, state, extensions, cache, downloadFlow, mediaChangeFlow
+            app, scope, state, repository, cache, downloadFlow, mediaChangeFlow
         )
 
         ExoPlayer.Builder(this, factory)
@@ -210,16 +201,16 @@ class PlayerService : MediaLibraryService() {
 
         fun selectServerIndex(
             app: App,
-            extensionId: String,
+            origin: String,
             streamables: List<Streamable>,
             downloaded: List<String>,
         ) = if (downloaded.isNotEmpty()) streamables.size
         else if (streamables.isNotEmpty()) {
-            val streamable = streamables.select(app, extensionId) { it.quality }
+            val streamable = select(app, origin, streamables) { it.quality }
             streamables.indexOf(streamable)
         } else -1
 
-        private fun <E> List<E>.select(
+        fun <E> List<E>.select(
             app: App,
             settings: SharedPreferences,
             quality: (E) -> Int,
@@ -245,14 +236,12 @@ class PlayerService : MediaLibraryService() {
         }
 
 
-        fun <T> List<T>.select(
-            app: App, extensionId: String, quality: (T) -> Int,
+        fun <T> select(
+            app: App, origin: String, list: List<T>, quality: (T) -> Int,
         ): T {
-            val extSettings =
-                extensionPrefId(ExtensionType.MUSIC.name, extensionId).prefs(app.context)
-            return select(app, extSettings, quality, "off")
-                ?: select(app, app.settings, quality)
-                ?: first()
+            // Simplified: use global settings for now
+            return list.select(app, app.settings, quality)
+                ?: list.first()
         }
 
         fun getController(

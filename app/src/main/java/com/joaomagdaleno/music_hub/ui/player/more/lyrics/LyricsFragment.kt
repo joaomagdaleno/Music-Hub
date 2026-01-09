@@ -12,9 +12,6 @@ import androidx.core.view.WindowInsetsCompat.CONSUMED
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.paging.LoadState
-import androidx.paging.LoadState.Error
-import androidx.paging.LoadState.NotLoading
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
@@ -23,21 +20,13 @@ import com.google.android.material.behavior.HideViewOnScrollBehavior
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.transition.MaterialSharedAxis
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.clients.LyricsSearchClient
-import com.joaomagdaleno.music_hub.common.models.ExtensionType
 import com.joaomagdaleno.music_hub.common.models.Lyrics
 import com.joaomagdaleno.music_hub.databinding.FragmentPlayerLyricsBinding
 import com.joaomagdaleno.music_hub.databinding.ItemLyricsItemBinding
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.isClient
-import com.joaomagdaleno.music_hub.ui.common.GridAdapter
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
-import com.joaomagdaleno.music_hub.ui.extensions.list.ExtensionsListBottomSheet
-import com.joaomagdaleno.music_hub.ui.feed.FeedLoadingAdapter
-import com.joaomagdaleno.music_hub.ui.feed.FeedLoadingAdapter.Companion.createListener
 import com.joaomagdaleno.music_hub.ui.player.PlayerColors.Companion.defaultPlayerColors
 import com.joaomagdaleno.music_hub.ui.player.PlayerViewModel
 import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
-import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadAsCircle
 import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
 import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
 import com.joaomagdaleno.music_hub.utils.ui.FastScrollerHelper
@@ -45,7 +34,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
-
 
 class LyricsFragment : Fragment() {
 
@@ -72,12 +60,6 @@ class LyricsFragment : Fragment() {
         }
     }
 
-    private val lyricsErrorAdapter by lazy {
-        FeedLoadingAdapter(createListener {
-            viewModel.reloadCurrent()
-        }) { LyricAdapter.Loading(it) }
-    }
-
     private var shouldAutoScroll = true
     val layoutManager by lazy {
         binding.lyricsRecyclerView.layoutManager as LinearLayoutManager
@@ -85,20 +67,17 @@ class LyricsFragment : Fragment() {
 
     private fun updateLyrics(current: Long) {
         val lyrics = currentLyrics as? Lyrics.Timed ?: return
-        val currentTime = lyrics.list.getOrNull(currentLyricsPos)?.endTime ?: -1
-        if (currentTime < current || current <= 0) {
-            val currentIndex = lyrics.list.indexOfLast { lyric ->
-                lyric.startTime <= current
-            }
-            lyricAdapter.updateCurrent(currentIndex)
-            if (!shouldAutoScroll) return
-            binding.appBarLayout.setExpanded(false)
-            slideDown()
-            if (currentIndex < 0) return
-            val smoothScroller = CenterSmoothScroller(requireContext())
-            smoothScroller.targetPosition = currentIndex
-            layoutManager.startSmoothScroll(smoothScroller)
+        val currentIndex = lyrics.list.indexOfLast { lyric ->
+            lyric.startTime <= current
         }
+        lyricAdapter.updateCurrent(currentIndex)
+        if (!shouldAutoScroll) return
+        binding.appBarLayout.setExpanded(false)
+        slideDown()
+        if (currentIndex < 0) return
+        val smoothScroller = CenterSmoothScroller(requireContext())
+        smoothScroller.targetPosition = currentIndex
+        layoutManager.startSmoothScroll(smoothScroller)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -108,62 +87,9 @@ class LyricsFragment : Fragment() {
         observe(uiViewModel.moreSheetState) {
             binding.root.keepScreenOn = it == BottomSheetBehavior.STATE_EXPANDED
         }
-        binding.searchBarText.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.menu_lyrics -> ExtensionsListBottomSheet.newInstance(ExtensionType.LYRICS)
-                    .show(parentFragmentManager, null)
-            }
-            true
-        }
-        val menu = binding.searchBarText.menu
-        val extMenu = binding.searchBarText.findViewById<View>(R.id.menu_lyrics)
-        extMenu.setOnLongClickListener {
-            val ext = viewModel.currentSelectionFlow.value ?: return@setOnLongClickListener false
-            val all = viewModel.extensionsFlow.value
-            val index = all.indexOf(ext)
-            val nextIndex = (index + 1) % all.size
-            if (nextIndex == index) return@setOnLongClickListener false
-            viewModel.selectExtension(nextIndex)
-            true
-        }
-        val lyricsItemAdapter = LyricsItemAdapter { lyrics ->
-            viewModel.onLyricsSelected(lyrics)
-            binding.searchView.hide()
-        }
-        GridAdapter.configureGridLayout(
-            binding.searchRecyclerView,
-            lyricsItemAdapter.withLoaders(this, viewModel),
-        )
-        observe(viewModel.currentSelectionFlow) { current ->
-            binding.searchBarText.hint = current?.name
-            current?.metadata?.icon.loadAsCircle(extMenu, R.drawable.ic_extension_32dp) {
-                menu.findItem(R.id.menu_lyrics).icon = it
-            }
-            val isSearchable = current?.isClient<LyricsSearchClient>() ?: false
-            binding.searchBarText.setNavigationIcon(
-                when (isSearchable) {
-                    true -> R.drawable.ic_search_outline
-                    false -> R.drawable.ic_queue_music
-                }
-            )
-            binding.searchView.editText.isEnabled = isSearchable
-            binding.searchView.hint = if (isSearchable)
-                getString(R.string.search_x, current.name)
-            else current?.name
-        }
 
-        binding.searchView.editText.setOnEditorActionListener { v, _, _ ->
-            viewModel.queryFlow.value = v.text.toString().trim()
-            true
-        }
-
-        observe(viewModel.queryFlow) {
-            binding.searchView.editText.setText(it)
-        }
-
-        observe(viewModel.pagingFlow) {
-            lyricsItemAdapter.submitData(it)
-        }
+        // Search and extension selection removed in monolithic mode
+        binding.searchBarText.isVisible = false
 
         var job: Job? = null
         binding.lyricsRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -184,21 +110,11 @@ class LyricsFragment : Fragment() {
             binding.noLyrics.setTextColor(colors.onBackground)
         }
 
-        binding.lyricsRecyclerView.adapter = ConcatAdapter(lyricsErrorAdapter, lyricAdapter)
+        binding.lyricsRecyclerView.adapter = lyricAdapter
         binding.lyricsRecyclerView.itemAnimator = null
         observe(viewModel.lyricsState) { state ->
             binding.noLyrics.isVisible = state == LyricsViewModel.State.Empty
-            lyricsErrorAdapter.loadState = when (state) {
-                LyricsViewModel.State.Initial -> LoadState.Loading
-                LyricsViewModel.State.Empty -> NotLoading(true)
-                LyricsViewModel.State.Loading -> LoadState.Loading
-                is LyricsViewModel.State.Loaded -> state.result.fold({
-                    NotLoading(true)
-                }, {
-                    Error(it)
-                })
-
-            }
+            
             val lyricsItem = (state as? LyricsViewModel.State.Loaded)?.result?.getOrNull()
             binding.lyricsItem.bind(lyricsItem)
             currentLyricsPos = -1

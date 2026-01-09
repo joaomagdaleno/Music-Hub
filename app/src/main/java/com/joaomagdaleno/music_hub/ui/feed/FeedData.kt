@@ -4,14 +4,11 @@ import android.os.Parcelable
 import androidx.paging.cachedIn
 import com.joaomagdaleno.music_hub.common.helpers.PagedData
 import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
-import com.joaomagdaleno.music_hub.common.models.ExtensionType
 import com.joaomagdaleno.music_hub.common.models.Feed
 import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.common.models.Tab
 import com.joaomagdaleno.music_hub.di.App
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtensionOrThrow
-import com.joaomagdaleno.music_hub.extensions.builtin.offline.MediaStoreUtils.searchBy
+import kotlinx.coroutines.flow.emptyFlow
 import com.joaomagdaleno.music_hub.ui.common.PagedSource
 import com.joaomagdaleno.music_hub.ui.feed.FeedType.Companion.toFeedType
 import com.joaomagdaleno.music_hub.ui.feed.viewholders.HorizontalListViewHolder
@@ -45,17 +42,17 @@ data class FeedData(
     private val feedId: String,
     private val scope: CoroutineScope,
     private val app: App,
-    private val extensionLoader: ExtensionLoader,
-    private val cached: suspend ExtensionLoader.() -> State<Feed<Shelf>>?,
-    private val load: suspend ExtensionLoader.() -> State<Feed<Shelf>>?,
+    private val repository: com.joaomagdaleno.music_hub.data.repository.MusicRepository,
+    private val cached: suspend com.joaomagdaleno.music_hub.data.repository.MusicRepository.() -> State<Feed<Shelf>>?,
+    private val load: suspend com.joaomagdaleno.music_hub.data.repository.MusicRepository.() -> State<Feed<Shelf>>?,
     private val defaultButtons: Feed.Buttons,
     private val noVideos: Boolean,
     private val extraLoadFlow: Flow<*>
 ) {
-    val current = extensionLoader.current
-    val usersFlow = extensionLoader.db.currentUsersFlow
-    suspend fun getExtension(id: String) =
-        extensionLoader.getFlow(ExtensionType.MUSIC).getExtensionOrThrow(id)
+    // Monolithic: No current extension flow, assume always present
+    val current = MutableStateFlow<String?>("native")
+    val usersFlow = emptyFlow<Unit>()
+    fun getExtension(id: String) = Unit // Placeholder if needed
 
     val layoutManagerStates = hashMapOf<Int, Parcelable?>()
     val visibleScrollableViews = hashMapOf<Int, WeakReference<HorizontalListViewHolder>>()
@@ -206,9 +203,7 @@ data class FeedData(
                         app.context.saveToCache("$extensionId-$feedId-$tabId", sortState, "sort")
                 }
                 if (query != null) {
-                    shelves = shelves.searchBy(query) {
-                        listOf(it.title)
-                    }.map { it.second }
+                    shelves = shelves.filter { it.title.contains(query, true) }
                 }
                 PagedData.Single {
                     shelves.toFeedType(
@@ -268,9 +263,9 @@ data class FeedData(
                 .merge().debounce(100L).collectLatest {
                     cachedState.value = null
                     loadedState.value = null
-                    extensionLoader.current.value ?: return@collectLatest
-                    cachedState.value = runCatching { cached(extensionLoader) }
-                    loadedState.value = runCatching { load(extensionLoader) }
+                    // Monolithic: Always load
+                    cachedState.value = runCatching { cached(repository) }
+                    loadedState.value = runCatching { load(repository) }
                 }
         }
         scope.launch {

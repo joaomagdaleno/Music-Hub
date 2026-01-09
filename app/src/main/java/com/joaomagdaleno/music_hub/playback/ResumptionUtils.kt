@@ -8,9 +8,9 @@ import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
 import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.download.Downloader
-import com.joaomagdaleno.music_hub.extensions.MediaState
+import com.joaomagdaleno.music_hub.common.models.MediaState
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.context
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.extensionId
+import com.joaomagdaleno.music_hub.playback.MediaItemUtils.origin
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.track
 import com.joaomagdaleno.music_hub.utils.CacheUtils.getFromCache
 import com.joaomagdaleno.music_hub.utils.CacheUtils.saveToCache
@@ -23,7 +23,7 @@ object ResumptionUtils {
     private const val FOLDER = "queue"
     private const val TRACKS = "queue_tracks"
     private const val CONTEXTS = "queue_contexts"
-    private const val EXTENSIONS = "queue_extensions"
+    private const val ORIGINS = "queue_origins"
     private const val INDEX = "queue_index"
     private const val POSITION = "position"
     private const val SHUFFLE = "shuffle"
@@ -40,11 +40,11 @@ object ResumptionUtils {
         if (list.isEmpty()) return@withContext
         val currentIndex = player.currentMediaItemIndex
         withContext(Dispatchers.IO) {
-            val extensionIds = list.map { it.extensionId }
+            val origins = list.map { it.origin }
             val tracks = list.map { it.track }
             val contexts = list.map { it.context }
             context.saveToCache(INDEX, currentIndex, FOLDER)
-            context.saveToCache(EXTENSIONS, extensionIds, FOLDER)
+            context.saveToCache(ORIGINS, origins, FOLDER)
             context.saveToCache(TRACKS, tracks, FOLDER)
             context.saveToCache(CONTEXTS, contexts, FOLDER)
         }
@@ -57,12 +57,12 @@ object ResumptionUtils {
     fun Context.recoverTracks(withClear: Boolean = false): List<Pair<MediaState.Unloaded<Track>, EchoMediaItem?>>? {
         if (withClear && getFromCache<Boolean>(CLEARED) != false) return null
         val tracks = getFromCache<List<Track>>(TRACKS, FOLDER)
-        val extensionIds = getFromCache<List<String>>(EXTENSIONS, FOLDER)
+        val origins = getFromCache<List<String>>(ORIGINS, FOLDER)
         val contexts = getFromCache<List<EchoMediaItem>>(CONTEXTS, FOLDER)
         return tracks?.mapIndexedNotNull { index, track ->
-            val extensionId = extensionIds?.getOrNull(index) ?: return@mapIndexedNotNull null
+            val origin = origins?.getOrNull(index) ?: return@mapIndexedNotNull null
             val item = contexts?.getOrNull(index)
-            MediaState.Unloaded(extensionId, track) to item
+            MediaState.Unloaded(origin, track) to item
         }
     }
 

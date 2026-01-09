@@ -81,8 +81,8 @@ object AppUpdater {
         val request = Request.Builder().url(url).build()
         val res = runCatching {
             client.newCall(request).await().use {
-                it.body.string().toData<GithubReleaseResponse>()
-            }.getOrThrow()
+                it.body?.string()?.toData<GithubReleaseResponse>()?.getOrThrow()
+            } ?: throw Exception("Empty release response")
         }.getOrElse {
             throw Exception("Failed to fetch latest release", it)
         }
@@ -105,8 +105,8 @@ object AppUpdater {
         val url =
             "https://api.github.com/repos/$githubRepo/actions/workflows/nightly.yml/runs?per_page=1&conclusion=success"
         val request = Request.Builder().url(url).build()
-        client.newCall(request).await().body.string().toData<GithubRunsResponse>().getOrThrow()
-            .workflowRuns.firstOrNull { it.sha.take(7) != hash }?.id
+        client.newCall(request).await().body?.string()?.toData<GithubRunsResponse>()?.getOrThrow()
+            ?.workflowRuns?.firstOrNull { it.sha.take(7) != hash }?.id
     }.getOrElse {
         throw Exception("Failed to fetch workflow ID", it)
     }
@@ -146,7 +146,7 @@ object AppUpdater {
         client: OkHttpClient
     ) = runIOCatching {
         val request = Request.Builder().url(url).build()
-        val res = client.newCall(request).await().body.byteStream()
+        val res = client.newCall(request).await().body?.byteStream() ?: throw Exception("Empty body")
         val file = context.getTempFile()
         res.use { input -> file.outputStream().use { output -> input.copyTo(output) } }
         file

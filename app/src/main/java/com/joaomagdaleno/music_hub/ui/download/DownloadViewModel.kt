@@ -4,18 +4,13 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.clients.DownloadClient
 import com.joaomagdaleno.music_hub.common.models.DownloadContext
 import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
 import com.joaomagdaleno.music_hub.common.models.Message
 import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.download.Downloader
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getIf
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.isClient
 import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
-import com.joaomagdaleno.music_hub.ui.extensions.add.ExtensionsAddBottomSheet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
@@ -26,7 +21,7 @@ import kotlinx.coroutines.launch
 
 class DownloadViewModel(
     app: App,
-    extensionLoader: ExtensionLoader,
+    private val repository: com.joaomagdaleno.music_hub.data.repository.MusicRepository,
     val downloader: Downloader,
 ) : ViewModel() {
 
@@ -34,12 +29,8 @@ class DownloadViewModel(
     private val messageFlow = app.messageFlow
     private val throwableFlow = app.throwFlow
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val downloadExtensions = extensionLoader.misc.mapLatest { list ->
-        list.filter { it.isEnabled && it.isClient<DownloadClient>() }
-    }.stateIn(viewModelScope, Eagerly, null)
-
-    val extensions = extensionLoader
+    // Deprecated extension properties
+    // val extensions = extensionLoader // Removed
 
     val flow = downloader.flow
 
@@ -51,24 +42,22 @@ class DownloadViewModel(
     ) = viewModelScope.launch(Dispatchers.IO) {
         with(activity) {
             messageFlow.emit(Message(getString(R.string.downloading_x, item.title)))
-            val downloadExt = downloadExtensions.first { it != null }?.firstOrNull()
-                ?: return@with messageFlow.emit(
-                    Message(
-                        app.getString(R.string.no_download_extension),
-                        Message.Action(getString(R.string.add_extension)) {
-                            ExtensionsAddBottomSheet().show(supportFragmentManager, null)
-                        }
-                    )
-                )
+            
+            // Native download logic:
+            val tracks = when(item) {
+                is com.joaomagdaleno.music_hub.common.models.Track -> listOf(item)
+                is com.joaomagdaleno.music_hub.common.models.Album -> repository.getAlbumTracks(item.id)
+                is com.joaomagdaleno.music_hub.common.models.Playlist -> repository.getPlaylistTracks(item.id)
+                else -> emptyList()
+            }
 
-            val downloads =
-                downloadExt.getIf<DownloadClient, List<DownloadContext>>(throwableFlow) {
-                    getDownloadTracks(extensionId, item, context)
-                } ?: return@with
-
-            if (downloads.isEmpty()) return@with messageFlow.emit(
+            if (tracks.isEmpty()) return@with messageFlow.emit(
                 Message(app.getString(R.string.nothing_to_download_in_x, item.title))
             )
+
+            val downloads = tracks.mapIndexed { index, track ->
+                 DownloadContext(extensionId = "native", track = track, sortOrder = index, context = context)
+            }
 
             downloader.add(downloads)
             messageFlow.emit(

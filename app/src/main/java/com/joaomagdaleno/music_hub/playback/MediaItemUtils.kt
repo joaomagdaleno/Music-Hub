@@ -20,7 +20,7 @@ import com.joaomagdaleno.music_hub.common.models.Streamable
 import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.download.Downloader
-import com.joaomagdaleno.music_hub.extensions.MediaState
+import com.joaomagdaleno.music_hub.common.models.MediaState
 import com.joaomagdaleno.music_hub.playback.PlayerService.Companion.selectServerIndex
 import com.joaomagdaleno.music_hub.utils.Serializer.getSerialized
 import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized
@@ -69,10 +69,10 @@ object MediaItemUtils {
         buildWithBundle(this, bundle)
     }
 
-    fun buildSource(mediaItem: MediaItem, index: Int) = with(mediaItem) {
+    fun buildStream(mediaItem: MediaItem, index: Int) = with(mediaItem) {
         val bundle = Bundle().apply {
             putAll(mediaMetadata.extras!!)
-            putInt("sourceIndex", index)
+            putInt("streamIndex", index)
             putInt("retries", 0)
         }
         buildWithBundle(this, bundle)
@@ -115,18 +115,18 @@ object MediaItemUtils {
     }
 
     @Serializable
-    data class Key(val trackId: String, val sourceIndex: Int, val extensionId: String)
+    data class Key(val trackId: String, val streamIndex: Int, val origin: String)
 
     fun String.toKey() = runCatching {
         Base64.decode(this).toString(UTF_8).toData<Key>().getOrThrow()
     }
 
-    fun buildForSource(
-        mediaItem: MediaItem, index: Int, source: Streamable.Source?,
+    fun buildForStream(
+        mediaItem: MediaItem, index: Int, stream: Streamable.Stream?,
     ) = with(mediaItem) {
         val item = buildUpon()
-        item.setUri(Base64.encode(Key(track.id, index, extensionId).toJson().toByteArray()))
-        when (val decryption = (source as? Streamable.Source.Http)?.decryption) {
+        item.setUri(Base64.encode(Key(track.id, index, origin).toJson().toByteArray()))
+        when (val decryption = (stream as? Streamable.Stream.Http)?.decryption) {
             null -> {}
             is Streamable.Decryption.Widevine -> {
                 val drmRequest = decryption.license
@@ -197,7 +197,7 @@ object MediaItemUtils {
                         .mapNotNull { it.download.finalFile }
                 putInt(
                     "serverIndex",
-                    serverIndex ?: selectServerIndex(app, extensionId, servers, downloaded)
+                    serverIndex ?: selectServerIndex(app, origin, servers, downloaded)
                 )
                 putSerialized("downloaded", downloaded)
             })
@@ -209,17 +209,17 @@ object MediaItemUtils {
     }
 
     private fun Bundle.indexes() =
-        "${getInt("serverIndex")} ${getInt("sourceIndex")} ${getInt("backgroundIndex")} ${getInt("subtitleIndex")}"
+        "${getInt("serverIndex")} ${getInt("streamIndex")} ${getInt("backgroundIndex")} ${getInt("subtitleIndex")}"
 
     private val Bundle?.stateNullable
         get() = this?.getSerialized<MediaState<Track>>("state")?.getOrNull()
     val Bundle?.state get() = requireNotNull(stateNullable)
     val Bundle?.track get() = state.item
     val Bundle?.isLoaded get() = this?.getBoolean("loaded") ?: false
-    val Bundle?.extensionId get() = state.extensionId
+    val Bundle?.origin get() = state.origin
     val Bundle?.context get() = this?.getSerialized<EchoMediaItem?>("context")?.getOrNull()
     val Bundle?.serverIndex get() = this?.getInt("serverIndex", -1) ?: -1
-    val Bundle?.sourceIndex get() = this?.getInt("sourceIndex", -1) ?: -1
+    val Bundle?.streamIndex get() = this?.getInt("streamIndex", -1) ?: -1
     val Bundle?.backgroundIndex get() = this?.getInt("backgroundIndex", -1) ?: -1
     val Bundle?.subtitleIndex get() = this?.getInt("subtitleIndex", -1) ?: -1
     val Bundle?.background
@@ -231,11 +231,11 @@ object MediaItemUtils {
 
     val MediaItem.state get() = mediaMetadata.extras.state
     val MediaItem.track get() = mediaMetadata.extras.track
-    val MediaItem.extensionId get() = mediaMetadata.extras.extensionId
+    val MediaItem.origin get() = mediaMetadata.extras.origin
     val MediaItem.context get() = mediaMetadata.extras.context
     val MediaItem.isLoaded get() = mediaMetadata.extras.isLoaded
     val MediaItem.serverIndex get() = mediaMetadata.extras.serverIndex
-    val MediaItem.sourceIndex get() = mediaMetadata.extras.sourceIndex
+    val MediaItem.streamIndex get() = mediaMetadata.extras.streamIndex
     val MediaItem.backgroundIndex get() = mediaMetadata.extras.backgroundIndex
     val MediaItem.subtitleIndex get() = mediaMetadata.extras.subtitleIndex
     val MediaItem.background get() = mediaMetadata.extras.background

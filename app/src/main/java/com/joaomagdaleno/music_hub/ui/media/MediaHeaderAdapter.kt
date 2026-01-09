@@ -33,7 +33,7 @@ import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.databinding.ItemLineBinding
 import com.joaomagdaleno.music_hub.databinding.ItemMediaHeaderBinding
 import com.joaomagdaleno.music_hub.databinding.ItemShelfErrorBinding
-import com.joaomagdaleno.music_hub.extensions.MediaState
+import com.joaomagdaleno.music_hub.common.models.MediaState
 import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.getFinalTitle
 import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.getMessage
 import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment

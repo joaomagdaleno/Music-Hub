@@ -1,0 +1,77 @@
+Configuration on demand is an incubating feature.
+Reusing configuration cache.
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :common:androidPreBuild UP-TO-DATE
+> Task :common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :common:preAndroidMainBuild UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :common:generateAndroidMainEmptyResourceFiles UP-TO-DATE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :common:writeAndroidMainAarMetadata UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :common:processAndroidMainManifest UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :common:compileAndroidMain UP-TO-DATE
+> Task :common:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :common:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :common:processAndroidMainJavaRes UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :common:bundleLibRuntimeToDirAndroidMain UP-TO-DATE
+> Task :common:mergeAndroidMainJniLibFolders UP-TO-DATE
+> Task :common:mergeAndroidMainNativeLibs NO-SOURCE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :common:copyAndroidMainJniLibsProjectOnly UP-TO-DATE
+> Task :app:mergeDebugNativeLibs NO-SOURCE
+> Task :app:stripDebugDebugSymbols NO-SOURCE
+> Task :app:extractDebugSupportedLocales
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:generateDebugLocaleConfig UP-TO-DATE
+> Task :app:packageDebugResources
+> Task :app:parseDebugLocalResources
+> Task :app:mergeDebugResources
+> Task :app:dataBindingGenBaseClassesDebug
+> Task :app:processDebugResources FAILED
+40 actionable tasks: 8 executed, 32 up-to-date
+Configuration cache entry reused.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:processDebugResources'.
+> A failure occurred while executing com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$TaskAction
+   > Android resource linking failed
+     warn: removing resource com.joaomagdaleno.music_hub:string/extensions without required default value.
+     warn: removing resource com.joaomagdaleno.music_hub:string/no_download_extension without required default value.
+     com.joaomagdaleno.music_hub.app-mergeDebugResources-74:/values/values.xml:8239: error: resource string/extensions (aka com.joaomagdaleno.music_hub:string/extensions) not found.
+     com.joaomagdaleno.music_hub.app-mergeDebugResources-74:/values/values.xml:8239: error: resource string/extensions (aka com.joaomagdaleno.music_hub:string/extensions) not found.
+     error: failed linking references.
+
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 24s

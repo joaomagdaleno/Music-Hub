@@ -1,0 +1,4423 @@
+================================================================================
+PROCESS AUDIT: hub_processo_biblioteca.txt
+DATE: 2026-01-08 15:23:52
+FILE COUNT: 41
+================================================================================
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\ButtonsAdapter.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed
+
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import androidx.core.widget.addTextChangedListener
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.databinding.ItemFeedButtonsBinding
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.animateVisibility
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimRecyclerAdapter
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
+
+class ButtonsAdapter(
+    private val viewModel: FeedData,
+    private val listener: FeedClickListener,
+    private val getAllLoaded: () -> List<Track>
+) : ScrollAnimRecyclerAdapter<ButtonsAdapter.ViewHolder>(), GridAdapter {
+    override fun getItemCount() = 1
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
+        ViewHolder(parent, viewModel, listener, getAllLoaded)
+
+    var buttons: FeedData.Buttons? = null
+        set(value) {
+            field = value
+            notifyItemChanged(0)
+        }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        super.onBindViewHolder(holder, position)
+        holder.bind(buttons)
+    }
+
+    override fun onViewDetachedFromWindow(holder: ViewHolder) {
+        holder.onViewDetached()
+    }
+
+    override val adapter = this
+    override fun getSpanSize(position: Int, width: Int, count: Int) = count
+
+    class ViewHolder(
+        parent: ViewGroup,
+        private val viewModel: FeedData,
+        private val listener: FeedClickListener,
+        private val getAllLoaded: () -> List<Track>,
+        private val binding: ItemFeedButtonsBinding = ItemFeedButtonsBinding.inflate(
+            LayoutInflater.from(parent.context), parent, false
+        )
+    ) : ScrollAnimViewHolder(binding.root) {
+
+        private var feed: FeedData.Buttons? = null
+
+        init {
+            binding.searchToggleButton.addOnCheckedChangeListener { _, isChecked ->
+                viewModel.searchToggled = isChecked
+                if (!isChecked) {
+                    binding.searchLayout.clearFocus()
+                    viewModel.searchQuery = null
+                    viewModel.onSearchClicked()
+                }
+                binding.searchBarContainer.animateVisibility(isChecked)
+            }
+            binding.searchBarText.addTextChangedListener { text ->
+                viewModel.searchQuery = text?.toString()?.takeIf { it.isNotBlank() }
+                binding.searchClose.isEnabled = !text.isNullOrBlank()
+            }
+            binding.searchClose.setOnClickListener {
+                binding.searchBarText.setText("")
+                viewModel.searchQuery = null
+                viewModel.onSearchClicked()
+            }
+            binding.searchBarText.setOnEditorActionListener { v, _, _ ->
+                viewModel.onSearchClicked()
+                true
+            }
+            binding.sortToggleButton.setOnClickListener {
+                listener.onSortClicked(it, feed?.feedId)
+            }
+            binding.playButton.setOnClickListener {
+                val list = if (feed?.item == null) {
+                    feed?.buttons?.customTrackList ?: getAllLoaded()
+                } else null
+                listener.onPlayClicked(it, feed?.extensionId, feed?.item, list, false)
+            }
+            binding.shuffleButton.setOnClickListener {
+                val feed = feed
+                val list = if (feed?.item == null) {
+                    feed?.buttons?.customTrackList ?: getAllLoaded()
+                } else null
+                listener.onPlayClicked(it, feed?.extensionId, feed?.item, list, true)
+            }
+        }
+
+        fun bind(feed: FeedData.Buttons?) {
+            val buttons = feed?.buttons ?: Feed.Buttons.EMPTY
+            this.feed = feed
+            val showButtons = buttons.run { showPlayAndShuffle || showSort || showSearch }
+            binding.searchToggleButton.isChecked = viewModel.searchToggled
+            binding.searchBarText.setText(viewModel.searchQuery)
+            binding.chipGroup.configure(feed?.sortState)
+            binding.buttonGroup.isVisible = showButtons
+            if (!showButtons) return
+            binding.playButton.isVisible = buttons.showPlayAndShuffle
+            binding.shuffleButton.isVisible = buttons.showPlayAndShuffle
+            binding.searchToggleButton.isVisible = buttons.showSearch
+            binding.sortToggleButton.isVisible = buttons.showSort
+        }
+
+        fun onViewDetached() {
+            binding.searchLayout.clearFocus()
+        }
+
+        private fun ChipGroup.configure(state: FeedSort.State?) {
+            removeAllViews()
+            var visible = false
+            if (state?.feedSort != null) {
+                visible = true
+                val chip = Chip(context)
+                chip.text = context.getString(state.feedSort.title)
+                chip.isCheckable = true
+                chip.isChecked = true
+                addView(chip)
+                chip.setOnClickListener {
+                    viewModel.feedSortState.value = state.copy(feedSort = null)
+                }
+            }
+            if (state?.reversed == true) {
+                visible = true
+                val chip = Chip(context)
+                chip.text = context.getString(R.string.reversed)
+                chip.isCheckable = true
+                chip.isChecked = true
+                addView(chip)
+                chip.setOnClickListener {
+                    viewModel.feedSortState.value = state.copy(reversed = false)
+                }
+            }
+            isVisible = visible
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\EmptyAdapter.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed
+
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.paging.LoadState
+import com.joaomagdaleno.music_hub.databinding.ItemShelfEmptyBinding
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimLoadStateAdapter
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
+
+class EmptyAdapter : ScrollAnimLoadStateAdapter<EmptyAdapter.ViewHolder>(), GridAdapter {
+    class ViewHolder(val binding: ItemShelfEmptyBinding) : ScrollAnimViewHolder(binding.root)
+
+    override fun onCreateViewHolder(parent: ViewGroup, loadState: LoadState): ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        val binding = ItemShelfEmptyBinding.inflate(inflater, parent, false)
+        return ViewHolder(binding)
+    }
+
+    override val adapter = this
+    override fun getSpanSize(position: Int, width: Int, count: Int) = count
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\FeedAdapter.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed
+
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
+import androidx.paging.LoadState
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.RecyclerView
+import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.databinding.ItemLoadingBinding
+import com.joaomagdaleno.music_hub.playback.PlayerState
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter
+import com.joaomagdaleno.music_hub.ui.feed.FeedData.FeedTab
+import com.joaomagdaleno.music_hub.ui.feed.FeedLoadingAdapter.Companion.createListener
+import com.joaomagdaleno.music_hub.ui.feed.FeedType.Enum.Category
+import com.joaomagdaleno.music_hub.ui.feed.FeedType.Enum.CategoryGrid
+import com.joaomagdaleno.music_hub.ui.feed.FeedType.Enum.Header
+import com.joaomagdaleno.music_hub.ui.feed.FeedType.Enum.HorizontalList
+import com.joaomagdaleno.music_hub.ui.feed.FeedType.Enum.Media
+import com.joaomagdaleno.music_hub.ui.feed.FeedType.Enum.MediaGrid
+import com.joaomagdaleno.music_hub.ui.feed.FeedType.Enum.Video
+import com.joaomagdaleno.music_hub.ui.feed.FeedType.Enum.VideoHorizontal
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.CategoryViewHolder
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.FeedViewHolder
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.HeaderViewHolder
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.HorizontalListViewHolder
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaGridViewHolder
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.VideoHorizontalViewHolder
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.VideoViewHolder
+import com.joaomagdaleno.music_hub.ui.player.PlayerViewModel
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.animatedWithAlpha
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimPagingAdapter
+import kotlinx.coroutines.flow.combine
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import java.lang.ref.WeakReference
+
+class FeedAdapter(
+    private val viewModel: FeedData,
+    private val listener: FeedClickListener,
+    private val takeFullScreen: Boolean = false,
+) : ScrollAnimPagingAdapter<FeedType, FeedViewHolder<*>>(DiffCallback), GridAdapter {
+
+    object DiffCallback : DiffUtil.ItemCallback<FeedType>() {
+        override fun areContentsTheSame(oldItem: FeedType, newItem: FeedType) = oldItem == newItem
+        override fun areItemsTheSame(oldItem: FeedType, newItem: FeedType): Boolean {
+            if (oldItem.extensionId != newItem.extensionId) return false
+            if (newItem.type != oldItem.type) return false
+            if (oldItem.id != newItem.id) return false
+            return true
+        }
+    }
+
+    private val viewPool = RecyclerView.RecycledViewPool()
+    override fun getItemViewType(position: Int) =
+        runCatching { getItem(position)!! }.getOrNull()?.type?.ordinal ?: 0
+
+    private var isPlayButtonShown = false
+    private fun FeedType.toTrack(): Track? = when (this) {
+        is FeedType.Media -> item as? Track
+        is FeedType.MediaGrid -> item as? Track
+        is FeedType.Video -> item
+        else -> null
+    }
+
+    fun getAllTracks(feed: FeedType): Pair<List<Track>, Int> {
+        if (!isPlayButtonShown) return listOfNotNull(feed.toTrack()) to 0
+        val list = snapshot().mapNotNull { it }
+        val index = list.indexOfFirst { it.id == feed.id }
+        if (index == -1) return listOf<Track>() to -1
+        val from = list.take(index).indexOfLast { it.type != feed.type }
+        val to = list.drop(index + 1).indexOfFirst { it.type != feed.type }
+        val feeds = list.subList(from + 1, if (to == -1) list.size else index + to + 1)
+        val tracks = feeds.mapNotNull { it.toTrack() }
+        val newIndex = tracks.indexOfFirst { it.id == feed.id }
+        return tracks to newIndex
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FeedViewHolder<*> {
+        val type = FeedType.Enum.entries[viewType]
+        return when (type) {
+            Header -> HeaderViewHolder(parent, listener)
+            HorizontalList -> HorizontalListViewHolder(parent, listener, viewPool)
+            Category -> CategoryViewHolder(parent, listener)
+            CategoryGrid -> CategoryViewHolder(parent, listener)
+            Media -> MediaViewHolder(parent, listener, ::getAllTracks)
+            MediaGrid -> MediaGridViewHolder(parent, listener, ::getAllTracks)
+            Video -> VideoViewHolder(parent, listener, ::getAllTracks)
+            VideoHorizontal -> VideoHorizontalViewHolder(parent, listener, ::getAllTracks)
+        }
+    }
+
+    override fun onBindViewHolder(holder: FeedViewHolder<*>, position: Int) {
+        super.onBindViewHolder(holder, position)
+        val feed = runCatching { getItem(position) }.getOrNull() ?: return
+        when (holder) {
+            is HeaderViewHolder -> holder.bind(feed as FeedType.Header)
+            is CategoryViewHolder -> holder.bind(feed as FeedType.Category)
+            is MediaViewHolder -> holder.bind(feed as FeedType.Media)
+            is MediaGridViewHolder -> holder.bind(feed as FeedType.MediaGrid)
+            is VideoViewHolder -> holder.bind(feed as FeedType.Video)
+            is VideoHorizontalViewHolder -> holder.bind(feed as FeedType.Video)
+            is HorizontalListViewHolder -> {
+                holder.bind(feed as FeedType.HorizontalList)
+                viewModel.visibleScrollableViews[position] = WeakReference(holder)
+                holder.layoutManager.apply {
+                    val state = viewModel.layoutManagerStates[position]
+                    if (state != null) onRestoreInstanceState(state)
+                    else scrollToPosition(0)
+                }
+            }
+        }
+        holder.onCurrentChanged(current)
+    }
+
+    override fun onViewRecycled(holder: FeedViewHolder<*>) {
+        if (holder is HorizontalListViewHolder) saveScrollState(holder) {
+            viewModel.visibleScrollableViews.remove(holder.bindingAdapterPosition)
+        }
+    }
+
+    override fun onViewAttachedToWindow(holder: FeedViewHolder<*>) {
+        holder.onCurrentChanged(current)
+    }
+
+    class LoadingViewHolder(
+        parent: ViewGroup,
+        val binding: ItemLoadingBinding = ItemLoadingBinding.inflate(
+            LayoutInflater.from(parent.context), parent, false
+        ),
+    ) : FeedLoadingAdapter.ViewHolder(binding.root) {
+        init {
+            binding.textView.isVisible = false
+        }
+
+        override fun bind(loadState: LoadState) {
+            binding.root.alpha = 0f
+            binding.root.animatedWithAlpha(500)
+        }
+    }
+
+    fun getAllTracks() = snapshot().mapNotNull {
+        when (it) {
+            is FeedType.Media -> listOfNotNull(it.item as? Track)
+            is FeedType.MediaGrid -> listOfNotNull(it.item as? Track)
+            is FeedType.Video -> listOf(it.item)
+            is FeedType.HorizontalList -> it.shelf.list.filterIsInstance<Track>()
+            else -> null
+        }
+    }.flatten()
+
+    fun withLoading(fragment: Fragment, vararg before: GridAdapter): GridAdapter.Concat {
+        val tabs = TabsAdapter<FeedTab>({ tab.title }) { view, index, tab ->
+            listener.onTabSelected(view, tab.feedId, tab.extensionId, index)
+        }
+        fragment.observe(viewModel.tabsFlow) { tabs.data = it }
+        fragment.observe(viewModel.selectedTabIndexFlow) { tabs.selected = it }
+        val buttons = ButtonsAdapter(viewModel, listener, ::getAllTracks)
+        fragment.observe(viewModel.buttonsFlow) {
+            buttons.buttons = it
+            isPlayButtonShown = it?.buttons?.showPlayAndShuffle == true
+        }
+        val loadStateListener = fragment.createListener { retry() }
+        val header = FeedLoadingAdapter(loadStateListener) { LoadingViewHolder(it) }
+        val footer = FeedLoadingAdapter(loadStateListener) { LoadingViewHolder(it) }
+        val empty = EmptyAdapter()
+        fragment.observe(
+            loadStateFlow.combine(viewModel.shouldShowEmpty) { a, b -> a to b }
+        ) { (loadStates, shouldShowEmpty) ->
+            val isEmpty =
+                shouldShowEmpty && itemCount == 0 && loadStates.append is LoadState.NotLoading
+            empty.loadState = if (isEmpty) LoadState.Loading else LoadState.NotLoading(false)
+        }
+        addLoadStateListener { loadStates ->
+            header.loadState = loadStates.refresh
+            footer.loadState = loadStates.append
+        }
+        return GridAdapter.Concat(*before, tabs, buttons, header, empty, this, footer)
+    }
+
+    override val adapter = this
+    override fun getSpanSize(position: Int, width: Int, count: Int) =
+        when (FeedType.Enum.entries[getItemViewType(position)]) {
+            Header, HorizontalList -> count
+            Category, Media, Video -> if (takeFullScreen) count else 2.coerceAtMost(count)
+            CategoryGrid, MediaGrid, VideoHorizontal -> 1
+        }
+
+    private fun clearState() {
+        viewModel.layoutManagerStates.clear()
+        viewModel.visibleScrollableViews.clear()
+    }
+
+    private fun saveScrollState(
+        holder: HorizontalListViewHolder, block: ((HorizontalListViewHolder) -> Unit)? = null,
+    ) = runCatching {
+        val layoutManagerStates = viewModel.layoutManagerStates
+        layoutManagerStates[holder.bindingAdapterPosition] =
+            holder.layoutManager.onSaveInstanceState()
+        block?.invoke(holder)
+    }
+
+    fun saveState() {
+        viewModel.visibleScrollableViews.values.forEach { item ->
+            item.get()?.let { saveScrollState(it) }
+        }
+        viewModel.visibleScrollableViews.clear()
+    }
+
+    init {
+        addLoadStateListener {
+            if (it.refresh == LoadState.Loading) clearState()
+        }
+    }
+
+    private var current: PlayerState.Current? = null
+    fun onCurrentChanged(current: PlayerState.Current?) {
+        this.current = current
+        onEachViewHolder { onCurrentChanged(current) }
+    }
+
+    companion object {
+        fun Fragment.getFeedAdapter(
+            viewModel: FeedData,
+            listener: FeedClickListener,
+            takeFullScreen: Boolean = false,
+        ): FeedAdapter {
+            val playerViewModel by activityViewModel<PlayerViewModel>()
+            val adapter = FeedAdapter(viewModel, listener, takeFullScreen)
+            observe(viewModel.pagingFlow) {
+                adapter.saveState()
+                adapter.submitData(it)
+            }
+            observe(playerViewModel.playerState.current) { adapter.onCurrentChanged(it) }
+            return adapter
+        }
+
+        fun getTouchHelper(listener: FeedClickListener) = ItemTouchHelper(
+            object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.START) {
+                override fun getMovementFlags(
+                    recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder,
+                ): Int {
+                    if (viewHolder !is MediaViewHolder) return 0
+                    if (viewHolder.feed?.item !is Track) return 0
+                    return makeMovementFlags(0, ItemTouchHelper.START)
+                }
+
+                override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                    val feed = (viewHolder as MediaViewHolder).feed ?: return
+                    val track = feed.item as? Track ?: return
+                    listener.onTrackSwiped(viewHolder.itemView, feed.extensionId, track)
+                    viewHolder.bindingAdapter?.notifyItemChanged(viewHolder.bindingAdapterPosition)
+                }
+
+                override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder) = 0.25f
+                override fun onMove(
+                    recyclerView: RecyclerView,
+                    viewHolder: RecyclerView.ViewHolder,
+                    target: RecyclerView.ViewHolder,
+                ) = false
+            }
+        )
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\FeedClickListener.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed
+
+import android.view.View
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.activityViewModels
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Radio
+import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
+import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler.Companion.createSnack
+import com.joaomagdaleno.music_hub.ui.media.MediaFragment
+import com.joaomagdaleno.music_hub.ui.media.MediaFragment.Companion.getBundle
+import com.joaomagdaleno.music_hub.ui.media.more.MediaMoreBottomSheet
+import com.joaomagdaleno.music_hub.ui.player.PlayerViewModel
+import com.joaomagdaleno.music_hub.ui.playlist.edit.search.EditPlaylistSearchClickListener
+import org.koin.androidx.viewmodel.ext.android.viewModel
+
+open class FeedClickListener(
+    private val fragment: Fragment,
+    val fragmentManager: FragmentManager,
+    private val containerId: Int,
+    private val afterOpen: () -> Unit = {}
+) {
+    companion object {
+        fun Fragment.getFeedListener(
+            navFragment: Fragment = this,
+            afterOpen: () -> Unit = {}
+        ): FeedClickListener {
+            val key = arguments?.getString("feedListener")
+            return when (key) {
+                "playlist_search" -> EditPlaylistSearchClickListener(this)
+                else -> FeedClickListener(
+                    this,
+                    navFragment.parentFragmentManager,
+                    navFragment.id,
+                    afterOpen
+                )
+            }
+        }
+    }
+
+    open fun onTabSelected(
+        view: View?,
+        feedId: String?,
+        extensionId: String?,
+        position: Int
+    ): Boolean {
+        val vm by fragment.viewModel<FeedViewModel>()
+        val feedData = vm.feedDataMap[feedId] ?: return notFoundSnack(R.string.feed)
+        feedData.selectTab(extensionId, position)
+        return true
+    }
+
+    open fun onSortClicked(view: View?, feedId: String?): Boolean {
+        val vm by fragment.viewModel<FeedViewModel>()
+        val feedData = vm.feedDataMap[feedId] ?: return notFoundSnack(R.string.feed)
+        feedData.feedSortState.value = feedData.feedSortState.value ?: FeedSort.State()
+        FeedSortBottomSheet.newInstance(feedId!!).show(fragment.childFragmentManager, null)
+        return true
+    }
+
+    open fun onPlayClicked(
+        view: View?,
+        extensionId: String?,
+        context: EchoMediaItem?,
+        tracks: List<Track>?,
+        shuffle: Boolean
+    ): Boolean {
+        if (extensionId == null) return notFoundSnack(R.string.extension)
+        val vm by fragment.activityViewModels<PlayerViewModel>()
+        if (tracks != null) {
+            if (tracks.isEmpty()) return notFoundSnack(R.string.tracks)
+            vm.setQueue(extensionId, tracks, 0, context)
+            vm.setShuffle(shuffle, true)
+            vm.setPlaying(true)
+            return true
+        }
+        if (context == null) return notFoundSnack(R.string.item)
+        if (shuffle) vm.shuffle(extensionId, context, true)
+        else vm.play(extensionId, context, true)
+        return true
+    }
+
+    open fun openFeed(
+        view: View?,
+        extensionId: String?,
+        feedId: String?,
+        title: String?,
+        subtitle: String?,
+        feed: Feed<Shelf>?
+    ): Boolean {
+        val fragment = fragmentManager.findFragmentById(containerId)
+            ?: return notFoundSnack(R.string.view)
+        val vm by fragment.activityViewModels<FeedFragment.VM>()
+        vm.extensionId = extensionId ?: return notFoundSnack(R.string.extension)
+        vm.feedId = feedId ?: return notFoundSnack(R.string.item)
+        vm.feed = feed ?: return notFoundSnack(R.string.feed)
+        fragment.openFragment<FeedFragment>(view, FeedFragment.getBundle(title.orEmpty(), subtitle))
+        afterOpen()
+        return true
+    }
+
+    fun notFoundSnack(id: Int): Boolean = with(fragment) {
+        val notFound = getString(R.string.no_x_found, getString(id))
+        createSnack(notFound)
+        false
+    }
+
+    open fun onMediaClicked(
+        view: View?, extensionId: String?, item: EchoMediaItem?, context: EchoMediaItem?
+    ): Boolean {
+        if (extensionId == null) return notFoundSnack(R.string.extension)
+        if (item == null) return notFoundSnack(R.string.item)
+        return when (item) {
+            is Radio -> {
+                val vm by fragment.activityViewModels<PlayerViewModel>()
+                vm.play(extensionId, item, false)
+                true
+            }
+
+            else -> {
+                val fragment = fragmentManager.findFragmentById(containerId)
+                    ?: return notFoundSnack(R.string.view)
+                fragment.openFragment<MediaFragment>(view, getBundle(extensionId, item, false))
+                afterOpen()
+                true
+            }
+        }
+    }
+
+    open fun onMediaLongClicked(
+        view: View?, extensionId: String?, item: EchoMediaItem?, context: EchoMediaItem?,
+        tabId: String?, index: Int
+    ): Boolean {
+        if (extensionId == null) return notFoundSnack(R.string.extension)
+        if (item == null) return notFoundSnack(R.string.item)
+        MediaMoreBottomSheet.newInstance(
+            containerId, extensionId, item, false,
+            context = context, tabId = tabId, pos = index
+        ).show(fragmentManager, null)
+        return true
+    }
+
+    open fun onTracksClicked(
+        view: View?,
+        extensionId: String?,
+        context: EchoMediaItem?,
+        tracks: List<Track>?,
+        pos: Int
+    ): Boolean {
+        if (extensionId == null) return notFoundSnack(R.string.extension)
+        if (tracks.isNullOrEmpty()) return notFoundSnack(R.string.tracks)
+        val vm by fragment.activityViewModels<PlayerViewModel>()
+        vm.setQueue(extensionId, tracks, pos, context)
+        vm.setPlaying(true)
+        return true
+    }
+
+    open fun onTrackSwiped(
+        view: View?, extensionId: String?, track: Track?,
+    ): Boolean {
+        if (extensionId == null) return notFoundSnack(R.string.extension)
+        if (track == null) return notFoundSnack(R.string.track)
+        val vm by fragment.activityViewModels<PlayerViewModel>()
+        vm.addToNext(extensionId, track, false)
+        return true
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\FeedData.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed
+
+import android.os.Parcelable
+import androidx.paging.cachedIn
+import com.joaomagdaleno.music_hub.common.helpers.PagedData
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.common.models.ExtensionType
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.common.models.Tab
+import com.joaomagdaleno.music_hub.di.App
+import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtensionOrThrow
+import com.joaomagdaleno.music_hub.extensions.builtin.offline.MediaStoreUtils.searchBy
+import com.joaomagdaleno.music_hub.ui.common.PagedSource
+import com.joaomagdaleno.music_hub.ui.feed.FeedType.Companion.toFeedType
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.HorizontalListViewHolder
+import com.joaomagdaleno.music_hub.utils.CacheUtils.getFromCache
+import com.joaomagdaleno.music_hub.utils.CacheUtils.saveToCache
+import com.joaomagdaleno.music_hub.utils.CoroutineUtils.combineTransformLatest
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadDrawable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted.Companion.Lazily
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.lang.ref.WeakReference
+
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+data class FeedData(
+    private val feedId: String,
+    private val scope: CoroutineScope,
+    private val app: App,
+    private val extensionLoader: ExtensionLoader,
+    private val cached: suspend ExtensionLoader.() -> State<Feed<Shelf>>?,
+    private val load: suspend ExtensionLoader.() -> State<Feed<Shelf>>?,
+    private val defaultButtons: Feed.Buttons,
+    private val noVideos: Boolean,
+    private val extraLoadFlow: Flow<*>
+) {
+    val current = extensionLoader.current
+    val usersFlow = extensionLoader.db.currentUsersFlow
+    suspend fun getExtension(id: String) =
+        extensionLoader.getFlow(ExtensionType.MUSIC).getExtensionOrThrow(id)
+
+    val layoutManagerStates = hashMapOf<Int, Parcelable?>()
+    val visibleScrollableViews = hashMapOf<Int, WeakReference<HorizontalListViewHolder>>()
+
+    private val refreshFlow = MutableSharedFlow<Unit>(1)
+    private val cachedState = MutableStateFlow<Result<State<Feed<Shelf>>?>?>(null)
+    private val loadedState = MutableStateFlow<Result<State<Feed<Shelf>>?>?>(null)
+    private val selectedTabFlow = MutableStateFlow<Tab?>(null)
+
+    val loadedShelves = MutableStateFlow<List<Shelf>?>(null)
+    var searchToggled: Boolean = false
+    var searchQuery: String? = null
+    val feedSortState = MutableStateFlow<FeedSort.State?>(null)
+    val searchClickedFlow = MutableSharedFlow<Unit>()
+
+    private val stateFlow = cachedState.combine(loadedState) { a, b -> a to b }
+        .stateIn(scope, Lazily, null to null)
+
+    private val cachedDataFlow = cachedState.combineTransformLatest(selectedTabFlow) { feed, tab ->
+        emit(null)
+        if (feed == null) return@combineTransformLatest
+        emit(getData(feed, tab))
+    }.stateIn(scope, Lazily, null)
+
+    private val loadedDataFlow = loadedState.combineTransformLatest(selectedTabFlow) { feed, tab ->
+        emit(null)
+        if (feed == null) return@combineTransformLatest
+        emit(getData(feed, tab))
+    }.stateIn(scope, Lazily, null)
+
+    private suspend fun getData(
+        state: Result<State<Feed<Shelf>>?>, tab: Tab?
+    ) = withContext(Dispatchers.IO) {
+        runCatching {
+            val (extensionId, item, feed) = state.getOrThrow() ?: return@runCatching null
+            State(extensionId, item, feed.getPagedData(tab))
+        }
+    }
+
+    val dataFlow = cachedDataFlow.combine(loadedDataFlow) { cached, loaded ->
+        val extensionId = (loaded?.getOrNull() ?: cached?.getOrNull())?.extensionId
+        val tabId = selectedTabFlow.value?.id
+        searchQuery = null
+        searchToggled = false
+        val id = "$extensionId-$feedId-$tabId"
+        feedSortState.value = extensionId?.let { app.context.getFromCache(id, "sort") }
+        loadedShelves.value = null
+        cached to loaded
+    }
+
+    val shouldShowEmpty = dataFlow.map { (cached, loaded) ->
+        val data = loaded?.getOrNull() ?: cached?.getOrNull()
+        data != null
+    }.stateIn(scope, Lazily, false)
+
+    val tabsFlow = stateFlow.map { (cached, loaded) ->
+        val state = (loaded?.getOrNull() ?: cached?.getOrNull()) ?: return@map listOf()
+        state.feed.tabs.map {
+            FeedTab(feedId, state.extensionId, it)
+        }
+    }
+
+    val selectedTabIndexFlow = tabsFlow.combine(selectedTabFlow) { tabs, tab ->
+        tabs.indexOfFirst { it.tab.id == tab?.id }
+    }
+
+    data class FeedTab(
+        val feedId: String,
+        val extensionId: String,
+        val tab: Tab
+    )
+
+    data class Buttons(
+        val feedId: String,
+        val extensionId: String,
+        val buttons: Feed.Buttons,
+        val item: EchoMediaItem? = null,
+        val sortState: FeedSort.State? = null,
+    )
+
+    val buttonsFlow = dataFlow.combine(feedSortState) { data, state ->
+        val feed = data.run { second?.getOrNull() ?: first?.getOrNull() } ?: return@combine null
+        Buttons(
+            feedId,
+            feed.extensionId,
+            feed.feed.buttons ?: defaultButtons,
+            feed.item,
+            state,
+        )
+    }
+
+    private val imageFlow = dataFlow.map { (cached, loaded) ->
+        (loaded?.getOrNull() ?: cached?.getOrNull())?.feed?.background
+    }.stateIn(scope, Lazily, null)
+
+    val backgroundImageFlow = imageFlow.mapLatest { image ->
+        image?.loadDrawable(app.context)
+    }.flowOn(Dispatchers.IO).stateIn(scope, Lazily, null)
+
+    val cachedFeedTypeFlow =
+        combineTransformLatest(cachedDataFlow, feedSortState, searchClickedFlow) { _ ->
+            emit(null)
+            val cached = cachedDataFlow.value ?: return@combineTransformLatest
+            emit(getFeedSourceData(cached))
+        }.stateIn(scope, Lazily, null)
+
+    val loadedFeedTypeFlow =
+        combineTransformLatest(loadedDataFlow, feedSortState, searchClickedFlow) { _ ->
+            emit(null)
+            val loaded = loadedDataFlow.value ?: return@combineTransformLatest
+            emit(getFeedSourceData(loaded))
+        }.stateIn(scope, Lazily, null)
+
+    val pagingFlow =
+        cachedFeedTypeFlow.combineTransformLatest(loadedFeedTypeFlow) { cached, loaded ->
+            emitAll(PagedSource(loaded, cached).flow)
+        }.cachedIn(scope)
+
+    private suspend fun getFeedSourceData(
+        result: Result<State<Feed.Data<Shelf>>?>
+    ): Result<PagedData<FeedType>> = withContext(Dispatchers.IO) {
+        val tabId = selectedTabFlow.value?.id
+        val data = if (feedSortState.value != null || searchQuery != null) {
+            result.mapCatching { state ->
+                state ?: return@mapCatching PagedData.empty()
+                val extensionId = state.extensionId
+                val data = state.feed.pagedData
+
+                val sortState = feedSortState.value
+                val query = searchQuery
+                var shelves = data.loadTill(2000)
+                shelves = if (sortState?.feedSort != null || query != null)
+                    shelves.flatMap { shelf ->
+                        when (shelf) {
+                            is Shelf.Category -> listOf(shelf)
+                            is Shelf.Item -> listOf(shelf)
+                            is Shelf.Lists.Categories -> shelf.list
+                            is Shelf.Lists.Items -> shelf.list.map { it.toShelf() }
+                            is Shelf.Lists.Tracks -> shelf.list.map { it.toShelf() }
+                        }
+                    }
+                else shelves
+                loadedShelves.value = shelves
+                if (sortState != null) {
+                    shelves = sortState.feedSort?.sorter?.invoke(app.context, shelves) ?: shelves
+                    if (sortState.reversed) shelves = shelves.reversed()
+                    if (sortState.save)
+                        app.context.saveToCache("$extensionId-$feedId-$tabId", sortState, "sort")
+                }
+                if (query != null) {
+                    shelves = shelves.searchBy(query) {
+                        listOf(it.title)
+                    }.map { it.second }
+                }
+                PagedData.Single {
+                    shelves.toFeedType(
+                        feedId,
+                        extensionId,
+                        state.item,
+                        tabId,
+                        noVideos
+                    )
+                }
+            }
+        } else result.mapCatching { state ->
+            state ?: return@mapCatching PagedData.empty()
+            val extId = state.extensionId
+            val data = state.feed.pagedData
+            data.loadPage(null)
+            var start = 0L
+            data.map { result ->
+                result.map {
+                    val list = it.toFeedType(feedId, extId, state.item, tabId, noVideos, start)
+                    start += list.size
+                    list
+                }.getOrThrow()
+            }
+        }
+        data
+    }
+
+    private suspend fun <T : Any> PagedData<T>.loadTill(limit: Long): List<T> {
+        val list = mutableListOf<T>()
+        var page = loadPage(null)
+        list.addAll(page.data)
+        while (page.continuation != null && list.size < limit) {
+            page = loadPage(page.continuation)
+            list.addAll(page.data)
+        }
+        return list
+    }
+
+    val isRefreshingFlow = loadedFeedTypeFlow.map {
+        loadedFeedTypeFlow.value == null
+    }.stateIn(scope, Lazily, true)
+
+    fun selectTab(extensionId: String?, pos: Int) {
+        val state = stateFlow.value.run { second?.getOrNull() ?: first?.getOrNull() }
+        val tab = state?.feed?.tabs?.getOrNull(pos)
+            ?.takeIf { state.extensionId == extensionId }
+        app.context.saveToCache(feedId, tab?.id, "selected_tab")
+        selectedTabFlow.value = tab
+    }
+
+    fun refresh() = scope.launch { refreshFlow.emit(Unit) }
+
+    init {
+        scope.launch(Dispatchers.IO) {
+            listOfNotNull(current, refreshFlow, usersFlow, extraLoadFlow)
+                .merge().debounce(100L).collectLatest {
+                    cachedState.value = null
+                    loadedState.value = null
+                    extensionLoader.current.value ?: return@collectLatest
+                    cachedState.value = runCatching { cached(extensionLoader) }
+                    loadedState.value = runCatching { load(extensionLoader) }
+                }
+        }
+        scope.launch {
+            stateFlow.collect { result ->
+                val feed = result.run { second?.getOrNull() ?: first?.getOrNull() }?.feed?.tabs
+                selectedTabFlow.value = if (feed == null) null else {
+                    val last = app.context.getFromCache<String>(feedId, "selected_tab")
+                    feed.find { it.id == last } ?: feed.firstOrNull()
+                }
+            }
+        }
+    }
+
+    data class State<T>(
+        val extensionId: String,
+        val item: EchoMediaItem?,
+        val feed: T,
+    )
+
+    fun onSearchClicked() = scope.launch { searchClickedFlow.emit(Unit) }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\FeedFragment.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed
+
+import android.os.Bundle
+import android.view.View
+import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.commit
+import androidx.fragment.app.replace
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModel
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.databinding.FragmentGenericCollapsableBinding
+import com.joaomagdaleno.music_hub.databinding.FragmentRecyclerWithRefreshBinding
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtensionOrThrow
+import com.joaomagdaleno.music_hub.extensions.cache.Cached
+import com.joaomagdaleno.music_hub.extensions.cache.Cached.savingFeed
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyContentInsets
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.configure
+import com.joaomagdaleno.music_hub.ui.extensions.login.LoginFragment.Companion.bind
+import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getFeedAdapter
+import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getTouchHelper
+import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener.Companion.getFeedListener
+import com.joaomagdaleno.music_hub.ui.main.MainFragment.Companion.applyPlayerBg
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.ui.FastScrollerHelper
+import kotlinx.coroutines.flow.combine
+import org.koin.androidx.viewmodel.ext.android.viewModel
+
+class FeedFragment : Fragment(R.layout.fragment_generic_collapsable) {
+    companion object {
+        fun getBundle(title: String, subtitle: String?) = Bundle().apply {
+            putString("title", title)
+            putString("subtitle", subtitle)
+        }
+    }
+
+    class VM : ViewModel() {
+        var initialized = false
+        var extensionId: String? = null
+        var feedId: String? = null
+        var feed: Feed<Shelf>? = null
+    }
+
+    private val activityVm by activityViewModels<VM>()
+    private val vm by viewModels<VM>()
+
+    private val feedData by lazy {
+        val feedViewModel by viewModel<FeedViewModel>()
+        if (!vm.initialized) {
+            vm.initialized = true
+            vm.extensionId = activityVm.extensionId
+            vm.feedId = activityVm.feedId
+            vm.feed = activityVm.feed
+        }
+        feedViewModel.getFeedData(
+            vm.feedId ?: "",
+            cached = {
+                val extId = vm.extensionId!!
+                val feed = Cached.getFeedShelf(app, extId, vm.feedId!!)
+                FeedData.State(extId, null, feed.getOrThrow())
+            }
+        ) {
+            val extension = music.getExtensionOrThrow(vm.extensionId)
+            val feed = savingFeed(app, extension, vm.feedId!!, vm.feed!!)
+            FeedData.State(extension.id, null, feed)
+        }
+    }
+
+    private val title by lazy { arguments?.getString("title")!! }
+    private val subtitle by lazy { arguments?.getString("subtitle") }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val binding = FragmentGenericCollapsableBinding.bind(view)
+        binding.bind(this, false)
+        binding.extensionIcon.isVisible = false
+        binding.toolBar.title = title
+        binding.toolBar.subtitle = subtitle
+        applyPlayerBg(view) {
+            mainBgDrawable.combine(feedData.backgroundImageFlow) { a, b -> b ?: a }
+        }
+        if (savedInstanceState == null) childFragmentManager.commit {
+            replace<Actual>(R.id.genericFragmentContainer, null, arguments)
+        }
+    }
+
+    class Actual() : Fragment(R.layout.fragment_recycler_with_refresh) {
+        private val feedData by lazy {
+            val vm by requireParentFragment().viewModel<FeedViewModel>()
+            vm.feedDataMap.values.first()
+        }
+
+        private val listener by lazy { requireParentFragment().getFeedListener() }
+        private val feedAdapter by lazy {
+            getFeedAdapter(feedData, listener)
+        }
+
+        override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+            val binding = FragmentRecyclerWithRefreshBinding.bind(view)
+            applyInsets {
+                binding.recyclerView.applyContentInsets(it, 20, 8, 16)
+            }
+            FastScrollerHelper.applyTo(binding.recyclerView)
+            configureGridLayout(
+                binding.recyclerView,
+                feedAdapter.withLoading(this)
+            )
+            getTouchHelper(listener).attachToRecyclerView(binding.recyclerView)
+            binding.swipeRefresh.run {
+                configure()
+                setOnRefreshListener { feedData.refresh() }
+                observe(feedData.isRefreshingFlow) {
+                    isRefreshing = it
+                }
+            }
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\FeedLoadingAdapter.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed
+
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import androidx.paging.LoadState
+import com.joaomagdaleno.music_hub.databinding.ItemShelfErrorBinding
+import com.joaomagdaleno.music_hub.databinding.ItemShelfLoginRequiredBinding
+import com.joaomagdaleno.music_hub.databinding.ItemShelfNotLoadingBinding
+import com.joaomagdaleno.music_hub.extensions.cache.Cached
+import com.joaomagdaleno.music_hub.extensions.exceptions.AppException
+import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.getFinalTitle
+import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.getMessage
+import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.openLoginException
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter
+import com.joaomagdaleno.music_hub.ui.common.PagedSource
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimLoadStateAdapter
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
+
+class FeedLoadingAdapter(
+    val listener: Listener? = null,
+    val loadingAdapter: (ViewGroup) -> ViewHolder,
+) : ScrollAnimLoadStateAdapter<FeedLoadingAdapter.ViewHolder>(), GridAdapter {
+
+    interface Listener {
+        fun onRetry()
+        fun onError(view: View, error: Throwable)
+        fun onLoginRequired(view: View, error: AppException.LoginRequired)
+    }
+
+    abstract class ViewHolder(val view: View) : ScrollAnimViewHolder(view) {
+        open fun bind(loadState: LoadState) {}
+    }
+
+    data class NotLoading(
+        val inflater: LayoutInflater,
+        val parent: ViewGroup,
+        val listener: Listener?,
+        val binding: ItemShelfNotLoadingBinding =
+            ItemShelfNotLoadingBinding.inflate(inflater, parent, false)
+    ) : ViewHolder(binding.root) {
+        override fun bind(loadState: LoadState) {
+            binding.retry.setOnClickListener {
+                listener?.onRetry()
+            }
+        }
+    }
+
+    data class Error(
+        val inflater: LayoutInflater,
+        val parent: ViewGroup,
+        val listener: Listener?,
+        val binding: ItemShelfErrorBinding =
+            ItemShelfErrorBinding.inflate(inflater, parent, false)
+    ) : ViewHolder(binding.root) {
+        override fun bind(loadState: LoadState) {
+            loadState as LoadState.Error
+            val throwable = loadState.error
+            binding.error.run {
+                transitionName = throwable.hashCode().toString()
+                text = context.getFinalTitle(throwable)
+            }
+            binding.errorView.setOnClickListener {
+                listener?.onError(binding.error, throwable)
+            }
+            binding.retry.setOnClickListener {
+                listener?.onRetry()
+            }
+        }
+    }
+
+    data class LoginRequired(
+        val inflater: LayoutInflater,
+        val parent: ViewGroup,
+        val listener: Listener?,
+        val binding: ItemShelfLoginRequiredBinding
+        = ItemShelfLoginRequiredBinding.inflate(inflater, parent, false)
+    ) : ViewHolder(binding.root) {
+        override fun bind(loadState: LoadState) {
+            val error = (loadState as LoadState.Error).error
+            val appError = error as AppException.LoginRequired
+            binding.error.run {
+                text = context.getFinalTitle(appError)
+            }
+            binding.login.transitionName = appError.hashCode().toString()
+            binding.login.setOnClickListener {
+                listener?.onLoginRequired(it, appError)
+            }
+        }
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, loadState: LoadState): ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return when (getStateViewType(loadState)) {
+            0 -> loadingAdapter(parent)
+            1 -> NotLoading(inflater, parent, listener)
+            2 -> Error(inflater, parent, listener)
+            3 -> LoginRequired(inflater, parent, listener)
+            else -> throw IllegalStateException()
+        }
+    }
+
+    override fun getStateViewType(loadState: LoadState): Int {
+        return when (loadState) {
+            is LoadState.Loading -> 0
+            is LoadState.NotLoading -> 1
+            is LoadState.Error -> {
+                when (loadState.error) {
+                    is AppException.LoginRequired -> 3
+                    is PagedSource.LoadingException -> 0
+                    is Cached.NotFound -> 1
+                    else -> 2
+                }
+            }
+        }
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, loadState: LoadState) {
+        super.onBindViewHolder(holder, loadState)
+        holder.bind(loadState)
+    }
+
+    override val adapter = this
+    override fun getSpanSize(position: Int, width: Int, count: Int) = count
+
+    companion object {
+        fun Fragment.createListener(retry: () -> Unit) =
+            object : Listener {
+                override fun onRetry() {
+                    retry()
+                }
+
+                override fun onError(view: View, error: Throwable) {
+                    requireActivity().getMessage(error, view).action?.handler?.invoke()
+                }
+
+                override fun onLoginRequired(view: View, error: AppException.LoginRequired) {
+                    requireActivity().openLoginException(error, view)
+                }
+            }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\FeedSort.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed
+
+import android.content.Context
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.Album
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.common.models.Playlist
+import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.ui.feed.FeedSort.entries
+import com.joaomagdaleno.music_hub.ui.media.MediaHeaderAdapter.Companion.toTrackString
+import kotlinx.serialization.Serializable
+
+fun getSorts(data: List<Shelf>): List<FeedSort> {
+    return entries.filter { it.shouldBeVisible(data) != null }
+}
+
+private fun Shelf.title() = when (this) {
+    is Shelf.Category -> this.title
+    is Shelf.Item -> this.media.title
+    is Shelf.Lists<*> -> null
+}
+
+private fun Shelf.subtitle() = when (this) {
+    is Shelf.Category -> this.subtitle
+    is Shelf.Item -> this.media.subtitle
+    is Shelf.Lists<*> -> null
+}
+
+private fun Shelf.duration() = when (this) {
+    is Shelf.Category -> null
+    is Shelf.Item -> when (val item = this.media) {
+        is Track -> item.duration
+        is Album -> item.duration
+        is Playlist -> item.duration
+        else -> null
+    }
+
+    is Shelf.Lists<*> -> null
+}
+
+private fun Shelf.date() = when (this) {
+    is Shelf.Category -> null
+    is Shelf.Item -> when (val item = this.media) {
+        is Track -> item.releaseDate
+        is Album -> item.releaseDate
+        is Playlist -> item.creationDate
+        else -> null
+    }
+
+    is Shelf.Lists<*> -> null
+}
+
+private fun Shelf.dateAdded() = when (this) {
+    is Shelf.Category -> null
+    is Shelf.Item -> when (val item = this.media) {
+        is Track -> item.playlistAddedDate
+        else -> null
+    }
+
+    is Shelf.Lists<*> -> null
+}
+
+private fun Shelf.artists() = when (this) {
+    is Shelf.Category -> null
+    is Shelf.Item -> when (val item = this.media) {
+        is Track -> item.artists
+        is EchoMediaItem.Lists -> item.artists
+        else -> null
+    }
+
+    is Shelf.Lists<*> -> null
+}
+
+private fun Shelf.album() = when (this) {
+    is Shelf.Category -> null
+    is Shelf.Item -> when (val item = this.media) {
+        is Track -> item.album
+        else -> null
+    }
+
+    is Shelf.Lists<*> -> null
+}
+
+private fun Shelf.trackCount() = when (this) {
+    is Shelf.Category -> null
+    is Shelf.Item -> when (val item = this.media) {
+        is EchoMediaItem.Lists -> item.trackCount
+        else -> null
+    }
+
+    is Shelf.Lists<*> -> null
+}
+
+private fun Shelf.ifListItem(): EchoMediaItem.Lists? = when (this) {
+    is Shelf.Category -> null
+    is Shelf.Item -> when (media) {
+        is EchoMediaItem.Lists -> media as EchoMediaItem.Lists
+        else -> null
+    }
+
+    is Shelf.Lists<*> -> null
+}
+
+private fun Shelf.copy(subtitle: String) = when (this) {
+    is Shelf.Category -> this.copy(subtitle = subtitle)
+    is Shelf.Item -> this.copy(media = this.media.copyMediaItem(subtitle = subtitle))
+    is Shelf.Lists<*> -> throw IllegalStateException()
+}
+
+enum class FeedSort(
+    val title: Int,
+    val sorter: Context.(List<Shelf>) -> List<Shelf>
+) {
+    Title(R.string.sort_title, { list -> list.sortedBy { it.title() } }),
+    Subtitle(R.string.sort_subtitle, { list -> list.sortedBy { it.subtitle() } }),
+    Duration(R.string.sort_duration, { list ->
+        list.sortedBy { it.duration() }
+    }),
+    Date(R.string.sort_date, { list ->
+        list.sortedBy { it.date() }
+            .filter { it.date() != null }
+            .map { it.copy(subtitle = it.date().toString()) }
+    }),
+    DateAdded(R.string.sort_date_added, { list ->
+        list.sortedBy { it.date() }
+            .filter { it.date() != null }
+            .map { it.copy(subtitle = it.date().toString()) }
+    }),
+    Artists(R.string.artists, { list ->
+        list.flatMap { shelf ->
+            shelf.artists().orEmpty().map {
+                it to shelf.copy(subtitle = it.name)
+            }
+        }.sortedBy { it.first.name.lowercase() }.groupBy { it.first.id }
+            .values.flatMap { it -> it.map { it.second } }
+    }),
+    Album(R.string.albums, { list ->
+        list.flatMap { shelf ->
+            shelf.album()?.let { album ->
+                listOf(shelf.copy(subtitle = album.title))
+            } ?: emptyList()
+        }.sortedBy { it.subtitle() }
+    }),
+    Tracks(R.string.tracks, { list ->
+        list.sortedBy { it.trackCount() }
+            .filter { it.trackCount() != null }
+            .map { it.copy(subtitle = it.ifListItem()?.toTrackString(this) ?: "???") }
+    })
+    ;
+
+    fun shouldBeVisible(data: List<Shelf>): FeedSort? {
+        val take = when (this) {
+            Title -> data.any { it.title()?.isNotEmpty() ?: false }
+            Subtitle -> data.any { it.subtitle()?.isNotEmpty() ?: false }
+            Date -> data.any { it.date() != null }
+            DateAdded -> data.any { it.dateAdded() != null }
+            Duration -> data.any { it.duration() != null }
+            Artists -> data.any { it.artists()?.isNotEmpty() ?: false }
+            Album -> data.mapNotNull { it.album() }.toSet().size > 1
+            Tracks -> data.any { it.trackCount() != null }
+        }
+        return if (take) this else null
+    }
+
+    @Serializable
+    data class State(
+        val feedSort: FeedSort? = null,
+        val reversed: Boolean = false,
+        val save: Boolean = false,
+    )
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\FeedSortBottomSheet.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed
+
+import android.content.DialogInterface
+import android.os.Bundle
+import android.text.TextUtils
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.chip.Chip
+import com.joaomagdaleno.music_hub.databinding.DialogSortBinding
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import org.koin.androidx.viewmodel.ext.android.viewModel
+
+class FeedSortBottomSheet : BottomSheetDialogFragment() {
+
+    private val feedData by lazy {
+        val vm by requireParentFragment().viewModel<FeedViewModel>()
+        val id = requireArguments().getString("id")!!
+        vm.feedDataMap[id]!!
+    }
+    private val loadedShelves by lazy { feedData.loadedShelves }
+    private val sortState by lazy { feedData.feedSortState }
+
+    private var binding by autoCleared<DialogSortBinding>()
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
+        binding = DialogSortBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    private var selectedFeedSort: FeedSort? = null
+    private fun applySorts() {
+        val list = loadedShelves.value ?: listOf()
+        val state = sortState.value
+        selectedFeedSort = state?.feedSort
+        val available = getSorts(list)
+        val checked = available.indexOf(state?.feedSort)
+        binding.sortChipGroup.run {
+            removeAllViews()
+            available.forEachIndexed { index, t ->
+                val chip = Chip(context)
+                chip.id = index
+                chip.text = getString(t.title)
+                chip.ellipsize = TextUtils.TruncateAt.MIDDLE
+                chip.isCheckable = true
+                addView(chip)
+                if (index == checked) check(chip.id)
+            }
+            setOnCheckedStateChangeListener { _, checkedIds ->
+                selectedFeedSort = available.getOrNull(checkedIds.firstOrNull() ?: -1)
+            }
+        }
+        binding.filter.isVisible = false
+        binding.filterGroup.isVisible = false
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        observe(loadedShelves) {
+            binding.progressIndicator.isVisible = it == null
+            applySorts()
+        }
+        observe(sortState) {
+            applySorts()
+            binding.saveCheckbox.isChecked = it?.save ?: false
+            binding.reversedSwitch.isChecked = it?.reversed ?: false
+        }
+        binding.saveContainer.setOnClickListener {
+            binding.saveCheckbox.isChecked = !binding.saveCheckbox.isChecked
+        }
+        binding.reversedContainer.setOnClickListener {
+            binding.reversedSwitch.isChecked = !binding.reversedSwitch.isChecked
+        }
+        binding.apply.setOnClickListener {
+            sortState.value = FeedSort.State(
+                feedSort = selectedFeedSort,
+                reversed = binding.reversedSwitch.isChecked,
+                save = binding.saveCheckbox.isChecked
+            )
+            dismiss()
+        }
+        binding.topAppBar.setNavigationOnClickListener {
+            dismiss()
+        }
+        binding.topAppBar.setOnMenuItemClickListener {
+            sortState.value = FeedSort.State()
+            dismiss()
+            true
+        }
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
+        parentFragmentManager.setFragmentResult("shelfSort", Bundle().apply {
+            putBoolean("changed", true)
+        })
+    }
+
+    companion object {
+        fun newInstance(id: String) = FeedSortBottomSheet().apply {
+            arguments = bundleOf("id" to id)
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\FeedType.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed
+
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.extensions.builtin.unified.UnifiedExtension.Companion.EXTENSION_ID
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import kotlinx.serialization.json.JsonClassDiscriminator
+
+@OptIn(ExperimentalSerializationApi::class)
+@JsonClassDiscriminator("clazzType")
+@Serializable
+sealed interface FeedType {
+
+    enum class Enum {
+        Header, HorizontalList,
+        Category, CategoryGrid,
+        Media, MediaGrid,
+        Video, VideoHorizontal,
+    }
+
+    val feedId: String
+    val id: String
+    val type: Enum
+    val extId: String
+    val extras: Map<String, String>?
+
+    val extensionId: String
+        get() = extras?.let {
+            if (it["cached"] == "true") it[EXTENSION_ID] else null
+        } ?: extId
+
+    val context: EchoMediaItem?
+    val tabId: String?
+
+    @Serializable
+    data class Header(
+        override val feedId: String,
+        override val extId: String,
+        override val context: EchoMediaItem?,
+        override val tabId: String?,
+        override val id: String,
+        val title: String,
+        val subtitle: String? = null,
+        @Transient val more: Feed<Shelf>? = null,
+        val tracks: List<Track>? = null,
+    ) : FeedType {
+        override val type = Enum.Header
+        override val extras: Map<String, String>? = null
+    }
+
+    @Serializable
+    data class Category(
+        override val feedId: String,
+        override val extId: String,
+        override val context: EchoMediaItem?,
+        override val tabId: String?,
+        val shelf: Shelf.Category,
+        override val type: Enum = Enum.Category,
+    ) : FeedType {
+        override val id = shelf.id
+        override val extras: Map<String, String>? = shelf.extras
+    }
+
+    @Serializable
+    data class Media(
+        override val feedId: String,
+        override val extId: String,
+        override val context: EchoMediaItem?,
+        override val tabId: String?,
+        val item: EchoMediaItem,
+        val number: Long?,
+    ) : FeedType {
+        override val id = item.id
+        override val type: Enum = Enum.Media
+        override val extras: Map<String, String>? = item.extras
+    }
+
+    @Serializable
+    data class Video(
+        override val feedId: String,
+        override val extId: String,
+        override val context: EchoMediaItem?,
+        override val tabId: String?,
+        val item: Track,
+        override val type: Enum = Enum.Video,
+    ) : FeedType {
+        override val id = item.id
+        override val extras: Map<String, String>? = item.extras
+    }
+
+    @Serializable
+    data class MediaGrid(
+        override val feedId: String,
+        override val extId: String,
+        override val context: EchoMediaItem?,
+        override val tabId: String?,
+        val item: EchoMediaItem,
+        val number: Int? = null,
+    ) : FeedType {
+        override val id = item.id
+        override val type: Enum = Enum.MediaGrid
+        override val extras: Map<String, String>? = item.extras
+    }
+
+    @Serializable
+    data class HorizontalList(
+        override val feedId: String,
+        override val extId: String,
+        override val context: EchoMediaItem?,
+        override val tabId: String?,
+        val shelf: Shelf.Lists<*>,
+    ) : FeedType {
+        override val id = shelf.id
+        override val type = Enum.HorizontalList
+        override val extras: Map<String, String>? = shelf.extras
+    }
+
+    companion object {
+        fun List<Shelf>.toFeedType(
+            feedId: String,
+            extId: String,
+            context: EchoMediaItem?,
+            tabId: String?,
+            noVideos: Boolean = false,
+            start: Long = 0,
+        ): List<FeedType> = mapIndexed { index, shelf ->
+
+            when (shelf) {
+                is Shelf.Category -> if (shelf.feed == null) listOf(
+                    Header(
+                        feedId, extId, context, tabId, shelf.id, shelf.title, shelf.subtitle,
+                    )
+                ) else listOf(Category(feedId, extId, context, tabId, shelf))
+
+                is Shelf.Item -> when (val item = shelf.media) {
+                    is Track -> if (!noVideos) when (item.type) {
+                        Track.Type.Video -> listOf(Video(feedId, extId, context, tabId, item))
+                        Track.Type.HorizontalVideo -> listOf(
+                            Video(feedId, extId, context, tabId, item, Enum.VideoHorizontal)
+                        )
+
+                        else -> listOf(Media(feedId, extId, context, tabId, item, null))
+                    } else {
+                        val index = start + index
+                        listOf(Media(feedId, extId, context, tabId, item, index))
+                    }
+
+                    else -> listOf(Media(feedId, extId, context, tabId, item, null))
+                }
+
+                is Shelf.Lists<*> -> listOf(
+                    Header(
+                        feedId, extId, context, tabId,
+                        shelf.id, shelf.title, shelf.subtitle, shelf.more,
+                        if (shelf is Shelf.Lists.Tracks) shelf.list else null
+                    )
+                ) + if (shelf.type == Shelf.Lists.Type.Linear) listOf(
+                    HorizontalList(feedId, extId, context, tabId, shelf)
+                )
+                else when (shelf) {
+                    is Shelf.Lists.Categories -> shelf.list.map {
+                        Category(feedId, extId, context, tabId, it, Enum.CategoryGrid)
+                    }
+
+                    is Shelf.Lists.Items -> shelf.list.map {
+                        MediaGrid(feedId, extId, context, tabId, it)
+                    }
+
+                    is Shelf.Lists.Tracks -> shelf.list.mapIndexed { index, item ->
+                        MediaGrid(feedId, extId, context, tabId, item, index + 1)
+                    }
+                }
+            }
+        }.flatten()
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\FeedViewModel.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.di.App
+import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.merge
+
+class FeedViewModel(
+    val app: App,
+    private val extensionLoader: ExtensionLoader,
+) : ViewModel() {
+    val feedDataMap = hashMapOf<String, FeedData>()
+    fun getFeedData(
+        id: String,
+        buttons: Feed.Buttons = Feed.Buttons(),
+        noVideos: Boolean = false,
+        vararg extraLoadFlow: Flow<*>,
+        cached: suspend ExtensionLoader.() -> FeedData.State<Feed<Shelf>>? = { null },
+        loader: suspend ExtensionLoader.() -> FeedData.State<Feed<Shelf>>?
+    ): FeedData {
+        return feedDataMap.getOrPut(id) {
+            FeedData(
+                feedId = id,
+                scope = viewModelScope,
+                app = app,
+                extensionLoader = extensionLoader,
+                cached = cached,
+                load = loader,
+                defaultButtons = buttons,
+                noVideos = noVideos,
+                extraLoadFlow = extraLoadFlow.toList().merge(),
+            )
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\TabsAdapter.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed
+
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.view.children
+import androidx.core.view.doOnLayout
+import androidx.core.view.isVisible
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonGroup
+import com.joaomagdaleno.music_hub.databinding.ItemTabBinding
+import com.joaomagdaleno.music_hub.databinding.ItemTabContainerBinding
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimRecyclerAdapter
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
+
+class TabsAdapter<T>(
+    private val getTitle: T.() -> String,
+    private val onTabSelected: (View, Int, T) -> Unit
+) : ScrollAnimRecyclerAdapter<TabsAdapter.ViewHolder>(), GridAdapter {
+    override val adapter = this
+    override fun getSpanSize(position: Int, width: Int, count: Int) = count
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = ViewHolder(parent)
+    override fun getItemCount() = 1
+
+    var data: List<T> = emptyList()
+        set(value) {
+            field = value
+            notifyItemChanged(0)
+        }
+
+    var selected = -1
+        set(value) {
+            field = value
+            parent?.let { apply(it) }
+        }
+
+    var parent: MaterialButtonGroup? = null
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        super.onBindViewHolder(holder, position)
+        val parent = holder.binding.buttonGroup
+        this.parent = parent
+        apply(parent)
+        parent.doOnLayout {
+            if (selected < 0) return@doOnLayout
+            val scrollX = parent.children.filter { it.isVisible }
+                .take(selected).sumOf { it.width }
+            holder.binding.root.scrollTo(scrollX, 0)
+        }
+    }
+
+    fun apply(parent: MaterialButtonGroup) {
+        val tabs = data
+        parent.isVisible = tabs.isNotEmpty()
+        if (tabs.isEmpty()) return
+        val toKeep = tabs.size - parent.childCount
+        val inflater = LayoutInflater.from(parent.context)
+        if (toKeep > 0) repeat(toKeep) {
+            parent.addView(ItemTabBinding.inflate(inflater, parent, false).root)
+        } else if (toKeep < 0) repeat(-toKeep) {
+            parent.getChildAt(tabs.size + it).isVisible = false
+        }
+        tabs.indices.forEach { i ->
+            val tab = tabs[i]
+            val button = parent.getChildAt(i) as MaterialButton
+            button.apply {
+                isVisible = true
+                val title = getTitle(tab)
+                if (text.toString() != title) text = title
+                setOnClickListener(null)
+                isChecked = i == selected
+                setOnClickListener {
+                    if (i == selected) isChecked = true
+                    else onTabSelected(it, i, tab)
+                }
+            }
+        }
+    }
+
+    class ViewHolder(
+        parent: ViewGroup,
+        val binding: ItemTabContainerBinding = ItemTabContainerBinding.inflate(
+            LayoutInflater.from(parent.context), parent, false
+        )
+    ) : ScrollAnimViewHolder(binding.root) {
+        init {
+            binding.buttonGroup.removeAllViews()
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\viewholders\CategoryViewHolder.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed.viewholders
+
+import android.graphics.Color
+import android.graphics.Color.HSVToColor
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.cardview.widget.CardView
+import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.toColorInt
+import androidx.core.view.isVisible
+import com.google.android.material.color.MaterialColors
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.databinding.ItemShelfCategoryBinding
+import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
+import com.joaomagdaleno.music_hub.ui.feed.FeedType
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadInto
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils.isNightMode
+import kotlin.math.roundToInt
+
+class CategoryViewHolder(
+    parent: ViewGroup,
+    listener: FeedClickListener,
+    private val binding: ItemShelfCategoryBinding = ItemShelfCategoryBinding.inflate(
+        LayoutInflater.from(parent.context), parent, false
+    )
+) : FeedViewHolder<FeedType.Category>(binding.root) {
+
+    private var feed: FeedType.Category? = null
+
+    init {
+        binding.root.setOnClickListener {
+            listener.openFeed(
+                it,
+                feed?.extensionId,
+                feed?.id,
+                feed?.shelf?.title,
+                feed?.shelf?.subtitle,
+                feed?.shelf?.feed
+            )
+        }
+    }
+
+    override fun bind(feed: FeedType.Category) {
+        this.feed = feed
+        val category = feed.shelf
+        binding.bind(category)
+    }
+
+    companion object {
+        fun ItemShelfCategoryBinding.bind(category: Shelf.Category) {
+            title.text = category.title
+            subtitle.text = category.subtitle
+            subtitle.isVisible = !category.subtitle.isNullOrEmpty()
+            icon.isVisible = category.image != null
+            category.image.loadInto(icon)
+            root.run {
+                val color = applyBackground(category.backgroundColor)
+                    ?: ResourcesCompat.getColor(resources, R.color.amoled_fg_semi, null)
+                setCardBackgroundColor(color)
+            }
+        }
+
+        fun CardView.applyBackground(hex: String?): Int? {
+            val hsv = runCatching { hex?.toColorInt() }.getOrNull()?.run {
+                val hsv = FloatArray(3)
+                Color.colorToHSV(this, hsv)
+                hsv
+            } ?: return null
+            val actualSat = (hsv[1] * 0.25).roundToInt()
+            val sat = if (context.isNightMode()) (35f + actualSat) / 100 else 0.2f
+            val value = if (context.isNightMode()) 0.5f else 0.9f
+            val color = HSVToColor(floatArrayOf(hsv[0], sat, value))
+            val with = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary)
+            return MaterialColors.harmonize(color, with)
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\viewholders\FeedViewHolder.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed.viewholders
+
+import android.view.View
+import com.joaomagdaleno.music_hub.playback.PlayerState
+import com.joaomagdaleno.music_hub.ui.feed.FeedType
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
+
+sealed class FeedViewHolder<T : FeedType>(view: View) : ScrollAnimViewHolder(view) {
+    abstract fun bind(feed: T)
+    open fun canBeSwiped(): Boolean = false
+    open fun onSwipe(): T? = null
+    open fun onCurrentChanged(current: PlayerState.Current?) {}
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\viewholders\HeaderViewHolder.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed.viewholders
+
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import com.joaomagdaleno.music_hub.databinding.ItemShelfHeaderBinding
+import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
+import com.joaomagdaleno.music_hub.ui.feed.FeedType
+
+class HeaderViewHolder(
+    parent: ViewGroup,
+    listener: FeedClickListener,
+    private val binding: ItemShelfHeaderBinding = ItemShelfHeaderBinding.inflate(
+        LayoutInflater.from(parent.context), parent, false
+    )
+) : FeedViewHolder<FeedType.Header>(binding.root) {
+
+    private var feed: FeedType.Header? = null
+
+    init {
+        binding.more.setOnClickListener {
+            listener.openFeed(
+                it,
+                feed?.extensionId,
+                feed?.id,
+                feed?.title,
+                feed?.subtitle,
+                feed?.more
+            )
+        }
+        binding.shuffle.setOnClickListener {
+            listener.onPlayClicked(it, feed?.extensionId, feed?.context, feed?.tracks, true)
+        }
+    }
+
+    override fun bind(feed: FeedType.Header) {
+        this.feed = feed
+        binding.title.text = feed.title
+        binding.title.isVisible = feed.title.isNotEmpty()
+        binding.subtitle.text = feed.subtitle
+        binding.subtitle.isVisible = !feed.subtitle.isNullOrEmpty()
+        binding.shuffle.isVisible = feed.tracks != null
+        binding.more.isVisible = feed.more != null
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\viewholders\HorizontalListViewHolder.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed.viewholders
+
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.core.view.updatePaddingRelative
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.databinding.ItemShelfListsBinding
+import com.joaomagdaleno.music_hub.playback.PlayerState
+import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
+import com.joaomagdaleno.music_hub.ui.feed.FeedType
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.shelf.ShelfType
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.shelf.ShelfViewHolder
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.applyTranslationAndScaleAnimation
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils.dpToPx
+
+class HorizontalListViewHolder(
+    parent: ViewGroup,
+    listener: FeedClickListener,
+    pool: RecyclerView.RecycledViewPool,
+    private val binding: ItemShelfListsBinding = ItemShelfListsBinding.inflate(
+        LayoutInflater.from(parent.context), parent, false
+    )
+) : FeedViewHolder<FeedType.HorizontalList>(binding.root) {
+    val adapter = Adapter(listener)
+    val layoutManager = LinearLayoutManager(parent.context, RecyclerView.HORIZONTAL, false)
+
+    init {
+        binding.root.setRecycledViewPool(pool)
+        binding.root.layoutManager = layoutManager
+    }
+
+    override fun bind(feed: FeedType.HorizontalList) {
+        val endPadding = if (feed.shelf is Shelf.Lists.Tracks) 8 else 20
+        binding.root.updatePaddingRelative(end = endPadding.dpToPx(binding.root.context))
+        adapter.tracks = feed.shelf.list.filterIsInstance<Track>()
+        adapter.submitList(feed.shelf.toShelfType(feed.extensionId, feed.context, feed.tabId)) {
+            binding.root.adapter = adapter
+        }
+    }
+
+    override fun onCurrentChanged(current: PlayerState.Current?) {
+        adapter.onCurrentChanged(current)
+    }
+
+    fun Shelf.Lists<*>.toShelfType(
+        extensionId: String, context: EchoMediaItem?, tabId: String?
+    ) = when (this) {
+        is Shelf.Lists.Items -> list.map { ShelfType.Media(extensionId, context, tabId, it) }
+        is Shelf.Lists.Categories -> list.map {
+            ShelfType.Category(extensionId, context, tabId, it)
+        }
+
+        is Shelf.Lists.Tracks -> list.chunked(3).mapIndexed { index, it ->
+            ShelfType.ThreeTracks(
+                extensionId, context, tabId, index,
+                Triple(
+                    it[0],
+                    it.getOrNull(1),
+                    it.getOrNull(2)
+                )
+            )
+        }
+    }
+
+    object DiffCallback : DiffUtil.ItemCallback<ShelfType>() {
+        override fun areItemsTheSame(oldItem: ShelfType, newItem: ShelfType): Boolean {
+            if (oldItem.extensionId != newItem.extensionId) return false
+            if (oldItem.type != newItem.type) return false
+            if (oldItem.id != newItem.id) return false
+            return true
+        }
+
+        override fun areContentsTheSame(oldItem: ShelfType, newItem: ShelfType): Boolean {
+            return oldItem == newItem
+        }
+    }
+
+    class Adapter(
+        private val listener: FeedClickListener
+    ) : ListAdapter<ShelfType, ShelfViewHolder<*>>(DiffCallback) {
+        var tracks: List<Track> = emptyList()
+        override fun getItemViewType(position: Int) = currentList[position].type.ordinal
+        override fun onCreateViewHolder(
+            parent: ViewGroup, viewType: Int
+        ) = when (ShelfType.Enum.entries[viewType]) {
+            ShelfType.Enum.Category -> ShelfViewHolder.Category(parent, listener)
+            ShelfType.Enum.Media -> ShelfViewHolder.Media(parent, listener)
+            ShelfType.Enum.ThreeTracks -> ShelfViewHolder.ThreeTracks(
+                parent, listener, { tracks }
+            )
+        }
+
+        override fun onBindViewHolder(
+            holder: ShelfViewHolder<*>, position: Int
+        ) {
+            holder.itemView.applyTranslationAndScaleAnimation(scrollAmountX)
+            holder.scrollX = scrollAmountX
+            when (holder) {
+                is ShelfViewHolder.Category -> holder.bind(
+                    position,
+                    currentList.map { it as ShelfType.Category })
+
+                is ShelfViewHolder.Media -> holder.bind(
+                    position,
+                    currentList.map { it as ShelfType.Media })
+
+                is ShelfViewHolder.ThreeTracks -> holder.bind(
+                    position,
+                    currentList.map { it as ShelfType.ThreeTracks })
+            }
+            holder.onCurrentChanged(current)
+        }
+
+        var current: PlayerState.Current? = null
+
+        override fun onViewDetachedFromWindow(holder: ShelfViewHolder<*>) {
+            holder.onCurrentChanged(current)
+        }
+
+        override fun onViewAttachedToWindow(holder: ShelfViewHolder<*>) {
+            holder.onCurrentChanged(current)
+        }
+
+        private var scrollAmountX: Int = 0
+        private val scrollListener = object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                scrollAmountX = dx
+            }
+        }
+
+        var recyclerView: RecyclerView? = null
+        override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+            this.recyclerView = recyclerView
+            recyclerView.addOnScrollListener(scrollListener)
+        }
+
+        override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+            recyclerView.removeOnScrollListener(scrollListener)
+            this.recyclerView = null
+        }
+
+        private fun onEachViewHolder(action: ShelfViewHolder<*>.() -> Unit) {
+            recyclerView?.let { rv ->
+                for (i in 0 until rv.childCount) {
+                    val holder = rv.getChildViewHolder(rv.getChildAt(i)) as? ShelfViewHolder<*>
+                    holder?.action()
+                }
+            }
+        }
+
+        fun onCurrentChanged(current: PlayerState.Current?) {
+            this.current = current
+            onEachViewHolder { onCurrentChanged(current) }
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\viewholders\MediaGridViewHolder.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed.viewholders
+
+import android.graphics.drawable.Animatable
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.databinding.ItemShelfMediaGridBinding
+import com.joaomagdaleno.music_hub.playback.PlayerState
+import com.joaomagdaleno.music_hub.playback.PlayerState.Current.Companion.isPlaying
+import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
+import com.joaomagdaleno.music_hub.ui.feed.FeedType
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.applyCover
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.subtitle
+
+class MediaGridViewHolder(
+    parent: ViewGroup,
+    listener: FeedClickListener,
+    getAllTracks: (FeedType) -> Pair<List<Track>, Int>,
+    private val binding: ItemShelfMediaGridBinding = ItemShelfMediaGridBinding.inflate(
+        LayoutInflater.from(parent.context), parent, false
+    )
+) : FeedViewHolder<FeedType.MediaGrid>(binding.root) {
+    private var feed: FeedType.MediaGrid? = null
+
+    init {
+        binding.coverContainer.cover.clipToOutline = true
+        binding.root.setOnClickListener {
+            when (val item = feed?.item) {
+                is Track -> {
+                    if (item.isPlayable != Track.Playable.Yes) {
+                        listener.onMediaClicked(it, feed?.extensionId, item, feed?.context)
+                        return@setOnClickListener
+                    }
+                    val (tracks, pos) = getAllTracks(feed!!)
+                    listener.onTracksClicked(it, feed?.extensionId, feed?.context, tracks, pos)
+                }
+
+                else -> listener.onMediaClicked(it, feed?.extensionId, item, feed?.context)
+            }
+        }
+        binding.root.setOnLongClickListener {
+            listener.onMediaLongClicked(
+                it, feed?.extensionId, feed?.item,
+                feed?.context, feed?.tabId, bindingAdapterPosition
+            )
+            true
+        }
+    }
+
+    override fun bind(feed: FeedType.MediaGrid) = with(binding) {
+        this@MediaGridViewHolder.feed = feed
+        val item = feed.item
+        val index = feed.number
+        title.text = if (index == null) item.title
+        else root.context.getString(R.string.n_dot_x, index + 1, item.title)
+        val subtitleText = item.subtitle(root.context)
+        subtitle.text = subtitleText
+        subtitle.isVisible = !subtitleText.isNullOrBlank()
+        coverContainer.run { applyCover(item, cover, listBg1, listBg2, icon) }
+    }
+
+
+    override fun onCurrentChanged(current: PlayerState.Current?) {
+        val isPlaying = current.isPlaying(feed?.item?.id)
+        binding.coverContainer.isPlaying.isVisible = isPlaying
+        (binding.coverContainer.isPlaying.icon as Animatable).start()
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\viewholders\MediaViewHolder.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed.viewholders
+
+import android.content.Context
+import android.graphics.drawable.Animatable
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.widget.ImageView
+import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.Album
+import com.joaomagdaleno.music_hub.common.models.Artist
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.common.models.Playlist
+import com.joaomagdaleno.music_hub.common.models.Radio
+import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.databinding.ItemShelfMediaBinding
+import com.joaomagdaleno.music_hub.playback.PlayerState
+import com.joaomagdaleno.music_hub.playback.PlayerState.Current.Companion.isPlaying
+import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
+import com.joaomagdaleno.music_hub.ui.feed.FeedType
+import com.joaomagdaleno.music_hub.ui.media.MediaHeaderAdapter.Companion.playableString
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadInto
+
+class MediaViewHolder(
+    parent: ViewGroup,
+    listener: FeedClickListener,
+    getAllTracks: (FeedType) -> Pair<List<Track>, Int>,
+    private val binding: ItemShelfMediaBinding = ItemShelfMediaBinding.inflate(
+        LayoutInflater.from(parent.context), parent, false
+    ),
+) : FeedViewHolder<FeedType.Media>(binding.root) {
+    var feed: FeedType.Media? = null
+
+    init {
+        binding.coverContainer.cover.clipToOutline = true
+        binding.root.setOnClickListener {
+            when (val item = feed?.item) {
+                is Track -> {
+                    if (item.isPlayable != Track.Playable.Yes) {
+                        listener.onMediaClicked(it, feed?.extensionId, item, feed?.context)
+                        return@setOnClickListener
+                    }
+                    val (tracks, pos) = getAllTracks(feed!!)
+                    listener.onTracksClicked(it, feed?.extensionId, feed?.context, tracks, pos)
+                }
+
+                else -> listener.onMediaClicked(it, feed?.extensionId, item, feed?.context)
+            }
+        }
+        binding.root.setOnLongClickListener {
+            listener.onMediaLongClicked(
+                it, feed?.extensionId, feed?.item,
+                feed?.context, feed?.tabId, bindingAdapterPosition
+            )
+            true
+        }
+
+        binding.more.setOnClickListener {
+            listener.onMediaLongClicked(
+                it, feed?.extensionId, feed?.item,
+                feed?.context, feed?.tabId, bindingAdapterPosition
+            )
+        }
+        binding.play.setOnClickListener {
+            listener.onPlayClicked(
+                it, feed?.extensionId, feed?.item, null, false
+            )
+        }
+    }
+
+    override fun bind(feed: FeedType.Media) {
+        this.feed = feed
+        binding.bind(feed.item, feed.number?.toInt())
+    }
+
+    override fun canBeSwiped() = feed?.item is Track
+    override fun onSwipe() = feed
+
+    override fun onCurrentChanged(current: PlayerState.Current?) {
+        val isPlaying = current.isPlaying(feed?.item?.id)
+        binding.coverContainer.isPlaying.isVisible = isPlaying
+        (binding.coverContainer.isPlaying.icon as Animatable).start()
+    }
+
+    companion object {
+        fun ItemShelfMediaBinding.bind(item: EchoMediaItem, index: Int? = null) {
+            title.text = if (index == null) item.title
+            else root.context.getString(R.string.n_dot_x, index + 1, item.title)
+            val subtitleText = item.subtitle(root.context)
+            subtitle.text = subtitleText
+            subtitle.isVisible = !subtitleText.isNullOrBlank()
+            coverContainer.run {
+                applyCover(item, cover, listBg1, listBg2, icon)
+                isPlaying.setBackgroundResource(
+                    if (item is Artist) R.drawable.rounded_rectangle_cover_profile
+                    else R.drawable.rounded_rectangle_cover
+                )
+            }
+            play.isVisible = item !is Track
+        }
+
+        val EchoMediaItem.placeHolder
+            get() = when (this) {
+                is Track -> R.drawable.art_music
+                is Artist -> R.drawable.art_artist
+                is Album -> R.drawable.art_album
+                is Playlist -> R.drawable.art_library_music
+                is Radio -> R.drawable.art_sensors
+            }
+
+        val EchoMediaItem.icon
+            get() = when (this) {
+                is Track -> R.drawable.ic_music
+                is Artist -> R.drawable.ic_artist
+                is Album -> R.drawable.ic_album
+                is Playlist -> R.drawable.ic_library_music
+                is Radio -> R.drawable.ic_sensors
+            }
+
+        fun applyCover(
+            item: EchoMediaItem,
+            cover: ImageView,
+            listBg1: View,
+            listBg2: View,
+            icon: ImageView,
+        ) {
+            icon.isVisible = when (item) {
+                is Track, is Artist, is Album -> false
+                else -> true
+            }
+            icon.setImageResource(item.icon)
+            cover.setBackgroundResource(
+                if (item is Artist) R.drawable.rounded_rectangle_cover_profile
+                else R.drawable.rounded_rectangle_cover
+            )
+            val bgVisible = item is EchoMediaItem.Lists
+            listBg1.isVisible = bgVisible
+            listBg2.isVisible = bgVisible
+            cover.updateLayoutParams {
+                height = if (item is Artist) width else WRAP_CONTENT
+            }
+            item.cover.loadInto(cover, item.placeHolder)
+        }
+
+        fun EchoMediaItem.subtitle(context: Context) = when (this) {
+            is Track -> playableString(context) ?: subtitleWithE
+            else -> subtitleWithE
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\viewholders\VideoHorizontalViewHolder.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed.viewholders
+
+import android.graphics.drawable.Animatable
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.databinding.ItemShelfVideoHorizontalBinding
+import com.joaomagdaleno.music_hub.playback.PlayerState
+import com.joaomagdaleno.music_hub.playback.PlayerState.Current.Companion.isPlaying
+import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
+import com.joaomagdaleno.music_hub.ui.feed.FeedType
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.icon
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.placeHolder
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.subtitle
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadInto
+
+class VideoHorizontalViewHolder(
+    parent: ViewGroup,
+    listener: FeedClickListener,
+    getAllTracks: (FeedType) -> Pair<List<Track>, Int>,
+    private val binding: ItemShelfVideoHorizontalBinding = ItemShelfVideoHorizontalBinding.inflate(
+        LayoutInflater.from(parent.context), parent, false
+    )
+) : FeedViewHolder<FeedType.Video>(binding.root) {
+    var feed: FeedType.Video? = null
+
+    init {
+        binding.artistCover.clipToOutline = true
+        binding.cover.clipToOutline = true
+        binding.root.setOnClickListener {
+            val track = feed?.item
+            if (track?.isPlayable != Track.Playable.Yes) {
+                listener.onMediaClicked(it, feed?.extensionId, track, feed?.context)
+                return@setOnClickListener
+            }
+            val (tracks, pos) = getAllTracks(feed!!)
+            listener.onTracksClicked(it, feed?.extensionId, feed?.context, tracks, pos)
+        }
+        binding.root.setOnLongClickListener {
+            listener.onMediaLongClicked(
+                it, feed?.extensionId, feed?.item,
+                feed?.context, feed?.tabId, bindingAdapterPosition
+            )
+            true
+        }
+        binding.more.setOnClickListener {
+            listener.onMediaLongClicked(
+                it, feed?.extensionId, feed?.item,
+                feed?.context, feed?.tabId, bindingAdapterPosition
+            )
+        }
+    }
+
+    override fun bind(feed: FeedType.Video) = with(binding) {
+        this@VideoHorizontalViewHolder.feed = feed
+        val track = feed.item
+        title.text = track.title
+        val sub = track.subtitle(root.context)
+        subtitle.text = sub
+        subtitle.isVisible = !sub.isNullOrBlank()
+        track.cover.loadInto(binding.cover, track.placeHolder)
+        val artist = track.artists.firstOrNull()
+        artist?.cover.loadInto(binding.artistCover, artist?.icon)
+        artistCover.isVisible = artist != null
+    }
+
+    override fun onCurrentChanged(current: PlayerState.Current?) {
+        val isPlaying = current.isPlaying(feed?.item?.id)
+        binding.isPlaying.isVisible = isPlaying
+        (binding.isPlaying.icon as Animatable).start()
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\viewholders\VideoViewHolder.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed.viewholders
+
+import android.graphics.drawable.Animatable
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.databinding.ItemShelfVideoBinding
+import com.joaomagdaleno.music_hub.playback.PlayerState
+import com.joaomagdaleno.music_hub.playback.PlayerState.Current.Companion.isPlaying
+import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
+import com.joaomagdaleno.music_hub.ui.feed.FeedType
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.icon
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.placeHolder
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.subtitle
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadInto
+
+class VideoViewHolder(
+    parent: ViewGroup,
+    listener: FeedClickListener,
+    getAllTracks: (FeedType) -> Pair<List<Track>, Int>,
+    private val binding: ItemShelfVideoBinding = ItemShelfVideoBinding.inflate(
+        LayoutInflater.from(parent.context), parent, false
+    )
+) : FeedViewHolder<FeedType.Video>(binding.root) {
+
+    var feed: FeedType.Video? = null
+
+    init {
+        binding.artistCover.clipToOutline = true
+        binding.cover.clipToOutline = true
+        binding.root.setOnClickListener {
+            val track = feed?.item
+            if (track?.isPlayable != Track.Playable.Yes) {
+                listener.onMediaClicked(it, feed?.extensionId, track, feed?.context)
+                return@setOnClickListener
+            }
+            val (tracks, pos) = getAllTracks(feed!!)
+            listener.onTracksClicked(it, feed?.extensionId, feed?.context, tracks, pos)
+        }
+        binding.root.setOnLongClickListener {
+            listener.onMediaLongClicked(
+                it, feed?.extensionId, feed?.item,
+                feed?.context, feed?.tabId, bindingAdapterPosition
+            )
+            true
+        }
+        binding.more.setOnClickListener {
+            listener.onMediaLongClicked(
+                it, feed?.extensionId, feed?.item,
+                feed?.context, feed?.tabId, bindingAdapterPosition
+            )
+        }
+    }
+
+    override fun bind(feed: FeedType.Video) = with(binding) {
+        this@VideoViewHolder.feed = feed
+        val track = feed.item
+        title.text = track.title
+        val sub = track.subtitle(root.context)
+        subtitle.text = sub
+        subtitle.isVisible = !sub.isNullOrBlank()
+        track.cover.loadInto(binding.cover, track.placeHolder)
+        val artist = track.artists.firstOrNull()
+        artist?.cover.loadInto(binding.artistCover, artist?.icon)
+        artistCover.isVisible = artist != null
+    }
+
+    override fun onCurrentChanged(current: PlayerState.Current?) {
+        val isPlaying = current.isPlaying(feed?.item?.id)
+        binding.isPlaying.isVisible = isPlaying
+        (binding.isPlaying.icon as Animatable).start()
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\viewholders\shelf\ShelfType.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed.viewholders.shelf
+
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.common.models.Track
+
+sealed interface ShelfType {
+    enum class Enum {
+        Category, Media, ThreeTracks
+    }
+
+    val extensionId: String
+    val tabId: String?
+    val type: Enum
+    val id: String
+    val context: EchoMediaItem?
+
+    class Category(
+        override val extensionId: String,
+        override val context: EchoMediaItem?,
+        override val tabId: String?,
+        val category: Shelf.Category,
+    ) : ShelfType {
+        override val type = Enum.Category
+        override val id = category.id
+    }
+
+    class Media(
+        override val extensionId: String,
+        override val context: EchoMediaItem?,
+        override val tabId: String?,
+        val media: EchoMediaItem,
+    ) : ShelfType {
+        override val type = Enum.Media
+        override val id = media.id
+    }
+
+    class ThreeTracks(
+        override val extensionId: String,
+        override val context: EchoMediaItem?,
+        override val tabId: String?,
+        val number: Int?,
+        val tracks: Triple<Track, Track?, Track?>,
+    ) : ShelfType {
+        override val type = Enum.ThreeTracks
+        override val id = tracks.run { "${first.id}-${second?.id}-${third?.id}" }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\feed\viewholders\shelf\ShelfViewHolder.kt ----------
+package com.joaomagdaleno.music_hub.ui.feed.viewholders.shelf
+
+import android.graphics.drawable.Animatable
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
+import com.joaomagdaleno.music_hub.common.models.Artist
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.databinding.ItemShelfCategoryBinding
+import com.joaomagdaleno.music_hub.databinding.ItemShelfListsMediaBinding
+import com.joaomagdaleno.music_hub.databinding.ItemShelfListsThreeTracksBinding
+import com.joaomagdaleno.music_hub.playback.PlayerState
+import com.joaomagdaleno.music_hub.playback.PlayerState.Current.Companion.isPlaying
+import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.CategoryViewHolder.Companion.bind
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.applyCover
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.bind
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.subtitle
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
+
+sealed class ShelfViewHolder<T : ShelfType>(view: View) : ScrollAnimViewHolder(view) {
+    var scrollX = 0
+    abstract fun bind(index: Int, list: List<T>)
+    open fun onCurrentChanged(current: PlayerState.Current?) {}
+
+    class Category(
+        parent: ViewGroup,
+        listener: FeedClickListener,
+        private val binding: ItemShelfCategoryBinding = ItemShelfCategoryBinding.inflate(
+            LayoutInflater.from(parent.context), parent, false
+        ),
+    ) : ShelfViewHolder<ShelfType.Category>(binding.root) {
+
+        private var item: ShelfType.Category? = null
+
+        init {
+            binding.root.setOnClickListener {
+                listener.openFeed(
+                    it,
+                    item?.extensionId,
+                    item?.id,
+                    item?.category?.title,
+                    item?.category?.subtitle,
+                    item?.category?.feed
+                )
+            }
+            binding.root.updateLayoutParams { width = WRAP_CONTENT }
+            binding.icon.clipToOutline = true
+        }
+
+        override fun bind(index: Int, list: List<ShelfType.Category>) {
+            val item = list[index]
+            this.item = item
+            binding.bind(item.category)
+        }
+    }
+
+    class Media(
+        parent: ViewGroup,
+        listener: FeedClickListener,
+        private val binding: ItemShelfListsMediaBinding = ItemShelfListsMediaBinding.inflate(
+            LayoutInflater.from(parent.context), parent, false
+        ),
+    ) : ShelfViewHolder<ShelfType.Media>(binding.root) {
+        var shelf: ShelfType.Media? = null
+
+        init {
+            binding.coverContainer.cover.clipToOutline = true
+            binding.root.setOnClickListener {
+                when (val item = shelf?.media) {
+                    is Track -> {
+                        if (item.isPlayable != Track.Playable.Yes) {
+                            listener.onMediaClicked(it, shelf?.extensionId, item, shelf?.context)
+                        } else listener.onTracksClicked(
+                            it, shelf?.extensionId, shelf?.context, listOf(item), 0
+                        )
+                    }
+
+                    else -> listener.onMediaClicked(it, shelf?.extensionId, item, shelf?.context)
+                }
+            }
+            binding.root.setOnLongClickListener {
+                listener.onMediaLongClicked(
+                    it, shelf?.extensionId, shelf?.media,
+                    shelf?.context, shelf?.tabId, bindingAdapterPosition
+                )
+                true
+            }
+        }
+
+        override fun bind(index: Int, list: List<ShelfType.Media>) {
+            val shelf = list[index]
+            this.shelf = shelf
+            binding.bind(shelf.media)
+        }
+
+        override fun onCurrentChanged(current: PlayerState.Current?) {
+            val isPlaying = current.isPlaying(shelf?.media?.id)
+            binding.coverContainer.isPlaying.isVisible = isPlaying
+            (binding.coverContainer.isPlaying.icon as Animatable).start()
+        }
+    }
+
+    class ThreeTracks(
+        parent: ViewGroup,
+        listener: FeedClickListener,
+        getAllTracks: () -> List<Track>,
+        binding: ItemShelfListsThreeTracksBinding = ItemShelfListsThreeTracksBinding.inflate(
+            LayoutInflater.from(parent.context), parent, false
+        ),
+    ) : ShelfViewHolder<ShelfType.ThreeTracks>(binding.root) {
+        private val bindings = listOf(binding.track1, binding.track2, binding.track3)
+
+        private var shelf: ShelfType.ThreeTracks? = null
+
+        init {
+            bindings.forEachIndexed { index, binding ->
+                binding.coverContainer.cover.clipToOutline = true
+                val actualIndex = shelf?.number?.let { it * 3 + index } ?: index
+                binding.root.setOnClickListener { view ->
+                    val tracks = getAllTracks()
+                    val pos = shelf?.number?.let { it * 3 + index } ?: index
+                    val track = tracks.getOrNull(index)
+                    if (track?.isPlayable != Track.Playable.Yes) listener.onMediaClicked(
+                        view, shelf?.extensionId, track, shelf?.context
+                    ) else listener.onTracksClicked(
+                        view, shelf?.extensionId, shelf?.context, tracks, pos
+                    )
+                }
+                binding.root.setOnLongClickListener {
+                    listener.onMediaLongClicked(
+                        it, shelf?.extensionId, shelf?.tracks?.toList()?.getOrNull(index),
+                        shelf?.context, shelf?.tabId, actualIndex
+                    )
+                    true
+                }
+                binding.more.setOnClickListener {
+                    listener.onMediaLongClicked(
+                        it, shelf?.extensionId, shelf?.tracks?.toList()?.getOrNull(index),
+                        shelf?.context, shelf?.tabId, actualIndex
+                    )
+                }
+            }
+        }
+
+        override fun bind(index: Int, list: List<ShelfType.ThreeTracks>) {
+            val shelf = list[index]
+            this.shelf = shelf
+            val number = shelf.number
+            val tracks = shelf.tracks.toList()
+            bindings.forEachIndexed { index, view ->
+                val track = tracks.getOrNull(index)
+                view.root.isVisible = track != null
+                if (track == null) return@forEachIndexed
+                view.bind(track, number?.let { it * 3 + index })
+            }
+        }
+
+        override fun onCurrentChanged(current: PlayerState.Current?) {
+            val tracks = shelf?.tracks?.toList() ?: return
+            bindings.forEachIndexed { index, binding ->
+                val track = tracks.getOrNull(index) ?: return@forEachIndexed
+                val isPlaying = current.isPlaying(track.id)
+                binding.coverContainer.isPlaying.isVisible = isPlaying
+                (binding.coverContainer.isPlaying.icon as Animatable).start()
+            }
+        }
+    }
+
+    companion object {
+        fun ItemShelfListsMediaBinding.bind(item: EchoMediaItem) {
+            val gravity = if (item is Artist) Gravity.CENTER else Gravity.NO_GRAVITY
+            title.text = item.title
+            title.gravity = gravity
+            val sub = item.subtitle(root.context)
+            subtitle.text = sub
+            subtitle.gravity = gravity
+            subtitle.isVisible = !sub.isNullOrBlank()
+            coverContainer.run { applyCover(item, cover, listBg1, listBg2, icon) }
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\SelectableMediaAdapter.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist
+
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import androidx.recyclerview.widget.DiffUtil
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.databinding.ItemMediaSelectableBinding
+import com.joaomagdaleno.music_hub.databinding.ItemSelectableHeaderBinding
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.shelf.ShelfViewHolder.Companion.bind
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimListAdapter
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimRecyclerAdapter
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
+
+class SelectableMediaAdapter(
+    val listener: Listener
+) : ScrollAnimListAdapter<Pair<EchoMediaItem, Boolean>, SelectableMediaAdapter.ViewHolder>(
+    object : DiffUtil.ItemCallback<Pair<EchoMediaItem, Boolean>>() {
+        override fun areItemsTheSame(
+            oldItem: Pair<EchoMediaItem, Boolean>, newItem: Pair<EchoMediaItem, Boolean>
+        ) = oldItem.first.id == newItem.first.id
+
+        override fun areContentsTheSame(
+            oldItem: Pair<EchoMediaItem, Boolean>, newItem: Pair<EchoMediaItem, Boolean>
+        ) = oldItem == newItem
+    }
+), GridAdapter {
+
+    fun interface Listener {
+        fun onItemSelected(selected: Boolean, item: EchoMediaItem)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = ViewHolder(parent, listener)
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        super.onBindViewHolder(holder, position)
+        holder.bind(getItem(position))
+    }
+
+    class ViewHolder(
+        parent: ViewGroup,
+        val listener: Listener,
+        val binding: ItemMediaSelectableBinding = ItemMediaSelectableBinding.inflate(
+            LayoutInflater.from(parent.context), parent, false
+        )
+    ) : ScrollAnimViewHolder(binding.root) {
+
+        private var item: EchoMediaItem? = null
+
+        init {
+            binding.media.root.setOnClickListener {
+                val item = item ?: return@setOnClickListener
+                listener.onItemSelected(!binding.selected.isVisible, item)
+            }
+            binding.media.coverContainer.cover.clipToOutline = true
+            binding.media.coverContainer.isPlaying.isVisible = false
+        }
+
+        fun bind(item: Pair<EchoMediaItem, Boolean>) {
+            val mediaItem = item.first
+            this.item = mediaItem
+            binding.media.bind(mediaItem)
+            binding.selected.isVisible = item.second
+        }
+    }
+
+    private var header: Header? = null
+    fun withHeader(selectAll: (Boolean) -> Unit): GridAdapter.Concat {
+        val header = Header(selectAll)
+        this.header = header
+        return GridAdapter.Concat(header, this)
+    }
+
+    override fun onCurrentListChanged(
+        previousList: MutableList<Pair<EchoMediaItem, Boolean>>,
+        currentList: MutableList<Pair<EchoMediaItem, Boolean>>
+    ) {
+        header?.submitList(
+            currentList.count { it.second },
+            currentList.all { it.second }
+        )
+    }
+
+    override val adapter = this
+    override fun getSpanSize(position: Int, width: Int, count: Int) = 1
+
+    class Header(
+        private val onSelectAll: (Boolean) -> Unit
+    ) : ScrollAnimRecyclerAdapter<Header.ViewHolder>(), GridAdapter {
+        class ViewHolder(val binding: ItemSelectableHeaderBinding) :
+            ScrollAnimViewHolder(binding.root)
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            val inflater = LayoutInflater.from(parent.context)
+            val binding = ItemSelectableHeaderBinding.inflate(inflater, parent, false)
+            binding.root.setOnClickListener {
+                onSelectAll(!binding.selectAll.isChecked)
+            }
+            return ViewHolder(binding)
+        }
+
+        override fun getItemCount() = 1
+        private var count = 0
+        private var selected = false
+
+        fun submitList(count: Int, selected: Boolean) {
+            this.count = count
+            this.selected = selected
+            notifyItemChanged(0)
+        }
+
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            super.onBindViewHolder(holder, position)
+            holder.binding.selected.run {
+                text = context.getString(R.string.selected_n, count)
+            }
+            holder.binding.selectAll.isChecked = selected
+        }
+
+        override val adapter = this
+        override fun getSpanSize(position: Int, width: Int, count: Int) = count
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\create\CreatePlaylistBottomSheet.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.create
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.databinding.DialogPlaylistCreateBinding
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import org.koin.androidx.viewmodel.ext.android.viewModel
+
+class CreatePlaylistBottomSheet : BottomSheetDialogFragment() {
+
+    var binding by autoCleared<DialogPlaylistCreateBinding>()
+    val viewModel by viewModel<CreatePlaylistViewModel>()
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
+        binding = DialogPlaylistCreateBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        binding.playlistName.setOnEditorActionListener { _, _, _ ->
+            binding.playlistDesc.requestFocus()
+            true
+        }
+
+        binding.playlistDesc.setOnEditorActionListener { _, _, _ ->
+            createPlaylist()
+            true
+        }
+
+        binding.playlistCreateButton.setOnClickListener { createPlaylist() }
+        binding.topAppBar.setNavigationOnClickListener { dismiss() }
+
+        observe(viewModel.createPlaylistStateFlow) {
+            when (it) {
+                CreateState.CreatePlaylist -> {
+                    binding.nestedScrollView.isVisible = true
+                    binding.saving.root.isVisible = false
+                }
+
+                CreateState.Creating -> {
+                    binding.nestedScrollView.isVisible = false
+                    binding.saving.root.isVisible = true
+                    binding.saving.textView.text =
+                        getString(R.string.creating_x, binding.playlistName.text)
+                }
+
+                is CreateState.PlaylistCreated -> {
+                    if (it.playlist != null) parentFragmentManager.setFragmentResult(
+                        "createPlaylist",
+                        Bundle().apply {
+                            putString("extensionId", it.extensionId)
+                            putSerialized("playlist", it.playlist)
+                        }
+                    )
+                    viewModel.createPlaylistStateFlow.value = CreateState.CreatePlaylist
+                    dismiss()
+                }
+            }
+        }
+    }
+
+    private fun createPlaylist() {
+        val title = binding.playlistName.text.toString()
+        if (title.isEmpty()) {
+            binding.playlistName.error = getString(R.string.playlist_name_empty)
+            binding.playlistName.requestFocus()
+            return
+        }
+        val desc = binding.playlistDesc.text.toString().takeIf { it.isNotBlank() }
+        viewModel.createPlaylist(title, desc)
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\create\CreatePlaylistViewModel.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.create
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.joaomagdaleno.music_hub.common.clients.PlaylistEditClient
+import com.joaomagdaleno.music_hub.common.models.Playlist
+import com.joaomagdaleno.music_hub.di.App
+import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getIf
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+
+class CreatePlaylistViewModel(
+    val app: App,
+    val extensionLoader: ExtensionLoader,
+) : ViewModel() {
+    val createPlaylistStateFlow =
+        MutableStateFlow<CreateState>(CreateState.CreatePlaylist)
+    fun createPlaylist(title: String, desc: String?) {
+        val extension = extensionLoader.current.value ?: return
+        createPlaylistStateFlow.value = CreateState.Creating
+        viewModelScope.launch(Dispatchers.IO) {
+            val playlist = extension.getIf<PlaylistEditClient, Playlist>(app.throwFlow) {
+                createPlaylist(title, desc)
+            }
+            createPlaylistStateFlow.value = CreateState.PlaylistCreated(extension.id, playlist)
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\create\CreateState.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.create
+
+import com.joaomagdaleno.music_hub.common.models.Playlist
+
+sealed class CreateState {
+    data object CreatePlaylist : CreateState()
+    data object Creating : CreateState()
+    data class PlaylistCreated(val extensionId: String, val playlist: Playlist?) : CreateState()
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\delete\DeletePlaylistBottomSheet.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.delete
+
+import android.os.Bundle
+import android.view.View
+import androidx.appcompat.app.AlertDialog
+import androidx.core.os.bundleOf
+import androidx.fragment.app.FragmentActivity
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.Playlist
+import com.joaomagdaleno.music_hub.databinding.ItemLoadingBinding
+import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler.Companion.createSnack
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.Serializer.getSerialized
+import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
+
+
+class DeletePlaylistBottomSheet : BottomSheetDialogFragment(R.layout.item_loading) {
+
+    companion object {
+        fun show(
+            activity: FragmentActivity, extensionId: String, item: Playlist, loaded: Boolean = false
+        ): AlertDialog = with(activity) {
+            MaterialAlertDialogBuilder(this)
+                .setTitle(getString(R.string.confirmation))
+                .setMessage(getString(R.string.delete_playlist_confirmation, item.title))
+                .setPositiveButton(getString(R.string.confirm)) { _, _ ->
+                    newInstance(extensionId, item, loaded).show(supportFragmentManager, null)
+                }
+                .setNegativeButton(getString(R.string.cancel)) { dialog, _ ->
+                    dialog.dismiss()
+                }.show()
+        }
+
+        private fun newInstance(
+            extensionId: String, item: Playlist, loaded: Boolean
+        ): DeletePlaylistBottomSheet {
+            return DeletePlaylistBottomSheet().apply {
+                arguments = Bundle().apply {
+                    putString("extensionId", extensionId)
+                    putSerialized("item", item)
+                    putBoolean("loaded", loaded)
+                }
+            }
+        }
+    }
+
+    val args by lazy { requireArguments() }
+    val extensionId by lazy { args.getString("extensionId")!! }
+    val item by lazy { args.getSerialized<Playlist>("item")!!.getOrThrow() }
+    val loaded by lazy { args.getBoolean("loaded", false) }
+
+    val vm by viewModel<DeletePlaylistViewModel> {
+        parametersOf(extensionId, item, loaded)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val binding = ItemLoadingBinding.bind(view)
+        observe(vm.deleteStateFlow) { state ->
+            val result = vm.playlistFlow.value
+            val playlist = result?.getOrNull()
+            val string = when (state) {
+                is DeleteState.Deleted -> {
+                    if (state.result.isSuccess) {
+                        createSnack(getString(R.string.deleted_x, playlist?.title))
+                        parentFragmentManager.setFragmentResult(
+                            "deleted", bundleOf("id" to playlist?.id)
+                        )
+                        parentFragmentManager.setFragmentResult("reloadLibrary", Bundle.EMPTY)
+                    }
+                    dismiss()
+                    return@observe
+                }
+
+                DeleteState.Deleting ->
+                    getString(R.string.deleting_x, playlist?.title)
+
+                DeleteState.Initial ->
+                    getString(R.string.loading_x, playlist?.title)
+            }
+            binding.textView.text = string
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\delete\DeletePlaylistViewModel.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.delete
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.joaomagdaleno.music_hub.common.clients.PlaylistEditClient
+import com.joaomagdaleno.music_hub.common.models.Playlist
+import com.joaomagdaleno.music_hub.di.App
+import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getAs
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class DeletePlaylistViewModel(
+    extensionLoader: ExtensionLoader,
+    private val app: App,
+    private val extensionId: String,
+    private val item: Playlist,
+    private val loaded: Boolean,
+) : ViewModel() {
+
+    val extensionFlow = extensionLoader.music.map { list ->
+        list.find { it.id == extensionId }
+    }.stateIn(viewModelScope, Eagerly, null)
+
+    val playlistFlow = extensionFlow.transformLatest {
+        emit(null)
+        if (it == null) return@transformLatest
+        if (loaded) emit(Result.success(item))
+        else emit(it.getAs<PlaylistEditClient, Playlist> { loadPlaylist(item) })
+    }.stateIn(viewModelScope, Eagerly, null)
+
+    private val deleteFlow = MutableSharedFlow<Unit>()
+    fun delete() = viewModelScope.launch { deleteFlow.emit(Unit) }
+
+    val deleteStateFlow = deleteFlow.transformLatest {
+        emit(DeleteState.Deleting)
+        val result = runCatching {
+            val extension = extensionFlow.value!!
+            val playlist = playlistFlow.value!!.getOrThrow()
+            extension.getAs<PlaylistEditClient, Unit> { deletePlaylist(playlist) }.getOrThrow()
+        }
+        result.getOrElse { app.throwFlow.emit(it) }
+        emit(DeleteState.Deleted(result))
+    }.stateIn(viewModelScope, Eagerly, DeleteState.Initial)
+
+    init {
+        viewModelScope.launch {
+            playlistFlow.first { it != null }
+            delete()
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\delete\DeleteState.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.delete
+
+sealed class DeleteState {
+    data object Initial : DeleteState()
+    data object Deleting : DeleteState()
+    data class Deleted(val result: Result<Unit>) : DeleteState()
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\edit\EditPlaylistBottomSheet.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.edit
+
+import android.content.Context
+import android.os.Bundle
+import android.view.View
+import androidx.core.os.bundleOf
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.Playlist
+import com.joaomagdaleno.music_hub.databinding.ItemLoadingBinding
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.Serializer.getSerialized
+import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
+
+class EditPlaylistBottomSheet : BottomSheetDialogFragment(R.layout.item_loading) {
+    companion object {
+        fun newInstance(
+            extensionId: String, playlist: Playlist, tabId: String?, index: Int
+        ) = EditPlaylistBottomSheet().apply {
+            arguments = Bundle().apply {
+                putString("extensionId", extensionId)
+                putSerialized("playlist", playlist)
+                putString("tabId", tabId)
+                putInt("removeIndex", index)
+            }
+        }
+
+        fun EditPlaylistViewModel.SaveState.toText(
+            playlist: Playlist, context: Context
+        ) = when (this) {
+            is EditPlaylistViewModel.SaveState.Performing -> when (action) {
+                is EditPlaylistViewModel.Action.Add ->
+                    context.getString(R.string.adding_x, tracks.joinToString(", ") { it.title })
+
+                is EditPlaylistViewModel.Action.Move ->
+                    context.getString(R.string.moving_x, tracks.first().title)
+
+                is EditPlaylistViewModel.Action.Remove ->
+                    context.getString(R.string.removing_x, tracks.joinToString(", ") { it.title })
+            }
+
+            EditPlaylistViewModel.SaveState.Saving ->
+                context.getString(R.string.saving_x, playlist.title)
+
+            EditPlaylistViewModel.SaveState.Initial -> context.getString(R.string.loading)
+            is EditPlaylistViewModel.SaveState.Saved -> context.getString(R.string.loading)
+        }
+    }
+
+    val args by lazy { requireArguments() }
+    val extensionId by lazy { args.getString("extensionId")!! }
+    val playlist by lazy { args.getSerialized<Playlist>("playlist")!!.getOrThrow() }
+    val tabId by lazy { args.getString("tabId") }
+    val removeIndex by lazy { args.getInt("removeIndex", -1).takeIf { it != -1 }!! }
+
+    val vm by viewModel<EditPlaylistViewModel> {
+        parametersOf(extensionId, playlist, true, tabId, removeIndex)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val binding = ItemLoadingBinding.bind(view)
+        observe(vm.saveState) { save ->
+            binding.textView.text = save.toText(playlist, requireContext())
+            val save = save as? EditPlaylistViewModel.SaveState.Saved ?: return@observe
+            if (save.result.isSuccess) parentFragmentManager.setFragmentResult(
+                "reload", bundleOf("id" to playlist.id)
+            )
+            dismiss()
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\edit\EditPlaylistFragment.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.edit
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.ConcatAdapter
+import com.joaomagdaleno.music_hub.common.models.Playlist
+import com.joaomagdaleno.music_hub.common.models.Tab
+import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.databinding.FragmentPlaylistEditBinding
+import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyBackPressCallback
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsetsWithChild
+import com.joaomagdaleno.music_hub.ui.feed.TabsAdapter
+import com.joaomagdaleno.music_hub.ui.playlist.edit.EditPlaylistBottomSheet.Companion.toText
+import com.joaomagdaleno.music_hub.ui.playlist.edit.search.EditPlaylistSearchFragment
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.Serializer.getSerialized
+import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import com.joaomagdaleno.music_hub.utils.ui.FastScrollerHelper
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils.configureAppBar
+import kotlinx.coroutines.flow.combine
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
+
+class EditPlaylistFragment : Fragment() {
+
+    companion object {
+        fun getBundle(extension: String, playlist: Playlist, loaded: Boolean) = Bundle().apply {
+            putString("extensionId", extension)
+            putSerialized("playlist", playlist)
+            putBoolean("loaded", loaded)
+        }
+    }
+
+    private val args by lazy { requireArguments() }
+    private val extensionId by lazy { args.getString("extensionId")!! }
+    private val playlist by lazy { args.getSerialized<Playlist>("playlist")!!.getOrThrow() }
+    private val loaded by lazy { args.getBoolean("loaded", false) }
+    private val selectedTab by lazy { args.getString("selectedTabId").orEmpty() }
+
+    private var binding: FragmentPlaylistEditBinding by autoCleared()
+    private val vm by viewModel<EditPlaylistViewModel> {
+        parametersOf(extensionId, playlist, loaded, selectedTab, -1)
+    }
+
+    private val adapter by lazy {
+        val (listener, itemCallback) = PlaylistTrackAdapter.getTouchHelperAndListener(vm)
+        itemCallback.attachToRecyclerView(binding.recyclerView)
+        PlaylistTrackAdapter(listener)
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        binding = FragmentPlaylistEditBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        setupTransition(view)
+        applyInsetsWithChild(binding.appBarLayout, binding.recyclerView, 96) {
+            binding.fabContainer.applyInsets(it)
+        }
+
+        applyBackPressCallback()
+        binding.appBarLayout.configureAppBar { offset ->
+            binding.toolbarOutline.alpha = offset
+            binding.toolbarIconContainer.alpha = 1 - offset
+        }
+
+        binding.toolbar.setNavigationOnClickListener {
+            parentFragmentManager.popBackStack()
+        }
+
+        binding.toolbar.setOnMenuItemClickListener {
+            parentFragmentManager.setFragmentResult("delete", Bundle().apply {
+                putSerialized("playlist", playlist)
+            })
+            parentFragmentManager.popBackStack()
+            true
+        }
+
+        binding.save.setOnClickListener {
+            vm.save()
+        }
+        observe(vm.isSaveable) {
+            binding.save.isEnabled = it
+        }
+
+        binding.add.setOnClickListener {
+            openFragment<EditPlaylistSearchFragment>(
+                it, EditPlaylistSearchFragment.getBundle(extensionId)
+            )
+        }
+        parentFragmentManager.setFragmentResultListener("searchedTracks", this) { _, bundle ->
+            val tracks = bundle.getSerialized<List<Track>>("tracks")!!.getOrNull().orEmpty().toMutableList()
+            vm.edit(
+                EditPlaylistViewModel.Action.Add(
+                    vm.currentTracks.value?.size ?: 0, tracks
+                )
+            )
+        }
+
+        FastScrollerHelper.applyTo(binding.recyclerView)
+
+        val headerAdapter = EditPlaylistHeaderAdapter(this, vm)
+        val tabAdapter = TabsAdapter<Tab>({ title }) { v, index, tab ->
+            vm.selectedTabFlow.value = tab
+        }
+
+        binding.recyclerView.adapter = ConcatAdapter(headerAdapter, tabAdapter, adapter)
+        observe(vm.dataFlow) { headerAdapter.data = it }
+        observe(vm.tabsFlow) { tabAdapter.data = it }
+        observe(vm.selectedTabFlow) { tabAdapter.selected = vm.tabsFlow.value.indexOf(it) }
+        observe(vm.currentTracks) { adapter.submitList(it) }
+
+        val combined = vm.originalList.combine(vm.saveState) { a, b -> a to b }
+        observe(combined) { (tracks, save) ->
+            val trackLoading = tracks == null
+            val saving = save != EditPlaylistViewModel.SaveState.Initial
+            val loading = trackLoading || saving
+            binding.recyclerView.isVisible = !loading
+            binding.fabContainer.isVisible = !loading
+            binding.loading.root.isVisible = loading
+            binding.loading.textView.text = save.toText(playlist, requireContext())
+
+            val save = save as? EditPlaylistViewModel.SaveState.Saved ?: return@observe
+            if (save.result.isSuccess) parentFragmentManager.setFragmentResult(
+                "reload", bundleOf("id" to playlist.id)
+            )
+            parentFragmentManager.popBackStack()
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\edit\EditPlaylistHeaderAdapter.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.edit
+
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.databinding.ItemEditPlaylistHeaderBinding
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadInto
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimRecyclerAdapter
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
+
+class EditPlaylistHeaderAdapter(
+    private val fragment: EditPlaylistFragment,
+    private val viewModel: EditPlaylistViewModel,
+) : ScrollAnimRecyclerAdapter<EditPlaylistHeaderAdapter.ViewHolder>() {
+    class ViewHolder(val binding: ItemEditPlaylistHeaderBinding) :
+        ScrollAnimViewHolder(binding.root)
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        val binding = ItemEditPlaylistHeaderBinding.inflate(inflater, parent, false)
+        binding.playlistName.setOnEditorActionListener { v, actionId, event ->
+            viewModel.nameFlow.value = v.text.toString()
+            binding.playlistDescription.requestFocus()
+            true
+        }
+        binding.playlistDescription.setOnEditorActionListener { v, actionId, event ->
+            viewModel.descriptionFlow.value = v.text.toString()
+            v.clearFocus()
+            true
+        }
+        binding.coverContainer.setOnClickListener {
+            viewModel.changeCover(fragment.requireActivity())
+        }
+        binding.removeCover.setOnClickListener {
+            viewModel.coverFlow.value = EditPlaylistViewModel.CoverState.Removed
+        }
+        return ViewHolder(binding)
+    }
+
+    override fun getItemCount() = 1
+
+    var data: EditPlaylistViewModel.Data? = null
+        set(value) {
+            field = value
+            notifyItemChanged(0)
+        }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        super.onBindViewHolder(holder, position)
+        val binding = holder.binding
+        val (title, desc, coverEditable, cover) = data ?: return
+        binding.playlistName.setText(title)
+        binding.playlistDescription.setText(desc)
+        binding.coverContainer.isVisible = coverEditable
+        binding.removeCover.isVisible = cover != null
+        cover.loadInto(binding.cover, R.drawable.art_add_photo)
+    }
+
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\edit\EditPlaylistViewModel.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.edit
+
+import androidx.core.net.toUri
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.joaomagdaleno.music_hub.common.Extension
+import com.joaomagdaleno.music_hub.common.clients.PlaylistClient
+import com.joaomagdaleno.music_hub.common.clients.PlaylistEditClient
+import com.joaomagdaleno.music_hub.common.clients.PlaylistEditCoverClient
+import com.joaomagdaleno.music_hub.common.clients.PlaylistEditorListenerClient
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.ImageHolder
+import com.joaomagdaleno.music_hub.common.models.ImageHolder.Companion.toResourceUriImageHolder
+import com.joaomagdaleno.music_hub.common.models.Playlist
+import com.joaomagdaleno.music_hub.common.models.Tab
+import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.di.App
+import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getAs
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getIf
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getOrThrow
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.isClient
+import com.joaomagdaleno.music_hub.extensions.InstallationUtils.openFileSelector
+import com.joaomagdaleno.music_hub.utils.CoroutineUtils.combineTransformLatest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.launch
+import java.io.File
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class EditPlaylistViewModel(
+    extensionLoader: ExtensionLoader,
+    private val app: App,
+    private val extensionId: String,
+    private val initial: Playlist,
+    private val loaded: Boolean,
+    private val selectedTab: String?,
+    private val removeIndex: Int,
+) : ViewModel() {
+    val extensionFlow = extensionLoader.music.map { list -> list.find { it.id == extensionId } }
+        .stateIn(viewModelScope, Eagerly, null)
+
+    val playlistFlow = extensionFlow.transformLatest { extension ->
+        emit(null)
+        if (extension == null) return@transformLatest
+        emit(extension.getAs<PlaylistClient, Playlist> {
+            if (!loaded) loadPlaylist(initial) else initial
+        })
+    }.stateIn(viewModelScope, Eagerly, null)
+
+    private val feedFlow = playlistFlow.transformLatest { playlist ->
+        emit(null)
+        val extension = extensionFlow.value ?: return@transformLatest
+        if (playlist == null) return@transformLatest
+        emit(extension.getAs<PlaylistClient, Feed<Track>> {
+            loadTracks(playlist.getOrThrow())
+        })
+    }
+
+    val selectedTabFlow = MutableStateFlow<Tab?>(null)
+    val tabsFlow = feedFlow.map { result ->
+        val tabs = result?.getOrNull()?.tabs ?: emptyList()
+        selectedTabFlow.value = tabs.find { it.id == selectedTab } ?: tabs.firstOrNull()
+        tabs
+    }.stateIn(viewModelScope, Eagerly, emptyList())
+
+    val originalList = feedFlow.combineTransformLatest(selectedTabFlow) { result, tab ->
+        emit(null)
+        if (result == null) return@combineTransformLatest
+        val extension = extensionFlow.value ?: return@combineTransformLatest
+        val tracks = extension.getAs<PlaylistClient, List<Track>> {
+            result.getOrThrow().getPagedData(tab).pagedData.loadAll()
+        }
+        emit(tracks)
+    }.stateIn(viewModelScope, Eagerly, null)
+
+    val currentTracks = MutableStateFlow<List<Track>?>(null)
+    fun edit(action: Action<Track>) {
+        currentTracks.value = currentTracks.value?.toMutableList()?.apply {
+            runCatching {
+                when (action) {
+                    is Action.Add -> addAll(action.index, action.items)
+                    is Action.Move -> add(action.to, removeAt(action.from))
+                    is Action.Remove -> action.indexes.forEach { removeAt(it) }
+                }
+            }.getOrElse {
+                viewModelScope.launch { app.throwFlow.emit(it) }
+            }
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val newActions = currentTracks.transformLatest { current ->
+        emit(null)
+        val list = originalList.value?.getOrNull()
+        if (list == null || current == null) return@transformLatest
+        emit(computeActions(list, current))
+    }.flowOn(Dispatchers.IO).stateIn(viewModelScope, Eagerly, null)
+
+    data class Data(
+        val title: String,
+        val desc: String?,
+        val coverEditable: Boolean,
+        val cover: ImageHolder?,
+    )
+
+    val nameFlow = MutableStateFlow(initial.title)
+    val descriptionFlow = MutableStateFlow(initial.description)
+
+    sealed interface CoverState {
+        data object Initial : CoverState
+        data object Removed : CoverState
+        data class Changed(val file: File) : CoverState
+    }
+
+    val coverFlow = MutableStateFlow<CoverState>(CoverState.Initial)
+    val dataFlow = combineTransformLatest(nameFlow, descriptionFlow, coverFlow, extensionFlow) {
+        val title = it[0] as String
+        val desc = it[1] as String?
+        val cover = it[2] as CoverState
+        val extension = it[3] as Extension<*>?
+        emit(Data(title, desc, false, null))
+        val isEditable = extension?.isClient<PlaylistEditCoverClient>() == true
+        val image = when (cover) {
+            is CoverState.Changed -> cover.file.toUri().toString().toResourceUriImageHolder()
+            CoverState.Initial -> initial.cover
+            CoverState.Removed -> null
+        }
+        emit(Data(title, desc, isEditable, image))
+    }
+
+    sealed interface SaveState {
+        data object Initial : SaveState
+        data class Performing(val action: Action<Track>, val tracks: List<Track>) : SaveState
+        data object Saving : SaveState
+        data class Saved(val result: Result<Unit>) : SaveState
+    }
+
+    private val saveFlow = MutableSharedFlow<Unit>()
+    val isSaveable = newActions.combine(dataFlow) { actions, pair ->
+        val playlist = playlistFlow.value?.getOrNull() ?: return@combine false
+        if (playlist.title != pair.title) return@combine true
+        if (playlist.description != pair.desc) return@combine true
+        if (coverFlow.value != CoverState.Initial) return@combine true
+        !actions.isNullOrEmpty()
+    }
+
+    val saveState = saveFlow.transformLatest {
+        emit(SaveState.Saving)
+        val saved = SaveState.Saved(runCatching {
+            val playlist = playlistFlow.value!!.getOrThrow()
+            val extension = extensionFlow.value!!
+            if (playlist.title != nameFlow.value || playlist.description != descriptionFlow.value) {
+                extension.getAs<PlaylistEditClient, Unit> {
+                    editPlaylistMetadata(playlist, nameFlow.value, descriptionFlow.value)
+                }.getOrThrow()
+            }
+            val cover = coverFlow.value
+            when (cover) {
+                CoverState.Initial -> {}
+                CoverState.Removed -> extension.getAs<PlaylistEditCoverClient, Unit> {
+                    editPlaylistCover(playlist, null)
+                }
+
+                is CoverState.Changed -> extension.getAs<PlaylistEditCoverClient, Unit> {
+                    editPlaylistCover(playlist, cover.file)
+                }
+            }
+
+            val newActions = newActions.value!!
+            if (newActions.isEmpty()) return@runCatching
+
+            var tracks = originalList.value!!.getOrThrow()
+            val selectedTab = selectedTabFlow.value
+            extension.getIf<PlaylistEditorListenerClient, Unit> {
+                onEnterPlaylistEditor(playlist, tracks)
+            }.getOrThrow()
+
+            extension.getAs<PlaylistEditClient, Unit> {
+                newActions.forEach { action ->
+                    when (action) {
+                        is Action.Add -> {
+                            addTracksToPlaylist(playlist, tracks, action.index, action.items)
+                            tracks =
+                                loadTracks(playlist).run { getPagedData(selectedTab).pagedData }
+                                    .loadAll()
+                        }
+
+                        is Action.Move -> {
+                            moveTrackInPlaylist(playlist, tracks, action.from, action.to)
+                            tracks = tracks.toMutableList().apply {
+                                add(action.to, removeAt(action.from))
+                            }
+                        }
+
+                        is Action.Remove -> {
+                            removeTracksFromPlaylist(playlist, tracks, action.indexes)
+                            tracks =
+                                loadTracks(playlist).run { getPagedData(selectedTab).pagedData }
+                                    .loadAll()
+                        }
+                    }
+                }
+            }.getOrThrow()
+            extension.getIf<PlaylistEditorListenerClient, Unit> {
+                onExitPlaylistEditor(playlist, tracks)
+            }.getOrThrow()
+        })
+        saved.result.getOrThrow(app.throwFlow)
+        emit(saved)
+    }.stateIn(viewModelScope, Eagerly, SaveState.Initial)
+
+    fun save() = viewModelScope.launch { saveFlow.emit(Unit) }
+    fun changeCover(activity: FragmentActivity) = viewModelScope.launch {
+        runCatching {
+            coverFlow.value = CoverState.Changed(activity.openFileSelector(fileType = "image/*"))
+        }.getOrThrow(app.throwFlow)
+    }
+
+    init {
+        viewModelScope.launch {
+            originalList.collectLatest {
+                currentTracks.value = it?.getOrNull()
+            }
+        }
+        viewModelScope.launch {
+            if (removeIndex == -1) return@launch
+            currentTracks.first { it != null }
+            edit(Action.Remove(listOf(removeIndex)))
+            newActions.first { it != null }
+            saveFlow.emit(Unit)
+        }
+    }
+
+    sealed interface Action<T> {
+        data class Add<T>(val index: Int, val items: MutableList<T>) : Action<T>
+        data class Remove<T>(val indexes: List<Int>) : Action<T>
+        data class Move<T>(val from: Int, val to: Int) : Action<T>
+    }
+
+    companion object {
+        // I am KR bbg.
+        // Don't forget to subscribe to my OnlyFans at https://github.com/justfoolingaround
+        fun <T> computeActions(
+            old: List<T>, new: List<T>,
+        ): MutableList<Action<T>> {
+            val out = mutableListOf<Action<T>>()
+            val before = old.toMutableList()
+
+            val afterIds = new.map { it }.toSet()
+            val removeIndexes = before.mapIndexedNotNull { index, item ->
+                if (item !in afterIds) index else null
+            }
+
+            if (removeIndexes.isNotEmpty()) {
+                removeIndexes.sortedDescending().forEach { before.removeAt(it) }
+                out.add(Action.Remove(indexes = removeIndexes))
+            }
+
+            val additions = mutableListOf<T>()
+            var addIndex = -1
+            new.forEachIndexed { targetIndex, targetItem ->
+                if (before.none { it == targetItem }) {
+                    if (addIndex == -1) addIndex = targetIndex
+                    additions.add(targetItem)
+                    before.add(targetIndex, targetItem)
+                } else if (additions.isNotEmpty()) {
+                    out.add(Action.Add(index = addIndex, items = additions.toMutableList()))
+                    additions.clear()
+                    addIndex = -1
+                }
+            }
+            if (additions.isNotEmpty()) {
+                out.add(Action.Add(index = addIndex, items = additions))
+            }
+
+            val moveActions = mutableListOf<Action.Move<T>>()
+            new.forEachIndexed { targetIndex, targetItem ->
+                val currentIndex = before.indexOfFirst { it == targetItem }
+                if (currentIndex != -1 && currentIndex != targetIndex) {
+                    moveActions.add(Action.Move(from = currentIndex, to = targetIndex))
+                    val item = before.removeAt(currentIndex)
+                    before.add(targetIndex, item)
+                }
+            }
+
+            var ind = -1
+            var last: Action.Move<T>? = null
+            moveActions.forEach {
+                val l = last
+                if (l != null) {
+                    if (l.from == it.to) {
+                        if (ind == -1) ind = l.from - 1
+                    } else {
+                        if (ind == -1) out.add(l)
+                        else {
+                            out.add(Action.Move(from = ind, to = l.from))
+                            ind = -1
+                        }
+                    }
+                }
+                last = it
+            }
+            val l = last
+            if (l != null) {
+                if (ind != -1) out.add(Action.Move(from = ind, to = l.from))
+                else out.add(l)
+            }
+
+            return out
+        }
+    }
+}
+
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\edit\PlaylistTrackAdapter.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.edit
+
+import android.content.res.ColorStateList
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import androidx.core.view.updatePaddingRelative
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.color.MaterialColors
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.databinding.ItemPlaylistTrackBinding
+import com.joaomagdaleno.music_hub.ui.player.more.upnext.QueueAdapter.Companion.bind
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils.dpToPx
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimListAdapter
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
+
+class PlaylistTrackAdapter(
+    private val listener: Listener,
+) : ScrollAnimListAdapter<Track, PlaylistTrackAdapter.ViewHolder>(DiffCallback) {
+    object DiffCallback : DiffUtil.ItemCallback<Track>() {
+        override fun areItemsTheSame(oldItem: Track, newItem: Track) = oldItem.id == newItem.id
+        override fun areContentsTheSame(oldItem: Track, newItem: Track) = oldItem == newItem
+    }
+
+    interface Listener {
+        fun onTrackClicked(viewHolder: ViewHolder)
+        fun onTrackClosedClicked(viewHolder: ViewHolder)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = ViewHolder(parent, listener)
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        super.onBindViewHolder(holder, position)
+        val track = getItem(position)
+        holder.bind(track)
+    }
+
+    class ViewHolder(
+        parent: ViewGroup,
+        listener: Listener,
+        val binding: ItemPlaylistTrackBinding = ItemPlaylistTrackBinding.inflate(
+            LayoutInflater.from(parent.context), parent, false
+        )
+    ) : ScrollAnimViewHolder(binding.root) {
+        var track: Track? = null
+
+        init {
+            binding.playlistItemClose.setOnClickListener {
+                listener.onTrackClosedClicked(this)
+            }
+            binding.playlistItemDrag.setOnTouchListener { v, event ->
+                if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                    v.performClick()
+                    listener.onTrackClicked(this)
+                }
+                true
+            }
+            val color = MaterialColors.getColor(binding.root, R.attr.echoBackground)
+            binding.root.backgroundTintList = ColorStateList.valueOf(color)
+            binding.playlistItemNowPlaying.isVisible = false
+            binding.playlistItem.updatePaddingRelative(start = 24.dpToPx(binding.root.context))
+        }
+
+        fun bind(track: Track) {
+            this.track = track
+            binding.bind(track)
+        }
+    }
+
+    companion object {
+        fun getTouchHelperAndListener(
+            viewModel: EditPlaylistViewModel
+        ): Pair<Listener, ItemTouchHelper> {
+            val callback = object : ItemTouchHelper.SimpleCallback(
+                ItemTouchHelper.UP or ItemTouchHelper.DOWN, ItemTouchHelper.START
+            ) {
+                override fun getMovementFlags(
+                    recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder
+                ): Int {
+                    if (viewHolder !is ViewHolder) return 0
+                    return makeMovementFlags(ItemTouchHelper.UP or ItemTouchHelper.DOWN, ItemTouchHelper.START)
+                }
+                override fun onMove(
+                    recyclerView: RecyclerView,
+                    viewHolder: RecyclerView.ViewHolder,
+                    target: RecyclerView.ViewHolder
+                ): Boolean {
+                    if (viewHolder !is ViewHolder) return false
+                    if (target !is ViewHolder) return false
+
+                    val fromPos = viewHolder.bindingAdapterPosition
+                    val toPos = target.bindingAdapterPosition
+                    viewModel.edit(EditPlaylistViewModel.Action.Move(fromPos, toPos))
+                    return true
+                }
+
+                override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                    val pos = viewHolder.bindingAdapterPosition
+                    viewModel.edit(EditPlaylistViewModel.Action.Remove(listOf(pos)))
+                }
+            }
+            val itemTouchHelper = ItemTouchHelper(callback)
+            val listener = object : Listener {
+                override fun onTrackClicked(viewHolder: ViewHolder) {
+                    itemTouchHelper.startDrag(viewHolder)
+                }
+
+                override fun onTrackClosedClicked(viewHolder: ViewHolder) {
+                    viewModel.edit(EditPlaylistViewModel.Action.Remove(listOf(viewHolder.bindingAdapterPosition)))
+                }
+            }
+            return listener to itemTouchHelper
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\edit\search\EditPlaylistSearchClickListener.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.edit.search
+
+import android.view.View
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
+
+class EditPlaylistSearchClickListener(fragment: Fragment) : FeedClickListener(
+    fragment, fragment.parentFragmentManager, R.id.playlistSearchContainer
+) {
+
+    private val parentFragment: Fragment
+        get() = fragmentManager.fragments.first().requireParentFragment()
+
+    private val viewModel by lazy {
+        parentFragment.viewModels<EditPlaylistSearchViewModel>().value
+    }
+
+    override fun onTracksClicked(
+        view: View?, extensionId: String?, context: EchoMediaItem?, tracks: List<Track>?, pos: Int
+    ): Boolean {
+        val track = tracks?.getOrNull(pos) ?: return notFoundSnack(R.string.track)
+        viewModel.addTrack(track)
+        return true
+    }
+
+    override fun onMediaClicked(
+        view: View?, extensionId: String?, item: EchoMediaItem?, context: EchoMediaItem?
+    ) = when (item) {
+        is Track -> {
+            viewModel.addTrack(item)
+            true
+        }
+
+        else -> super.onMediaClicked(view, extensionId, item, context)
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\edit\search\EditPlaylistSearchFragment.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.edit.search
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.activity.BackEventCompat
+import androidx.activity.OnBackPressedCallback
+import androidx.core.view.updatePadding
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.databinding.FragmentPlaylistSearchBinding
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
+import com.joaomagdaleno.music_hub.ui.main.search.SearchFragment
+import com.joaomagdaleno.music_hub.ui.playlist.SelectableMediaAdapter
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils.dpToPx
+
+class EditPlaylistSearchFragment : Fragment() {
+    companion object {
+        fun getBundle(extensionId: String) = Bundle().apply {
+            putString("extensionId", extensionId)
+        }
+    }
+
+    private var binding by autoCleared<FragmentPlaylistSearchBinding>()
+    private val viewModel by viewModels<EditPlaylistSearchViewModel>()
+
+    private val args by lazy { requireArguments() }
+    private val extensionId by lazy { args.getString("extensionId")!! }
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
+        binding = FragmentPlaylistSearchBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        setupTransition(view)
+        val behavior = BottomSheetBehavior.from(binding.bottomSheet)
+        binding.bottomSheetDragHandle.setOnClickListener { behavior.state = STATE_EXPANDED }
+        var topInset = 0
+        applyInsets {
+            topInset = it.top
+            behavior.peekHeight = 72.dpToPx(requireContext()) + it.bottom
+            binding.playlistSearchContainer.updatePadding(bottom = it.bottom)
+            binding.recyclerView.updatePadding(top = it.top)
+        }
+
+        val backCallback = object : OnBackPressedCallback(false) {
+            override fun handleOnBackStarted(backEvent: BackEventCompat) =
+                behavior.startBackProgress(backEvent)
+
+            override fun handleOnBackProgressed(backEvent: BackEventCompat) =
+                behavior.updateBackProgress(backEvent)
+
+            override fun handleOnBackPressed() = behavior.handleBackInvoked()
+            override fun handleOnBackCancelled() = behavior.cancelBackProgress()
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backCallback)
+
+        behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+            override fun onStateChanged(p0: View, p1: Int) {
+                backCallback.isEnabled = p1 == STATE_EXPANDED
+            }
+
+            override fun onSlide(p0: View, p1: Float) {
+                binding.selectedSongsLayout.translationY = p1 * topInset
+                binding.recyclerView.alpha = p1
+                binding.bottomSheetDragHandle.alpha = 1 - p1
+            }
+        })
+
+        val searchFragment = binding.playlistSearchContainer.getFragment<SearchFragment>()
+        searchFragment.arguments = Bundle().apply {
+            putString("extensionId", extensionId)
+            putString("feedListener", "playlist_search")
+        }
+        searchFragment.parentFragmentManager.addFragmentOnAttachListener { _, fragment ->
+            val arguments = fragment.arguments ?: Bundle()
+            arguments.putAll(searchFragment.arguments)
+            fragment.arguments = arguments
+        }
+
+        val adapter = SelectableMediaAdapter { _, item ->
+            viewModel.toggleTrack(item as Track)
+        }
+        configureGridLayout(binding.recyclerView, adapter, false)
+        binding.addTracks.setOnClickListener {
+            parentFragmentManager.setFragmentResult("searchedTracks", Bundle().apply {
+                putSerialized("tracks", viewModel.selectedTracks.value)
+            })
+            viewModel.selectedTracks.value = emptyList()
+            parentFragmentManager.popBackStack()
+        }
+
+        observe(viewModel.selectedTracks) { list ->
+            val items = list.map {
+                it to (it in viewModel.selectedTracks.value)
+            }
+            adapter.submitList(items)
+            binding.addTracks.isEnabled = items.isNotEmpty()
+            val tracks = items.size
+            binding.selectedSongs.text = runCatching {
+                resources.getQuantityString(R.plurals.number_songs, tracks, tracks)
+            }.getOrNull() ?: getString(R.string.n_songs, tracks)
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\edit\search\EditPlaylistSearchViewModel.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.edit.search
+
+import androidx.lifecycle.ViewModel
+import com.joaomagdaleno.music_hub.common.models.Track
+import kotlinx.coroutines.flow.MutableStateFlow
+
+class EditPlaylistSearchViewModel : ViewModel() {
+
+    val selectedTracks = MutableStateFlow<List<Track>>(listOf())
+    fun toggleTrack(track: Track) = with(selectedTracks) {
+        val mutable = selectedTracks.value.toMutableList()
+        with(mutable) { if (contains(track)) remove(track) else add(track) }
+        value = mutable
+    }
+
+    fun addTrack(track: Track) = with(selectedTracks) {
+        if(value.contains(track)) return@with
+        val mutable = selectedTracks.value.toMutableList()
+        mutable.add(track)
+        value = mutable
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\save\MediaItemAdapter.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.save
+
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import androidx.recyclerview.widget.DiffUtil
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.databinding.ItemShelfMediaBinding
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.bind
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimListAdapter
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
+
+class MediaItemAdapter(
+    private val listener: Listener,
+) : ScrollAnimListAdapter<MediaItemAdapter.Item, MediaItemAdapter.ViewHolder>(
+    DiffCallback
+), GridAdapter {
+
+    data class Item(val extensionId: String, val item: EchoMediaItem) {
+        val id = extensionId + item.id
+    }
+
+    object DiffCallback : DiffUtil.ItemCallback<Item>() {
+        override fun areItemsTheSame(oldItem: Item, newItem: Item) = oldItem.id == newItem.id
+        override fun areContentsTheSame(oldItem: Item, newItem: Item) = oldItem == newItem
+    }
+
+    fun interface Listener {
+        fun onMediaItemClicked(view: View?, item: Item?)
+    }
+
+    class ViewHolder(
+        parent: ViewGroup,
+        private val listener: Listener,
+        val binding: ItemShelfMediaBinding = ItemShelfMediaBinding.inflate(
+            LayoutInflater.from(parent.context), parent, false
+        )
+    ) : ScrollAnimViewHolder(binding.root) {
+        var item: Item? = null
+
+        init {
+            binding.coverContainer.cover.clipToOutline = true
+            binding.root.setOnClickListener {
+                listener.onMediaItemClicked(it, item)
+            }
+            binding.more.isVisible = false
+        }
+
+        fun bind(item: Item) {
+            this.item = item
+            binding.bind(item.item)
+            binding.play.isVisible = false
+        }
+    }
+
+    override val adapter = this
+    override fun getSpanSize(position: Int, width: Int, count: Int) = count
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = ViewHolder(parent, listener)
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        super.onBindViewHolder(holder, position)
+        val item = getItem(position) ?: return
+        holder.bind(item)
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\save\SaveToPlaylistBottomSheet.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.save
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.common.models.Playlist
+import com.joaomagdaleno.music_hub.databinding.DialogPlaylistSaveBinding
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
+import com.joaomagdaleno.music_hub.ui.playlist.SelectableMediaAdapter
+import com.joaomagdaleno.music_hub.ui.playlist.create.CreatePlaylistBottomSheet
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.Serializer.getSerialized
+import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils.configureBottomBar
+import kotlinx.coroutines.flow.combine
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
+
+class SaveToPlaylistBottomSheet : BottomSheetDialogFragment() {
+
+    companion object {
+        fun newInstance(extensionId: String, item: EchoMediaItem) =
+            SaveToPlaylistBottomSheet().apply {
+                arguments = Bundle().apply {
+                    putString("extensionId", extensionId)
+                    putSerialized("item", item)
+                }
+            }
+    }
+
+    private val args by lazy { requireArguments() }
+    private val extensionId by lazy { args.getString("extensionId")!! }
+    private val item by lazy { args.getSerialized<EchoMediaItem>("item")!!.getOrThrow() }
+
+    private val itemAdapter by lazy {
+        MediaItemAdapter { _, _ -> }
+    }
+
+    private val adapter by lazy {
+        SelectableMediaAdapter { _, item ->
+            viewModel.togglePlaylist(item as Playlist)
+        }
+    }
+
+    private val topBarAdapter by lazy {
+        TopAppBarAdapter(
+            { dismiss() },
+            { CreatePlaylistBottomSheet().show(parentFragmentManager, null) }
+        )
+    }
+
+    private var binding by autoCleared<DialogPlaylistSaveBinding>()
+    private val viewModel by viewModel<SaveToPlaylistViewModel> {
+        parametersOf(extensionId, item)
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
+    ): View {
+        binding = DialogPlaylistSaveBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        configureBottomBar(binding.saveCont)
+        binding.save.setOnClickListener {
+            viewModel.saveTracks()
+        }
+        itemAdapter.submitList(listOf(MediaItemAdapter.Item(extensionId, item)))
+        val combined = viewModel.playlistsFlow.combine(viewModel.saveFlow) { playlists, save ->
+            playlists to save
+        }
+        configureGridLayout(
+            binding.recyclerView,
+            GridAdapter.Concat(
+                topBarAdapter,
+                itemAdapter,
+                adapter.withHeader { viewModel.toggleAll(it) },
+            ),
+            false
+        )
+        observe(combined) { (state, save) ->
+            val playlistLoading = state !is SaveToPlaylistViewModel.PlaylistState.Loaded
+            val saving = save != SaveToPlaylistViewModel.SaveState.Initial
+            val loading = playlistLoading || saving
+            binding.recyclerView.isVisible = !saving
+            binding.loading.root.isVisible = loading
+            binding.loading.textView.text = when (save) {
+                SaveToPlaylistViewModel.SaveState.Initial -> getString(R.string.loading)
+                is SaveToPlaylistViewModel.SaveState.LoadingPlaylist ->
+                    getString(R.string.loading_x, save.playlist.title)
+
+                SaveToPlaylistViewModel.SaveState.LoadingTracks -> getString(
+                    R.string.loading_x,
+                    item.title
+                )
+
+                is SaveToPlaylistViewModel.SaveState.Saved -> {
+                    dismiss()
+                    getString(R.string.not_loading)
+                }
+
+                is SaveToPlaylistViewModel.SaveState.Saving ->
+                    getString(R.string.saving_x, save.playlist.title)
+            }
+            if (state is SaveToPlaylistViewModel.PlaylistState.Loaded) {
+                if (state.list == null) {
+                    dismiss()
+                    return@observe
+                }
+                adapter.submitList(state.list)
+                binding.save.isEnabled = state.list.any { it.second }
+            }
+        }
+
+        parentFragmentManager.setFragmentResultListener(
+            "createPlaylist", this
+        ) { _, _ -> viewModel.refresh() }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\save\SaveToPlaylistViewModel.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.save
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.Extension
+import com.joaomagdaleno.music_hub.common.clients.AlbumClient
+import com.joaomagdaleno.music_hub.common.clients.PlaylistClient
+import com.joaomagdaleno.music_hub.common.clients.PlaylistEditClient
+import com.joaomagdaleno.music_hub.common.clients.PlaylistEditorListenerClient
+import com.joaomagdaleno.music_hub.common.clients.RadioClient
+import com.joaomagdaleno.music_hub.common.models.Album
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.common.models.Feed.Companion.loadAll
+import com.joaomagdaleno.music_hub.common.models.Message
+import com.joaomagdaleno.music_hub.common.models.Playlist
+import com.joaomagdaleno.music_hub.common.models.Radio
+import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.di.App
+import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getAs
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtension
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtensionOrThrow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+
+class SaveToPlaylistViewModel(
+    private val extensionId: String,
+    private val item: EchoMediaItem,
+    private val app: App,
+    extensionLoader: ExtensionLoader,
+) : ViewModel() {
+
+    private val extensions = extensionLoader.music
+    private val extensionFlow = MutableStateFlow<Extension<*>?>(null)
+
+    sealed class SaveState {
+        data object Initial : SaveState()
+        data object LoadingTracks : SaveState()
+        data class LoadingPlaylist(val playlist: Playlist) : SaveState()
+        data class Saving(val playlist: Playlist, val tracks: List<Track>) : SaveState()
+        data class Saved(val success: Boolean) : SaveState()
+    }
+
+    val saveFlow = MutableStateFlow<SaveState>(SaveState.Initial)
+    fun saveTracks() = viewModelScope.launch(Dispatchers.IO) {
+        saveFlow.value = SaveState.LoadingTracks
+        val result = runCatching {
+            val extension = extensionFlow.value!!
+            val playlists = when (val state = playlistsFlow.value) {
+                is PlaylistState.Loaded -> state.list!!.mapNotNull { if (it.second) it.first else null }
+                else -> throw IllegalStateException("Playlists not loaded")
+            }
+            if (playlists.isEmpty()) return@runCatching false
+            saveFlow.value = SaveState.LoadingTracks
+            val tracks = when (item) {
+                is Album ->
+                    extension.getAs<AlbumClient, List<Track>> { loadTracks(item)?.loadAll().orEmpty() }
+
+                is Playlist ->
+                    extension.getAs<PlaylistClient, List<Track>> { loadTracks(item).loadAll() }
+
+                is Radio ->
+                    extension.getAs<RadioClient, List<Track>> { loadTracks(item).loadAll() }
+
+                is Track -> Result.success(listOf(item))
+                else -> null
+            }?.getOrThrow().orEmpty()
+            if (tracks.isEmpty()) return@runCatching false
+
+            playlists.forEach { playlist ->
+                extension.getAs<PlaylistEditClient, Unit> {
+                    saveFlow.value = SaveState.LoadingPlaylist(playlist)
+                    val loaded = loadPlaylist(playlist)
+                    check(loaded.isEditable)
+                    val playlistTracks = loadTracks(loaded).loadAll()
+                    saveFlow.value = SaveState.Saving(loaded, tracks)
+                    val listener = this as? PlaylistEditorListenerClient
+                    listener?.onEnterPlaylistEditor(loaded, playlistTracks)
+                    addTracksToPlaylist(loaded, playlistTracks, playlistTracks.size, tracks)
+                    listener?.onExitPlaylistEditor(loaded, playlistTracks + tracks)
+                }.getOrThrow()
+            }
+            val message =
+                if (playlists.size != 1) app.context.getString(R.string.saved_to_playlists)
+                else app.context.getString(R.string.saved_to_x, playlists.first().title)
+            app.messageFlow.emit(Message(message))
+            true
+        }.getOrElse {
+            app.throwFlow.emit(it)
+            false
+        }
+        saveFlow.value = SaveState.Saved(result)
+    }
+
+    sealed class PlaylistState {
+        data object Initial : PlaylistState()
+        data object Loading : PlaylistState()
+        data class Loaded(val list: List<Pair<Playlist, Boolean>>?) : PlaylistState()
+    }
+
+    val playlistsFlow = MutableStateFlow<PlaylistState>(PlaylistState.Initial)
+    private suspend fun loadPlaylists(): List<Pair<Playlist, Boolean>> {
+        val extension = extensions.getExtensionOrThrow(extensionId)
+        val track = item as? Track
+        return extension.getAs<PlaylistEditClient, List<Pair<Playlist, Boolean>>> {
+            listEditablePlaylists(track)
+        }.getOrThrow()
+    }
+
+    fun refresh() {
+        viewModelScope.launch(Dispatchers.IO) {
+            playlistsFlow.value = PlaylistState.Loading
+            val result = runCatching { loadPlaylists() }.getOrElse {
+                app.throwFlow.emit(it)
+                null
+            }
+            playlistsFlow.value = PlaylistState.Loaded(result)
+        }
+    }
+
+    fun togglePlaylist(playlist: Playlist) {
+        val state = playlistsFlow.value
+        if (state !is PlaylistState.Loaded) return
+        val newList = state.list?.toMutableList() ?: return
+        val index = newList.indexOfFirst { it.first.id == playlist.id }
+        if (index == -1) return
+        newList[index] = newList[index].copy(second = !newList[index].second)
+        playlistsFlow.value = PlaylistState.Loaded(newList)
+    }
+
+    fun toggleAll(selected: Boolean) {
+        val state = playlistsFlow.value
+        if (state !is PlaylistState.Loaded) return
+        val newList = state.list?.map { it.copy(second = selected) } ?: return
+        playlistsFlow.value = PlaylistState.Loaded(newList)
+    }
+
+    init {
+        viewModelScope.launch {
+            extensions.collectLatest {
+                extensionFlow.value = extensions.getExtension(extensionId)
+            }
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            refresh()
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\playlist\save\TopAppBarAdapter.kt ----------
+package com.joaomagdaleno.music_hub.ui.playlist.save
+
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import com.joaomagdaleno.music_hub.databinding.ItemPlaylistSaveHeaderBinding
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimRecyclerAdapter
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
+
+class TopAppBarAdapter(
+    private val onClose: () -> Unit,
+    private val onCreateClicked: () -> Unit
+) : ScrollAnimRecyclerAdapter<TopAppBarAdapter.ViewHolder>(), GridAdapter {
+    inner class ViewHolder(
+        val binding: ItemPlaylistSaveHeaderBinding
+    ) : ScrollAnimViewHolder(binding.root) {
+        init {
+            binding.root.setNavigationOnClickListener {
+                onClose()
+            }
+
+            binding.root.setOnMenuItemClickListener {
+                onCreateClicked()
+                true
+            }
+        }
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return ViewHolder(ItemPlaylistSaveHeaderBinding.inflate(inflater, parent, false))
+
+    }
+
+    override fun getItemCount() = 1
+    override val adapter = this
+    override fun getSpanSize(position: Int, width: Int, count: Int) = count
+}
+

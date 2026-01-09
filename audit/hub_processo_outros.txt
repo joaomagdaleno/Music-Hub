@@ -1,0 +1,4756 @@
+================================================================================
+PROCESS AUDIT: hub_processo_outros.txt
+DATE: 2026-01-08 15:23:52
+FILE COUNT: 45
+================================================================================
+
+---------- FILE: .github\FUNDING.yml ----------
+github: [brahmkshatriya]
+ko_fi: brahmkshatriya
+
+
+---------- FILE: .github\ISSUE_TEMPLATE\bug_report.yml ----------
+name: Bug Report
+description: Report broken or incorrect behaviour
+labels: [bug]
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking your time to fill out this form. For real-time support, consider asking in the `#support` channel on our Discord: https://discord.gg/J3WvbBUU8Z
+
+        Please note that this form is for bug reports only!
+
+  - type: input
+    attributes:
+      label: Summary
+      description: A short summary of the bug report.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Reproduction Steps
+      description: What you did to make it happen.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Expected Result
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Actual Result
+      description: What actually happened?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Device Information
+      description: |
+        Please provide some information of the device you are using.
+        You can get the device info by doing these steps:
+        1) Open Echo
+        2) Go to Settings > About
+        3) Scroll to the bottom
+        4) Long press "Version X.X.X"
+      placeholder: |
+        Echo Version: X.X.X
+        Brand: Samsung
+        Architecture: aarch64
+        Android Version: 11
+    validations:
+      required: true
+
+  - type: checkboxes
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched the open AND closed issues for any duplicates.
+          required: true
+        - label: If this is an issue with an extension, I should be opening an issue in the extension's repository.
+          required: false
+
+  - type: textarea
+    attributes:
+      label: Additional Information
+      description: If there is anything else to say, please do so here.
+
+
+---------- FILE: .github\ISSUE_TEMPLATE\config.yml ----------
+blank_issues_enabled: false
+contact_links:
+  - name: Discord Server
+    url: https://discord.gg/J3WvbBUU8Z
+    about: Join our Discord server for support and updates.
+  - name: Telegram group
+    url: https://t.me/echo_extension
+    about: Join our Telegram discussion group for support and updates.
+
+---------- FILE: .github\ISSUE_TEMPLATE\feature_request.yml ----------
+name: Feature Request
+description: Suggest a feature for Echo
+labels: [enhancement]
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        Please make sure that you have read the entire README.
+#        Especially the [Planned Stuff](https://github.com/saikou-app/saikou#planned-stuff) and [Rejected Stuff](https://github.com/saikou-app/saikou#rejected-stuff).
+
+  - type: input
+    attributes:
+      label: Summary
+      description: A short summary of what your feature request is.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: The Problem
+      description: >
+        What problem is your feature trying to solve?
+        What becomes easier or possible when this feature is implemented?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: The Ideal Solution
+      description: >
+        What is your ideal solution to the problem?
+        What would you like this feature to do?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: The Current Solution
+      description: What is the current solution to the problem, if any?
+    validations:
+      required: false
+
+  - type: checkboxes
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched the open AND closed issues for any duplicates.
+          required: true
+        - label: If this is an issue with an extension, I should be opening an issue in the extension's repository.
+          required: false
+
+  - type: textarea
+    attributes:
+      label: Additional Context
+      description: If there is anything else to say, please do so here.
+
+
+---------- FILE: .github\workflows\debug.yml ----------
+name: Compile Debug
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: { }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+          cache: 'gradle'
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          path: app/build/outputs/apk/debug/app-debug.apk
+
+
+---------- FILE: .github\workflows\deploy-docs.yml ----------
+name: Deploy Docs to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'common/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Grant execute permission for Gradle wrapper
+        run: chmod +x gradlew
+
+      - name: Build Dokka docs
+        run: ./gradlew :common:dokkaGenerate
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./common/build/dokka/html
+          publish_branch: docs
+
+
+---------- FILE: .github\workflows\handle-extension-issues.yml ----------
+name: Handle Extension Issues
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  check-extension-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debug Issue Body
+        run: |
+          echo "Issue body: ${{ github.event.issue.body }}"
+      - name: Check for Extension Checkbox
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issueBody = context.payload.issue.body || '';
+            const extensionCheckboxPattern = /- \[[xX]\]\s*If this is an issue with an extension, I should be opening an issue in the extension's repository\./;
+            console.log(`Checking issue body for checkbox pattern: ${extensionCheckboxPattern}`);
+            if (extensionCheckboxPattern.test(issueBody)) {
+              console.log("Checkbox found! Posting comment and closing issue.");
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                body: "If this is an issue with an extension, please open an issue in the extension's repository."
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                state: "closed",
+                state_reason: "not_planned"
+              });
+            } else {
+              console.log("Checkbox not found in issue body.");
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+---------- FILE: .github\workflows\maven.yml ----------
+name: Maven Publish
+on:
+  release:
+    types: [released, prereleased]
+  workflow_dispatch:
+jobs:
+  publish:
+    name: Release build and publish
+    runs-on: macOS-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 21
+      - name: Publish to MavenCentral
+        run: ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
+
+---------- FILE: .github\workflows\nightly.yml ----------
+name: nightly
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: { }
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: $( echo ${{ github.event.head_commit.id }} | cut -c1-7 )
+      COMMIT: $( sed -E "s/(.*) <.*@.*>/\\1/g;t" <<< "${{ github.event.head_commit.message }}" | jq -Rsa . | tail -c +2 | head -c -2 )
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+          cache: 'gradle'
+
+      - name: Cook KeyStore
+        run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > $GITHUB_WORKSPACE/signing-key.jks
+
+      - name: Cook Google Services
+        run: echo "${{ secrets.GOOGLE_SERVICES_B64 }}" | base64 -d > app/google-services.json
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle
+        run: |
+          ./gradlew assembleNightly \
+          -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
+          -Pandroid.injected.signing.store.password=${{ secrets.PASSWORD }} \
+          -Pandroid.injected.signing.key.alias=key0 \
+          -Pandroid.injected.signing.key.password=${{ secrets.PASSWORD }}
+          cp app/build/outputs/apk/nightly/app-nightly.apk app/build/${{ env.VERSION }}.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          path: app/build/outputs/apk/nightly/app-nightly.apk
+
+      - name: Upload APK to Discord
+        shell: bash
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_NIGHTLY_WEBHOOK }}
+        run: |
+          message=$(echo "@everyone **${{ env.VERSION }}**\n${{ env.COMMIT }}")
+          curl -F "payload_json={\"content\":\"${message}\"}" \
+          -F "echo_beta=@app/build/${{ env.VERSION }}.apk" \
+          ${{ env.WEBHOOK }}
+
+      - name: Upload APK to Telegram
+        shell: bash
+        env:
+          BOT_ID: ${{ secrets.TELEGRAM_BOT_ID }}
+          CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          THREAD_ID: ${{ secrets.TELEGRAM_THREAD_ID }}
+        run: |
+          regex='s/[\_\*\[\]\(\)\~\`\>\#\+\-\=\|\{\}\.\!]/\\&/g'
+          message=$(printf "*Nightly Release*\n${{ env.COMMIT }}" | sed -E "$regex")
+          curl -F "chat_id=${{ env.CHANNEL_ID }}" \
+          -F "message_thread_id=${{ env.THREAD_ID }}" \
+          -F "document=@app/build/${{ env.VERSION }}.apk" \
+          -F "caption=${message}" \
+          -F "parse_mode=MarkdownV2" \
+          https://api.telegram.org/bot${{ env.BOT_ID }}/sendDocument
+
+
+---------- FILE: .github\workflows\pr.yml ----------
+name: pr build
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: { }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+          cache: 'gradle'
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew assembleRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
+
+
+---------- FILE: .github\workflows\stable.yml ----------
+name: stable
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch: { }
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ github.ref_name }}
+      COMMIT: $( sed -E "s/(.*) <.*@.*>/\\1/g;t" <<< "${{ github.event.head_commit.message }}" | jq -Rsa . | tail -c +2 | head -c -2 )
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+          cache: 'gradle'
+
+      - name: Cook KeyStore
+        run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > $GITHUB_WORKSPACE/signing-key.jks
+
+      - name: Cook Google Services
+        run: echo "${{ secrets.GOOGLE_SERVICES_B64 }}" | base64 -d > app/google-services.json
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle
+        run: |
+          ./gradlew assembleStable \
+          -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
+          -Pandroid.injected.signing.store.password=${{ secrets.PASSWORD }} \
+          -Pandroid.injected.signing.key.alias=key0 \
+          -Pandroid.injected.signing.key.password=${{ secrets.PASSWORD }}
+          cp app/build/outputs/apk/stable/app-stable.apk app/build/${{ env.VERSION }}.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          path: app/build/outputs/apk/stable/app-stable.apk
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          make_latest: true
+          body: ${{ env.COMMIT }}
+          files: app/build/${{ env.VERSION }}.apk
+
+      - name: Upload APK to Discord
+        shell: bash
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_RELEASE_WEBHOOK }}
+        run: |
+          message=$(echo "@everyone **${{ env.VERSION }}**\n${{ env.COMMIT }}")
+          curl -F "payload_json={\"content\":\"${message}\"}" \
+          -F "echo_beta=@app/build/${{ env.VERSION }}.apk" \
+          ${{ env.WEBHOOK }}
+
+      - name: Upload APK to Telegram
+        shell: bash
+        env:
+          BOT_ID: ${{ secrets.TELEGRAM_BOT_ID }}
+          CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          THREAD_ID: ${{ secrets.TELEGRAM_THREAD_ID }}
+        run: |
+          regex='s/[\_\*\[\]\(\)\~\`\>\#\+\-\=\|\{\}\.\!]/\\&/g'
+          message=$(printf "${{ env.COMMIT }}" | sed -E "$regex")
+          curl -F "chat_id=${{ env.CHANNEL_ID }}" \
+          -F "message_thread_id=${{ env.THREAD_ID }}" \
+          -F "document=@app/build/${{ env.VERSION }}.apk" \
+          -F "caption=${message}" \
+          -F "parse_mode=MarkdownV2" \
+          https://api.telegram.org/bot${{ env.BOT_ID }}/sendDocument
+
+
+---------- FILE: LICENSE.md ----------
+# Unabandon Public License (UPL)
+
+```
+    Preamble
+```
+This Unabandon Public License (UPL) is designed to ensure the continued development and public availability of source code based on works released under the GNU General Public License Version 3 (GPLv3) while upholding the core principles of GPLv3. This license extends GPLv3 by mandating public accessibility of source code for any derivative works.
+
+```
+    Body
+```
+1. **Incorporation of GPLv3:** This UPL incorporates all terms and conditions of the GNU General Public License Version 3 (GPLv3) as published by the Free Software Foundation. You can find the complete text of GPLv3 at [https://www.gnu.org/licenses/licenses.en.html](https://www.gnu.org/licenses/licenses.en.html).
+
+2. **Public Source Requirement:** In addition to the terms of GPLv3, the source code for any software distributed under this license, including modifications and derivative works, must be publicly available. Public availability means the source code must be accessible to anyone through a publicly accessible repository or download link without any access restrictions or fees.
+
+3. **Source Code Availability:** The source code must be made publicly available using a recognized open-source hosting platform (e.g., GitHub, GitLab) or be downloadable from a publicly accessible website. The chosen method must clearly identify the source code and its corresponding licensed work.
+
+```
+    Termination
+```
+This UPL terminates automatically if the terms and conditions are not followed by the licensee.
+
+---------- FILE: README.md ----------
+# Music Hub
+
+An Extension-based Music Player for Android, designed with a clean and intuitive UI.
+
+## Features
+
+- Modular architecture with support for external music sources.
+- Built with Kotlin Multiplatform and Jetpack Compose.
+- Support for streaming and offline music playback.
+
+## Getting Started
+
+To build the project, open it in Android Studio and sync the Gradle files.
+
+## License
+
+Music Hub is licensed under the Unabandon Public License (UPL).
+
+
+---------- FILE: app\src\main\AndroidManifest.xml ----------
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <!--    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />-->
+    <!--    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />-->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+    <uses-permission android:name="android.permission.DETECT_SCREEN_CAPTURE" />
+
+    <application
+        android:name=".MainApplication"
+        android:appCategory="audio"
+        android:enableOnBackInvokedCallback="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:requestLegacyExternalStorage="true"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:supportsRtl="true"
+        android:theme="@style/Default"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="33">
+        <receiver
+            android:name=".widget.WidgetVertical"
+            android:exported="false"
+            android:label="@string/vertical">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_vertical" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.WidgetCircle"
+            android:exported="false"
+            android:label="@string/circle">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_circle" />
+        </receiver>
+        <receiver
+            android:name=".widget.WidgetHorizontal"
+            android:exported="false"
+            android:label="@string/horizontal">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_horizontal" />
+        </receiver>
+
+        <activity
+            android:name=".MainActivity"
+            android:enableOnBackInvokedCallback="false"
+            android:enabled="true"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="stateVisible|adjustPan">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.media.action.MEDIA_PLAY_FROM_SEARCH" />
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.MUSIC_PLAYER" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.APP_MUSIC" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="echo" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".MainActivity$Back"
+            android:enableOnBackInvokedCallback="true"
+            android:enabled="false"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="stateVisible|adjustPan">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.media.action.MEDIA_PLAY_FROM_SEARCH" />
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.MUSIC_PLAYER" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.APP_MUSIC" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="echo" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.extensions.ExtensionOpenerActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="content" />
+                <data android:host="*" />
+                <data android:scheme="file" />
+                <data android:pathPattern=".*" />
+                <data android:pathPattern=".*\\.eapk" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:enabled="true"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
+
+        <service
+            android:name=".playback.PlayerService"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback"
+            tools:ignore="ExportedService">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaLibraryService" />
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".playback.PlayerCallback$ButtonReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
+
+        <activity android:name=".playback.PlayerService$MainActivityOpener" />
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
+
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+    </application>
+
+</manifest>
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\ApkLinkParser.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions
+
+import org.w3c.dom.Document
+import org.w3c.dom.Node
+import org.xml.sax.Attributes
+import org.xml.sax.helpers.DefaultHandler
+import java.io.File
+import java.io.InputStream
+import java.util.Stack
+import java.util.zip.ZipFile
+import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.parsers.SAXParserFactory
+
+object ApkLinkParser {
+    fun getSupportedLinks(apkFile: File): List<String> {
+        val zip = ZipFile(apkFile)
+        val entry = zip.getEntry("AndroidManifest.xml")
+        val manifest = parse(zip.getInputStream(entry)) ?: return listOf()
+        return manifest.getElementsByTagName("intent-filter").run {
+            (0 until length).flatMap { index ->
+                val intentFilter = item(index)
+                val schemes = mutableListOf<String>()
+                val hosts = mutableListOf<String>()
+                val paths = mutableListOf<String>()
+
+                intentFilter.childNodes.run {
+                    for (i in 0 until length) {
+                        val node = item(i)
+                        fun data(name: String) = node.attributes.getNamedItem(name)?.nodeValue
+                        if (node.nodeName == "data") {
+                            data("android:scheme")?.let { schemes.add(it) }
+                            data("android:host")?.let { hosts.add(it) }
+                            data("android:path")?.let {
+                                paths.add(it)
+                            }
+                        }
+                    }
+
+                    schemes.flatMap { scheme ->
+                        hosts.flatMap { host ->
+                            if (paths.isEmpty()) listOf("$scheme://$host")
+                            else paths.map { path -> "$scheme://$host$path" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun parse(input: InputStream) = runCatching {
+        val xmlDom = XmlDom()
+        runCatching {
+            CompressedXmlParser(xmlDom).parse(input)
+        }.getOrElse {
+            NonCompressedXmlParser(xmlDom).parse(input)
+        }
+        xmlDom.document
+    }.getOrNull()
+
+
+    class Attribute {
+        var name: String? = null
+        var prefix: String? = null
+        var namespace: String? = null
+        var value: String? = null
+    }
+
+    class XmlDom {
+        val document: Document =
+            DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument()
+        private val mStack = Stack<Node?>()
+        private fun isEmpty(text: String?) = text == null || "" == text
+        fun startDocument() {
+            mStack.push(document)
+        }
+
+        fun startElement(
+            uri: String?, localName: String?, qName: String?, attrs: Array<Attribute>
+        ) {
+            val elt = if (isEmpty(uri)) document.createElement(localName)
+            else document.createElementNS(uri, qName)
+
+            for (attr in attrs) {
+                if (isEmpty(attr.namespace)) elt.setAttribute(attr.name, attr.value)
+                else elt.setAttributeNS(attr.namespace, attr.prefix + ':' + attr.name, attr.value)
+            }
+            mStack.peek()!!.appendChild(elt)
+            mStack.push(elt)
+        }
+
+        fun endElement() {
+            mStack.pop()
+        }
+
+        fun text(data: String?) {
+            mStack.peek()!!.appendChild(document.createTextNode(data))
+        }
+
+        fun characterData(data: String?) {
+            mStack.peek()!!.appendChild(document.createCDATASection(data))
+        }
+    }
+
+    //NOT TESTED
+    class NonCompressedXmlParser(private val mListener: XmlDom) {
+        fun parse(input: InputStream) {
+            val factory = SAXParserFactory.newInstance()
+            val saxParser = factory.newSAXParser()
+            val handler = object : DefaultHandler() {
+                override fun startDocument() = mListener.startDocument()
+                override fun startElement(
+                    uri: String?, localName: String?, qName: String, attributes: Attributes
+                ) {
+                    val attrs = Array(attributes.length) { i ->
+                        Attribute().apply {
+                            name = attributes.getQName(i)
+                            namespace = uri
+                            value = attributes.getValue(i)
+                        }
+                    }
+                    mListener.startElement(uri, localName, qName, attrs)
+                }
+
+                override fun characters(ch: CharArray, start: Int, length: Int) {
+                    val data = String(ch, start, length)
+                    mListener.characterData(data)
+                }
+
+                override fun endElement(uri: String?, localName: String?, qName: String) =
+                    mListener.endElement()
+
+                override fun endDocument() {}
+            }
+
+            saxParser.parse(input, handler)
+        }
+    }
+
+    class CompressedXmlParser(private val mListener: XmlDom) {
+
+        fun parse(input: InputStream) {
+            mData = ByteArray(input.available())
+            input.read(mData)
+            input.close()
+            parseCompressedXml()
+        }
+
+        private fun parseCompressedXml() {
+            var word0: Int
+
+            while (mParserOffset < mData.size) {
+                word0 = getLEWord(mParserOffset)
+                when (word0) {
+                    WORD_START_DOCUMENT -> parseStartDocument()
+                    WORD_STRING_TABLE -> parseStringTable()
+                    WORD_RES_TABLE -> parseResourceTable()
+                    WORD_START_NS -> parseNamespace(true)
+                    WORD_END_NS -> parseNamespace(false)
+                    WORD_START_TAG -> parseStartTag()
+                    WORD_END_TAG -> parseEndTag()
+                    WORD_TEXT -> parseText()
+                    else -> mParserOffset += WORD_SIZE
+                }
+            }
+        }
+
+        private fun parseStartDocument() {
+            mListener.startDocument()
+            mParserOffset += 2 * WORD_SIZE
+        }
+
+        private fun parseStringTable() {
+            val chunk = getLEWord(mParserOffset + (1 * WORD_SIZE))
+            mStringsCount = getLEWord(mParserOffset + (2 * WORD_SIZE))
+            mStylesCount = getLEWord(mParserOffset + (3 * WORD_SIZE))
+            val strOffset = mParserOffset + getLEWord(mParserOffset + (5 * WORD_SIZE))
+            mStringsTable = arrayOfNulls(mStringsCount)
+            var offset: Int
+            for (i in 0 until mStringsCount) {
+                offset = strOffset + getLEWord(mParserOffset + ((i + 7) * WORD_SIZE))
+                mStringsTable[i] = getStringFromStringTable(offset)
+            }
+            mParserOffset += chunk
+        }
+
+        private fun parseResourceTable() {
+            val chunk = getLEWord(mParserOffset + (1 * WORD_SIZE))
+            mResCount = (chunk / 4) - 2
+            mResourcesIds = IntArray(mResCount)
+            for (i in 0 until mResCount) {
+                mResourcesIds[i] = getLEWord(mParserOffset + ((i + 2) * WORD_SIZE))
+            }
+            mParserOffset += chunk
+        }
+
+        private fun parseNamespace(start: Boolean) {
+            val prefixIdx = getLEWord(mParserOffset + (4 * WORD_SIZE))
+            val uriIdx = getLEWord(mParserOffset + (5 * WORD_SIZE))
+            val uri = getString(uriIdx)
+            val prefix = getString(prefixIdx)
+            if (start) mNamespaces[uri] = prefix
+            else mNamespaces.remove(uri)
+            mParserOffset += 6 * WORD_SIZE
+        }
+
+        private fun parseStartTag() {
+            val uriIdx = getLEWord(mParserOffset + (4 * WORD_SIZE))
+            val nameIdx = getLEWord(mParserOffset + (5 * WORD_SIZE))
+            val attrCount = getLEShort(mParserOffset + (7 * WORD_SIZE))
+            val name = getString(nameIdx)
+            val (uri, qName) = if (uriIdx == -0x1) "" to name else {
+                val uri = getString(uriIdx)
+                uri to if (mNamespaces.containsKey(uri)) mNamespaces[uri] + ':' + name
+                else name
+            }
+            mParserOffset += 9 * WORD_SIZE
+            val attrs = Array(attrCount) {
+                parseAttribute().also { mParserOffset += 5 * 4 }
+            }
+            mListener.startElement(uri, name, qName, attrs)
+        }
+
+        private fun parseAttribute(): Attribute {
+            val attrNSIdx = getLEWord(mParserOffset)
+            val attrNameIdx = getLEWord(mParserOffset + (1 * WORD_SIZE))
+            val attrValueIdx = getLEWord(mParserOffset + (2 * WORD_SIZE))
+            val attrType = getLEWord(mParserOffset + (3 * WORD_SIZE))
+            val attrData = getLEWord(mParserOffset + (4 * WORD_SIZE))
+
+            val attr = Attribute()
+            attr.name = getString(attrNameIdx)
+
+            if (attrNSIdx == -0x1) {
+                attr.namespace = null
+                attr.prefix = null
+            } else {
+                val uri = getString(attrNSIdx)
+                if (mNamespaces.containsKey(uri)) {
+                    attr.namespace = uri
+                    attr.prefix = mNamespaces[uri]
+                }
+            }
+            attr.value = if (attrValueIdx == -0x1) getAttributeValue(attrType, attrData)
+            else getString(attrValueIdx)
+
+            return attr
+        }
+
+        private fun parseText() {
+            val strIndex = getLEWord(mParserOffset + (4 * WORD_SIZE))
+            val data = getString(strIndex)
+            mListener.characterData(data)
+            mParserOffset += 7 * WORD_SIZE
+        }
+
+        private fun parseEndTag() {
+            mListener.endElement()
+            mParserOffset += 6 * WORD_SIZE
+        }
+
+        private fun getString(index: Int): String? {
+            val res = if (index in 0..<mStringsCount) mStringsTable[index] else null
+            return res
+        }
+
+        private fun getStringFromStringTable(offset: Int): String {
+            val strLength: Int
+            val chars: ByteArray
+            if (mData[offset + 1] == mData[offset]) {
+                strLength = mData[offset].toInt()
+                chars = ByteArray(strLength)
+                for (i in 0 until strLength) {
+                    chars[i] = mData[offset + 2 + i]
+                }
+            } else {
+                strLength =
+                    ((mData[offset + 1].toInt() shl 8) and 0xFF00) or (mData[offset].toInt() and 0xFF)
+                chars = ByteArray(strLength)
+                for (i in 0 until strLength) {
+                    chars[i] = mData[offset + 2 + (i * 2)]
+                }
+            }
+            return String(chars)
+        }
+
+        private fun getLEWord(off: Int) = (((mData[off + 3].toInt() shl 24) and -0x1000000)
+                or ((mData[off + 2].toInt() shl 16) and 0x00ff0000)
+                or ((mData[off + 1].toInt() shl 8) and 0x0000ff00)
+                or ((mData[off + 0].toInt() shl 0) and 0x000000ff))
+
+        private fun getLEShort(off: Int) =
+            ((mData[off + 1].toInt() shl 8) and 0xff00) or ((mData[off + 0].toInt() shl 0) and 0x00ff)
+
+        private fun getAttributeValue(type: Int, data: Int) = when (type) {
+            TYPE_STRING -> getString(data)
+            TYPE_ID_REF -> String.format("@id/0x%08X", data)
+            TYPE_ATTR_REF -> String.format("?id/0x%08X", data)
+            else -> String.format("%08X/0x%08X", type, data)
+        }
+
+        private val mNamespaces: MutableMap<String?, String?> = HashMap()
+        private lateinit var mData: ByteArray
+
+        private lateinit var mStringsTable: Array<String?>
+        private lateinit var mResourcesIds: IntArray
+        private var mStringsCount = 0
+        private var mStylesCount = 0
+        private var mResCount = 0
+        private var mParserOffset = 0
+
+        companion object {
+            const val WORD_START_DOCUMENT: Int = 0x00080003
+
+            const val WORD_STRING_TABLE: Int = 0x001C0001
+            const val WORD_RES_TABLE: Int = 0x00080180
+
+            const val WORD_START_NS: Int = 0x00100100
+            const val WORD_END_NS: Int = 0x00100101
+            const val WORD_START_TAG: Int = 0x00100102
+            const val WORD_END_TAG: Int = 0x00100103
+            const val WORD_TEXT: Int = 0x00100104
+            const val WORD_SIZE: Int = 4
+
+            private const val TYPE_ID_REF = 0x01000008
+            private const val TYPE_ATTR_REF = 0x02000008
+            private const val TYPE_STRING = 0x03000008
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\ExtensionInfoFragment.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions
+
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.net.toUri
+import androidx.preference.Preference
+import androidx.preference.PreferenceCategory
+import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceGroup
+import androidx.preference.SwitchPreferenceCompat
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.Extension
+import com.joaomagdaleno.music_hub.common.models.ExtensionType
+import com.joaomagdaleno.music_hub.common.models.ImageHolder
+import com.joaomagdaleno.music_hub.common.models.ImportType
+import com.joaomagdaleno.music_hub.common.settings.Setting
+import com.joaomagdaleno.music_hub.common.settings.SettingCategory
+import com.joaomagdaleno.music_hub.common.settings.SettingItem
+import com.joaomagdaleno.music_hub.common.settings.SettingList
+import com.joaomagdaleno.music_hub.common.settings.SettingMultipleChoice
+import com.joaomagdaleno.music_hub.common.settings.SettingOnClick
+import com.joaomagdaleno.music_hub.common.settings.SettingSlider
+import com.joaomagdaleno.music_hub.common.settings.SettingSwitch
+import com.joaomagdaleno.music_hub.common.settings.SettingTextInput
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.extensionPrefId
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.toSettings
+import com.joaomagdaleno.music_hub.playback.PlayerService.Companion.STREAM_QUALITY
+import com.joaomagdaleno.music_hub.playback.PlayerService.Companion.streamQualities
+import com.joaomagdaleno.music_hub.ui.settings.BaseSettingsFragment
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.PermsUtils.registerActivityResultLauncher
+import com.joaomagdaleno.music_hub.utils.Serializer.getSerialized
+import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized
+import com.joaomagdaleno.music_hub.utils.exportExtensionSettings
+import com.joaomagdaleno.music_hub.utils.importExtensionSettings
+import com.joaomagdaleno.music_hub.utils.ui.prefs.LoadingPreference
+import com.joaomagdaleno.music_hub.utils.ui.prefs.MaterialListPreference
+import com.joaomagdaleno.music_hub.utils.ui.prefs.MaterialMultipleChoicePreference
+import com.joaomagdaleno.music_hub.utils.ui.prefs.MaterialSliderPreference
+import com.joaomagdaleno.music_hub.utils.ui.prefs.MaterialTextInputPreference
+import com.joaomagdaleno.music_hub.utils.ui.prefs.TransitionPreference
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
+
+class ExtensionInfoFragment : BaseSettingsFragment() {
+    private val args by lazy { requireArguments() }
+    private val name by lazy { args.getString("name")!! }
+    private val extensionId by lazy { args.getString("id")!! }
+    private val extensionType by lazy { args.getString("type")!! }
+    private val extIcon by lazy { args.getSerialized<ImageHolder?>("icon")?.getOrThrow() }
+
+    private val viewModel by viewModel<ExtensionInfoViewModel> {
+        parametersOf(ExtensionType.valueOf(extensionType), extensionId)
+    }
+    private val extensionsViewModel by activityViewModel<ExtensionsViewModel>()
+
+    override val title get() = name
+    override val icon get() = extIcon
+    override val creator = { ExtensionPreference().apply { arguments = args } }
+
+    companion object {
+        fun getBundle(
+            name: String, id: String, type: ExtensionType, icon: ImageHolder?,
+        ) = Bundle().apply {
+            putString("name", name)
+            putString("id", id)
+            putString("type", type.name)
+            putSerialized("icon", icon)
+        }
+
+        fun getBundle(extension: Extension<*>) =
+            getBundle(extension.name, extension.id, extension.type, extension.metadata.icon)
+
+        fun Activity.openLink(url: String) {
+            val intent = Intent(Intent.ACTION_VIEW).apply { data = url.toUri() }
+            runCatching { startActivity(intent) }
+        }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        observe(viewModel.stateFlow) { state ->
+            val extension = state?.extension ?: return@observe
+            val metadata = extension.metadata
+            binding.toolBar.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.menu_uninstall -> {
+                        parentFragmentManager.popBackStack()
+                        extensionsViewModel.uninstall(requireActivity(), extension)
+                        true
+                    }
+
+                    R.id.menu_repo -> {
+                        requireActivity().openLink(metadata.repoUrl!!)
+                        true
+                    }
+
+                    R.id.menu_update -> {
+                        extensionsViewModel.update(extension)
+                        true
+                    }
+
+                    else -> false
+                }
+            }
+            if (metadata.importType != ImportType.BuiltIn) {
+                binding.toolBar.menu.clear()
+                binding.toolBar.inflateMenu(R.menu.extensions_menu)
+                if (metadata.repoUrl == null) binding.toolBar.menu.removeItem(R.id.menu_repo)
+            }
+        }
+    }
+
+    class ExtensionPreference : PreferenceFragmentCompat() {
+        private val extensionId by lazy { arguments?.getString("id")!! }
+        private val extensionType by lazy { arguments?.getString("type")!! }
+        private val viewModel by lazy {
+            requireParentFragment().viewModel<ExtensionInfoViewModel> {
+                parametersOf(ExtensionType.valueOf(extensionType), extensionId)
+            }.value
+        }
+
+        override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+            super.onViewCreated(view, savedInstanceState)
+            configure()
+        }
+
+        override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+            val context = preferenceManager.context
+            preferenceManager.sharedPreferencesName = extensionPrefId(extensionType, extensionId)
+            preferenceManager.sharedPreferencesMode = Context.MODE_PRIVATE
+            val prefs = preferenceManager.sharedPreferences ?: return
+            val settings = toSettings(prefs)
+            prefs.registerOnSharedPreferenceChangeListener { _, key ->
+                viewModel.onSettingsChanged(settings, key)
+            }
+            preferenceManager.setOnPreferenceTreeClickListener {
+                viewModel.onSettingsChanged(settings, it.key)
+                true
+            }
+            observe(viewModel.stateFlow) { state ->
+                val extension = state?.extension
+                val screen = preferenceManager.createPreferenceScreen(context)
+                preferenceScreen = screen
+                if (extension == null) {
+                    screen.addPreference(LoadingPreference(context))
+                    return@observe
+                }
+                val infoPreference = ExtensionInfoPreference(
+                    this@ExtensionPreference, extension, state.isLoginClient
+                )
+                screen.addPreference(infoPreference)
+                if (extension.type == ExtensionType.MUSIC) MaterialListPreference(context).apply {
+                    key = STREAM_QUALITY
+                    title = getString(R.string.stream_quality)
+                    summary = getString(R.string.x_specific_quality_summary, extension.name)
+                    entries =
+                        context.resources.getStringArray(R.array.stream_qualities) + getString(R.string.off)
+                    entryValues = streamQualities + "off"
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    setDefaultValue("off")
+                    screen.addPreference(this)
+                }
+                state.settings.forEach { it.addPreferenceTo(screen) }
+
+                TransitionPreference(context).apply {
+                    key = "export"
+                    title = getString(R.string.export_settings)
+                    summary = getString(R.string.export_settings_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    screen.addPreference(this)
+                    setOnPreferenceClickListener {
+                        val contract = ActivityResultContracts.CreateDocument("application/json")
+                        requireActivity().registerActivityResultLauncher(contract) { uri ->
+                            uri?.let {
+                                context.exportExtensionSettings(extensionType, extensionId, it)
+                            }
+                        }.launch("echo-$extensionType-$extensionId-settings.json".lowercase())
+                        true
+                    }
+                }
+
+                TransitionPreference(context).apply {
+                    key = "import"
+                    title = getString(R.string.import_settings)
+                    summary = getString(R.string.import_settings_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    screen.addPreference(this)
+                    setOnPreferenceClickListener {
+                        val contract = ActivityResultContracts.OpenDocument()
+                        requireActivity().registerActivityResultLauncher(contract) {
+                            it?.let {
+                                context.importExtensionSettings(extensionType, extensionId, it)
+                                requireActivity().recreate()
+                            }
+                        }.launch(arrayOf("application/json"))
+                        true
+                    }
+                }
+            }
+        }
+
+        private fun Setting.addPreferenceTo(preferenceGroup: PreferenceGroup) {
+            val context = preferenceGroup.context
+            when (this) {
+                is SettingCategory -> {
+                    PreferenceCategory(context).also {
+                        it.title = this.title
+                        it.key = this.key
+
+                        it.isIconSpaceReserved = false
+                        it.layoutResource = R.layout.preference_category
+                        preferenceGroup.addPreference(it)
+
+                        this.items.forEach { item ->
+                            item.addPreferenceTo(it)
+                        }
+                    }
+                }
+
+                is SettingItem -> {
+                    Preference(context).also {
+                        it.title = this.title
+                        it.key = this.key
+                        it.summary = this.summary
+
+                        it.isIconSpaceReserved = false
+                        it.layoutResource = R.layout.preference
+                        preferenceGroup.addPreference(it)
+                    }
+                }
+
+                is SettingSwitch -> {
+                    SwitchPreferenceCompat(context).also {
+                        it.title = this.title
+                        it.key = this.key
+                        it.summary = this.summary
+                        it.setDefaultValue(this.defaultValue)
+
+                        it.isIconSpaceReserved = false
+                        it.layoutResource = R.layout.preference_switch
+                        preferenceGroup.addPreference(it)
+                    }
+                }
+
+                is SettingList -> {
+                    MaterialListPreference(context).also {
+                        it.title = this.title
+                        it.key = this.key
+                        it.summary = this.summary
+                        defaultEntryIndex?.let { index ->
+                            it.setDefaultValue(this.entryValues[index])
+                        }
+                        it.entries = this.entryTitles.toTypedArray()
+                        it.entryValues = this.entryValues.toTypedArray()
+
+                        it.isIconSpaceReserved = false
+                        it.layoutResource = R.layout.preference
+                        preferenceGroup.addPreference(it)
+                    }
+                }
+
+                is SettingMultipleChoice -> {
+                    MaterialMultipleChoicePreference(context).also {
+                        it.title = this.title
+                        it.key = this.key
+                        it.summary = this.summary
+                        defaultEntryIndices?.let { indices ->
+                            it.setDefaultValue(indices.mapNotNull { index ->
+                                entryValues.getOrNull(index)
+                            }.toSet())
+                        }
+                        it.entries = this.entryTitles.toTypedArray()
+                        it.entryValues = this.entryValues.toTypedArray()
+
+                        it.isIconSpaceReserved = false
+                        it.layoutResource = R.layout.preference
+                        preferenceGroup.addPreference(it)
+                    }
+                }
+
+                is SettingTextInput -> {
+                    MaterialTextInputPreference(context).also {
+                        it.title = this.title
+                        it.key = this.key
+                        it.summary = this.summary
+                        it.text = this.defaultValue
+
+                        it.isIconSpaceReserved = false
+                        it.layoutResource = R.layout.preference
+                        preferenceGroup.addPreference(it)
+                    }
+                }
+
+                is SettingSlider -> {
+                    MaterialSliderPreference(context, from, to, steps, allowOverride).also {
+                        it.title = this.title
+                        it.key = this.key
+                        it.summary = this.summary
+                        it.setDefaultValue(this.defaultValue)
+
+                        it.isIconSpaceReserved = false
+                        preferenceGroup.addPreference(it)
+                    }
+                }
+
+                is SettingOnClick -> {
+                    TransitionPreference(context).also {
+                        it.title = this.title
+                        it.key = this.key
+                        it.summary = this.summary
+                        it.setOnPreferenceClickListener {
+                            viewModel.onSettingsClick(onClick)
+                            true
+                        }
+                        it.isIconSpaceReserved = false
+                        it.layoutResource = R.layout.preference
+                        preferenceGroup.addPreference(it)
+                    }
+                }
+            }
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\ExtensionInfoPreference.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions
+
+import android.annotation.SuppressLint
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.method.LinkMovementMethod
+import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
+import androidx.preference.Preference
+import androidx.preference.PreferenceViewHolder
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.Extension
+import com.joaomagdaleno.music_hub.common.models.ExtensionType
+import com.joaomagdaleno.music_hub.databinding.ItemLoginUserBinding
+import com.joaomagdaleno.music_hub.databinding.PreferenceExtensionInfoBinding
+import com.joaomagdaleno.music_hub.extensions.db.models.CurrentUser
+import com.joaomagdaleno.music_hub.extensions.db.models.UserEntity.Companion.toEntity
+import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
+import com.joaomagdaleno.music_hub.ui.extensions.ExtensionInfoFragment.Companion.openLink
+import com.joaomagdaleno.music_hub.ui.extensions.login.LoginFragment
+import com.joaomagdaleno.music_hub.ui.extensions.login.LoginUserListBottomSheet
+import com.joaomagdaleno.music_hub.ui.extensions.login.LoginUserListViewModel
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadInto
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.addOnDestroyObserver
+import com.joaomagdaleno.music_hub.utils.ui.SimpleItemSpan
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+
+class ExtensionInfoPreference(
+    private val fragment: Fragment,
+    private val extension: Extension<*>,
+    private val isLoginClient: Boolean,
+) : Preference(fragment.requireContext()) {
+
+    private val viewModel by fragment.activityViewModel<ExtensionsViewModel>()
+    private val loginViewModel by fragment.activityViewModel<LoginUserListViewModel>()
+
+    init {
+        layoutResource = R.layout.preference_extension_info
+        if (isLoginClient) {
+            loginViewModel.currentExtension.value = extension
+            fragment.addOnDestroyObserver {
+                loginViewModel.currentExtension.value = viewModel.extensionLoader.current.value
+            }
+        }
+    }
+
+    @SuppressLint("SetTextI18n")
+    override fun onBindViewHolder(holder: PreferenceViewHolder) {
+        val binding = PreferenceExtensionInfoBinding.bind(holder.itemView)
+        val metadata = extension.metadata
+        binding.extensionDetails.text =
+            "${metadata.version} • ${metadata.importType.name}"
+
+        val byAuthor = fragment.getString(R.string.by_x, metadata.author)
+        val type = getType(extension.type)
+        val typeString = fragment.getString(R.string.x_extension, fragment.getString(type))
+        val span = SpannableString("$typeString\n\n${metadata.description}\n\n$byAuthor")
+        val authUrl = metadata.authorUrl
+        if (authUrl != null) {
+            val itemSpan = SimpleItemSpan(context) {
+                fragment.requireActivity().openLink(authUrl)
+            }
+            val start = span.length - metadata.author.length
+            span.setSpan(itemSpan, start, span.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+        binding.extensionDescription.text = span
+        binding.extensionDescription.movementMethod = LinkMovementMethod.getInstance()
+
+        fun updateText(enabled: Boolean) {
+            binding.extensionEnabledText.text = fragment.getString(
+                if (enabled) R.string.enabled else R.string.disabled
+            )
+        }
+        binding.extensionEnabledSwitch.apply {
+            updateText(metadata.isEnabled)
+            isChecked = metadata.isEnabled
+            setOnCheckedChangeListener { _, isChecked ->
+                updateText(isChecked)
+                viewModel.setExtensionEnabled(extension.type, metadata.id, isChecked)
+            }
+            binding.extensionEnabled.setOnClickListener { toggle() }
+        }
+        if (isLoginClient) binding.extensionLoginUser.bind(fragment)
+        else binding.extensionLoginUser.root.isVisible = false
+    }
+
+    companion object {
+        fun getType(type: ExtensionType) = when (type) {
+            ExtensionType.MUSIC -> R.string.music
+            ExtensionType.TRACKER -> R.string.tracker
+            ExtensionType.LYRICS -> R.string.lyrics
+            ExtensionType.MISC -> R.string.misc
+        }
+
+        private fun ItemLoginUserBinding.bind(fragment: Fragment) = with(fragment) {
+            val viewModel by activityViewModel<LoginUserListViewModel>()
+            val binding = this@bind
+
+            binding.switchAccount.setOnClickListener {
+                LoginUserListBottomSheet().show(parentFragmentManager, null)
+            }
+            observe(viewModel.currentUser) { user ->
+                binding.login.isVisible = user == null
+                binding.notLoggedInContainer.isVisible = user == null
+
+                binding.logout.isVisible = user != null
+                binding.userContainer.isVisible = user != null
+
+                val ext = viewModel.currentExtension.value
+                binding.login.setOnClickListener {
+                    ext ?: return@setOnClickListener
+                    requireActivity().openFragment<LoginFragment>(
+                        null,
+                        LoginFragment.getBundle(ext.id, ext.name, ext.type)
+                    )
+                }
+
+                binding.logout.setOnClickListener {
+                    ext ?: return@setOnClickListener
+                    viewModel.logout(user?.toEntity(ext.type, ext.id))
+                    viewModel.setLoginUser(CurrentUser(ext.type, ext.id, null))
+                }
+
+                binding.incognito.setOnClickListener {
+                    ext ?: return@setOnClickListener
+                    viewModel.setLoginUser(CurrentUser(ext.type, ext.id, null))
+                }
+
+                binding.currentUserName.text = user?.name
+                binding.currentUserSubTitle.text = user?.subtitle ?: ext?.name
+                user?.cover.loadInto(binding.currentUserAvatar, R.drawable.ic_account_circle)
+            }
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\ExtensionInfoViewModel.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.joaomagdaleno.music_hub.common.Extension
+import com.joaomagdaleno.music_hub.common.clients.LoginClient
+import com.joaomagdaleno.music_hub.common.clients.SettingsChangeListenerClient
+import com.joaomagdaleno.music_hub.common.models.ExtensionType
+import com.joaomagdaleno.music_hub.common.providers.SettingsProvider
+import com.joaomagdaleno.music_hub.common.settings.Setting
+import com.joaomagdaleno.music_hub.common.settings.Settings
+import com.joaomagdaleno.music_hub.di.App
+import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.get
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getIf
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getOrThrow
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.isClient
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.runIf
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.launch
+
+class ExtensionInfoViewModel(
+    val app: App,
+    val extensionLoader: ExtensionLoader,
+    val type: ExtensionType,
+    val id: String,
+) : ViewModel() {
+
+    private val reload = MutableSharedFlow<Unit>(1).also {
+        viewModelScope.launch { it.emit(Unit) }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val stateFlow = extensionLoader.getFlow(type).combine(reload) { a, _ -> a }
+        .transformLatest { list ->
+            emit(null)
+            val ext = list.find { it.id == id } ?: return@transformLatest
+            emit(
+                State(
+                    ext,
+                    ext.isClient<LoginClient>(),
+                    ext.isClient<SettingsChangeListenerClient>(),
+                    ext.getIf<SettingsProvider, List<Setting>>(app.throwFlow) {
+                        getSettingItems()
+                    }.orEmpty()
+                )
+            )
+        }.stateIn(viewModelScope, Eagerly, null)
+
+    data class State(
+        val extension: Extension<*>?,
+        val isLoginClient: Boolean,
+        val isPlaylistEditClient: Boolean,
+        val settings: List<Setting>,
+    )
+
+    fun onSettingsChanged(settings: Settings, key: String?) = viewModelScope.launch {
+        stateFlow.value?.extension?.runIf<SettingsChangeListenerClient>(app.throwFlow) {
+            onSettingsChanged(settings, key)
+        }
+    }
+
+    fun onSettingsClick(onClick: suspend () -> Unit) = viewModelScope.launch {
+        stateFlow.value?.extension?.get { onClick() }?.getOrThrow(app.throwFlow)
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\ExtensionInstallerBottomSheet.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
+import android.os.Bundle
+import android.provider.Settings
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
+import androidx.core.net.toUri
+import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.ImportType
+import com.joaomagdaleno.music_hub.databinding.DialogExtensionInstallerBinding
+import com.joaomagdaleno.music_hub.extensions.exceptions.ExtensionLoaderException
+import com.joaomagdaleno.music_hub.extensions.repo.ExtensionParser.Companion.PACKAGE_FLAGS
+import com.joaomagdaleno.music_hub.ui.extensions.ExtensionInfoPreference.Companion.getType
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadAsCircle
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import java.io.File
+
+class ExtensionInstallerBottomSheet : BottomSheetDialogFragment() {
+
+    companion object {
+        fun newInstance(
+            file: File,
+        ) = ExtensionInstallerBottomSheet().apply {
+            arguments = Bundle().apply {
+                putString("file", file.absolutePath)
+            }
+        }
+
+        fun Context.createLinksDialog(
+            file: File, links: List<String>
+        ): AlertDialog = MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.allow_opening_links))
+            .setMessage(
+                links.joinToString("\n") + "\n" + getString(R.string.open_links_instruction)
+            )
+            .setPositiveButton(getString(R.string.okay)) { dialog, _ ->
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                val packageName = packageManager
+                    .getPackageArchiveInfo(file.absolutePath, PACKAGE_FLAGS)?.packageName
+                intent.setData("package:$packageName".toUri())
+                startActivity(intent)
+                dialog.dismiss()
+            }
+            .setNegativeButton(getString(R.string.cancel)) { dialog, _ -> dialog.dismiss() }
+            .show()
+    }
+
+    private var binding by autoCleared<DialogExtensionInstallerBinding>()
+    private val viewModel by activityViewModel<ExtensionsViewModel>()
+
+    private val args by lazy { requireArguments() }
+    private val file by lazy { File(args.getString("file")!!) }
+    private val supportedLinks by lazy {
+        runCatching { ApkLinkParser.getSupportedLinks(file) }.getOrNull().orEmpty()
+    }
+    private val metadata by lazy {
+        runCatching { viewModel.extensionLoader.parser.parseManifest(file, ImportType.File) }
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, parent: ViewGroup?, state: Bundle?): View {
+        binding = DialogExtensionInstallerBinding.inflate(inflater, parent, false)
+        return binding.root
+    }
+
+    private var install = false
+    private var installAsApk = false
+
+    @SuppressLint("SetTextI18n")
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        binding.topAppBar.setNavigationOnClickListener { dismiss() }
+        val metadata = metadata.getOrElse {
+            lifecycleScope.launch {
+                viewModel.app.throwFlow.emit(
+                    ExtensionLoaderException("ExtensionInstaller", file.toString(), it)
+                )
+            }
+            dismiss()
+            return
+        }
+
+        binding.extensionTitle.text = metadata.name
+        metadata.icon
+            .loadAsCircle(binding.extensionIcon, R.drawable.ic_extension_32dp) {
+                binding.extensionIcon.setImageDrawable(it)
+            }
+        binding.extensionDetails.text = metadata.version
+
+        val byAuthor = getString(R.string.by_x, metadata.author)
+        val type = getType(metadata.type)
+        val typeString = getString(R.string.x_extension, getString(type))
+        binding.extensionDescription.text = "$typeString\n\n${metadata.description}\n\n$byAuthor"
+
+        val isSupported = supportedLinks.isNotEmpty()
+        binding.installationTypeTitle.isVisible = isSupported
+        binding.installationTypeGroup.isVisible = isSupported
+        binding.installationTypeSummary.isVisible = isSupported
+        binding.installationTypeLinks.isVisible = isSupported
+        binding.installationTypeWarning.isVisible = false
+
+        installAsApk = isSupported
+        if (isSupported) {
+            binding.installationTypeLinks.text = supportedLinks.joinToString("\n")
+            binding.installationTypeGroup.addOnButtonCheckedListener { group, _, _ ->
+                installAsApk = group.checkedButtonId == R.id.appInstall
+                binding.installationTypeWarning.isVisible = !installAsApk
+            }
+        }
+
+        binding.installButton.setOnClickListener {
+            install = true
+            dismiss()
+        }
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
+        val id = metadata.getOrNull()?.id
+        val type = if (installAsApk) ImportType.App else ImportType.File
+        viewModel.promptDismissed(file, install, type, id ?: "", supportedLinks)
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\ExtensionOpenerActivity.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions
+
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
+import androidx.core.net.toFile
+import com.joaomagdaleno.music_hub.MainActivity.Companion.getMainActivity
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.extensions.InstallationUtils.getTempFile
+import com.joaomagdaleno.music_hub.utils.ContextUtils.getTempFile
+import java.io.File
+
+class ExtensionOpenerActivity : Activity() {
+    override fun onStart() {
+        super.onStart()
+        val uri = intent.data
+
+        val file = runCatching {
+            when (uri?.scheme) {
+                "content" -> getTempFile(uri)
+                "file" -> getTempFile(uri.toFile())
+                else -> null
+            }
+        }.getOrNull()
+
+        if (file == null) Toast.makeText(
+            this, getString(R.string.could_not_find_the_file), Toast.LENGTH_SHORT
+        ).show()
+
+        finish()
+        val startIntent = Intent(this, getMainActivity())
+        startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startIntent.data = file?.let { Uri.fromFile(it) }
+        startActivity(startIntent)
+    }
+
+    private fun getTempFile(file: File): File {
+        val tempFile = getTempFile()
+        file.copyTo(tempFile)
+        return tempFile
+    }
+}
+
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\ExtensionsViewModel.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions
+
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.viewModelScope
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.Extension
+import com.joaomagdaleno.music_hub.common.MusicExtension
+import com.joaomagdaleno.music_hub.common.models.ExtensionType
+import com.joaomagdaleno.music_hub.common.models.ImportType
+import com.joaomagdaleno.music_hub.common.models.Message
+import com.joaomagdaleno.music_hub.di.App
+import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtensionOrThrow
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getOrThrow
+import com.joaomagdaleno.music_hub.extensions.InstallationUtils.installApp
+import com.joaomagdaleno.music_hub.extensions.InstallationUtils.installFile
+import com.joaomagdaleno.music_hub.extensions.InstallationUtils.uninstallApp
+import com.joaomagdaleno.music_hub.extensions.InstallationUtils.uninstallFile
+import com.joaomagdaleno.music_hub.extensions.db.models.ExtensionEntity
+import com.joaomagdaleno.music_hub.extensions.exceptions.AppException.Companion.toAppException
+import com.joaomagdaleno.music_hub.ui.extensions.ExtensionInstallerBottomSheet.Companion.createLinksDialog
+import com.joaomagdaleno.music_hub.ui.extensions.list.ExtensionListViewModel
+import com.joaomagdaleno.music_hub.utils.AppUpdater.downloadUpdate
+import com.joaomagdaleno.music_hub.utils.AppUpdater.getUpdateFileUrl
+import com.joaomagdaleno.music_hub.utils.AppUpdater.updateApp
+import com.joaomagdaleno.music_hub.utils.CacheUtils.getFromCache
+import com.joaomagdaleno.music_hub.utils.CacheUtils.saveToCache
+import com.joaomagdaleno.music_hub.utils.ContextUtils.cleanupTempApks
+import com.joaomagdaleno.music_hub.utils.ContextUtils.collect
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import java.io.File
+
+class ExtensionsViewModel(
+    val extensionLoader: ExtensionLoader,
+    val app: App
+) : ExtensionListViewModel<MusicExtension>() {
+    override val extensionsFlow = extensionLoader.music
+    override val currentSelectionFlow = extensionLoader.current
+    override fun onExtensionSelected(extension: MusicExtension) {
+        extensionLoader.setupMusicExtension(extension, true)
+    }
+
+    private val extensionDao = extensionLoader.db.extensionDao()
+    fun setExtensionEnabled(extensionType: ExtensionType, id: String, checked: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            extensionDao.setExtension(ExtensionEntity(id, extensionType, checked))
+        }
+    }
+
+    fun changeExtension(id: String) {
+        viewModelScope.launch {
+            runCatching {
+                val ext = extensionLoader.music.getExtensionOrThrow(id)
+                extensionLoader.setupMusicExtension(ext, true)
+            }.getOrElse {
+                app.throwFlow.emit(it)
+            }
+        }
+    }
+
+    val lastSelectedManageExt = MutableStateFlow(0)
+    val manageExtListFlow = extensionLoader.all.combine(lastSelectedManageExt) { _, last ->
+        extensionLoader.getFlow(ExtensionType.entries[last]).value
+    }
+
+    fun moveExtensionItem(toPos: Int, fromPos: Int) {
+        val type = ExtensionType.entries[lastSelectedManageExt.value]
+        val flow = extensionLoader.priorityMap[type]!!
+        val list = extensionLoader.getFlow(type).value.map { it.id }.toMutableList()
+        list.add(toPos, list.removeAt(fromPos))
+        flow.value = list
+    }
+
+    private val updateTime = 1000 * 60 * 60 * 2 // Check every 2hrs
+    private fun shouldCheckForExtensionUpdates(): Boolean {
+        val check = app.settings.getBoolean("check_for_updates", true)
+        if (!check) return false
+        val lastUpdateCheck = app.context.getFromCache<Long>("last_update_check") ?: 0
+        return System.currentTimeMillis() - lastUpdateCheck > updateTime
+    }
+
+    private suspend fun message(msg: String) {
+        app.messageFlow.emit(Message(msg))
+    }
+
+    fun update(activity: FragmentActivity, force: Boolean) = viewModelScope.launch {
+        if (!force && !shouldCheckForExtensionUpdates()) return@launch
+        activity.saveToCache("last_update_check", System.currentTimeMillis())
+        activity.cleanupTempApks()
+        message(app.context.getString(R.string.checking_for_updates))
+        val appApk = updateApp(app)
+        runCatching {
+            if (appApk != null) {
+                activity.saveToCache("last_update_check", 0)
+                awaitInstallation(appApk).getOrThrow()
+            } else extensionLoader.all.value.forEach { updateExt(it) }
+        }.getOrElse { app.throwFlow.emit(it) }
+    }
+
+    data class PromptResult(
+        val file: File,
+        val accepted: Boolean,
+        val type: ImportType,
+        val id: String,
+        val supportedLinks: List<String>
+    )
+
+    val installPromptFlow = MutableSharedFlow<File>()
+    private val promptResultFlow = MutableSharedFlow<PromptResult>()
+    val installFileFlow = MutableSharedFlow<File>()
+    val installedFlow = MutableSharedFlow<Pair<File, Result<Unit>>>()
+    val linksDialogFlow = MutableSharedFlow<Pair<File, List<String>>>()
+
+    private suspend fun install(id: String, type: ImportType, file: File): Result<Unit> {
+        return if (type == ImportType.App) awaitInstallation(file)
+        else runCatching { installFile(app.context, extensionLoader.fileIgnoreFlow, id, file) }
+    }
+
+    private suspend fun awaitInstallation(file: File): Result<Unit> {
+        installFileFlow.emit(file)
+        return installedFlow.first { it.first == file }.second
+    }
+
+    fun promptDismissed(
+        file: File, install: Boolean, type: ImportType, id: String, supportedLinks: List<String>
+    ) = viewModelScope.launch {
+        promptResultFlow.emit(PromptResult(file, install, type, id, supportedLinks))
+    }
+
+    private suspend fun updateExt(ext: Extension<*>, show: Boolean = false) {
+        val file = getExtensionUpdate(ext, show) ?: return
+        install(ext.id, ext.metadata.importType, file).onFailure {
+            app.throwFlow.emit(it)
+            return
+        }
+        message(app.context.getString(R.string.extension_updated_successfully, ext.name))
+    }
+
+    fun update(extension: Extension<*>) = viewModelScope.launch { updateExt(extension, true) }
+
+    fun installWithPrompt(files: List<File>) = viewModelScope.launch {
+        files.forEach { file ->
+            installPromptFlow.emit(file)
+            val result = promptResultFlow.first { it.file == file }
+            if (!result.accepted) return@forEach
+            install(result.id, result.type, result.file).onFailure {
+                app.throwFlow.emit(it)
+                return@forEach
+            }
+            message(app.context.getString(R.string.extension_installed_successfully))
+            if (result.type == ImportType.App)
+                linksDialogFlow.emit(file to result.supportedLinks)
+        }
+    }
+
+    fun uninstall(activity: FragmentActivity, extension: Extension<*>) = viewModelScope.launch {
+        val fileResult = runCatching {
+            uninstallFile(extensionLoader.fileIgnoreFlow, extension.metadata.path)
+        }.exceptionOrNull()
+        val appResult = runCatching {
+            uninstallApp(activity, extension.metadata.path)
+        }.exceptionOrNull()
+        val result = if (extension.metadata.importType == ImportType.App) appResult else fileResult
+        if (result == null) message(app.context.getString(R.string.extension_uninstalled_successfully))
+        else app.throwFlow.emit(result)
+    }
+
+    companion object {
+        fun FragmentActivity.configureExtensionsUpdater() {
+            val viewModel by viewModel<ExtensionsViewModel>()
+            collect(viewModel.installPromptFlow) {
+                ExtensionInstallerBottomSheet.newInstance(it).show(supportFragmentManager, null)
+            }
+            collect(viewModel.linksDialogFlow) {
+                createLinksDialog(it.first, it.second)
+            }
+
+            viewModel.update(this, false)
+            var currentFile: File? = null
+            collect(viewModel.installFileFlow) {
+                currentFile = it
+                viewModel.installedFlow.emit(it to runCatching { installApp(this, it) })
+            }
+            lifecycle.addObserver(object : DefaultLifecycleObserver {
+                override fun onDestroy(owner: LifecycleOwner) {
+                    val file = currentFile ?: return
+                    viewModel.run {
+                        viewModelScope.launch {
+                            installedFlow.emit(
+                                file to Result.failure(CancellationException())
+                            )
+                        }
+                    }
+                }
+            })
+        }
+    }
+
+    private val client = OkHttpClient()
+    private suspend fun getExtensionUpdate(
+        extension: Extension<*>,
+        show: Boolean = false
+    ): File? {
+        val currentVersion = extension.version
+        val updateUrl = extension.metadata.updateUrl ?: return null
+        val url = runCatching {
+            getUpdateFileUrl(currentVersion, updateUrl, client).getOrThrow()
+        }.recoverCatching {
+            throw it.toAppException(extension)
+        }.getOrThrow(app.throwFlow)
+        if (url == null) {
+            if (show) message(
+                app.context.getString(R.string.no_update_available_for_x, extension.name)
+            )
+            return null
+        }
+        message(app.context.getString(R.string.downloading_update_for_x, extension.name))
+        val file = runCatching {
+            downloadUpdate(app.context, url, client).getOrThrow()
+        }.recoverCatching {
+            throw it.toAppException(extension)
+        }.getOrThrow(app.throwFlow) ?: return null
+        return file
+    }
+
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\WebViewUtils.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions
+
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.graphics.Bitmap
+import android.os.Build
+import android.os.Bundle
+import android.view.View
+import android.webkit.CookieManager
+import android.webkit.JavascriptInterface
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebSettings
+import android.webkit.WebStorage
+import android.webkit.WebView
+import androidx.activity.OnBackPressedCallback
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.add
+import androidx.fragment.app.commit
+import androidx.lifecycle.lifecycleScope
+import com.acsbendi.requestinspectorwebview.RequestInspectorWebViewClient
+import com.google.android.material.progressindicator.LinearProgressIndicator
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.helpers.WebViewRequest
+import com.joaomagdaleno.music_hub.common.models.Message
+import com.joaomagdaleno.music_hub.common.models.NetworkRequest
+import com.joaomagdaleno.music_hub.databinding.FragmentGenericCollapsableBinding
+import com.joaomagdaleno.music_hub.databinding.FragmentWebviewBinding
+import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
+import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.addIfNull
+import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
+import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler.Companion.createSnack
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyBackPressCallback
+import com.joaomagdaleno.music_hub.ui.extensions.login.LoginFragment.Companion.bind
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadAsCircle
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+
+object WebViewUtils {
+    private const val USER_AGENT =
+        "Mozilla/5.0 (Linux; Android 2; Jeff Bezos) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.158 Mobile Safari/537.36"
+
+    @Suppress("DEPRECATION")
+    @SuppressLint("SetJavaScriptEnabled")
+    fun <T> FragmentActivity.configure(
+        webView: WebView,
+        progress: LinearProgressIndicator,
+        target: WebViewRequest<T>,
+        skipTimeout: Boolean,
+        onComplete: suspend (Result<T>?) -> Unit,
+    ): OnBackPressedCallback {
+        val callback = object : OnBackPressedCallback(false) {
+            override fun handleOnBackPressed() {
+                webView.goBack()
+            }
+        }
+        WebStorage.getInstance().deleteAllData()
+        CookieManager.getInstance().run {
+            removeAllCookies(null)
+            flush()
+        }
+        webView.settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            databaseEnabled = true
+            userAgentString = USER_AGENT
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                isAlgorithmicDarkeningAllowed = true
+        }
+        runCatching {
+            webView.load(lifecycleScope, progress, callback, target, skipTimeout, onComplete)
+        }.getOrElse {
+            lifecycleScope.launch {
+                webView.stop(callback)
+                onComplete(Result.failure(it))
+            }
+        }
+        return callback
+    }
+
+    private fun <T> WebView.load(
+        scope: CoroutineScope,
+        progress: LinearProgressIndicator,
+        callback: OnBackPressedCallback,
+        target: WebViewRequest<T>,
+        skipTimeout: Boolean,
+        onComplete: suspend (Result<T>?) -> Unit,
+    ) {
+        val stopRegex = target.stopUrlRegex
+        val interceptRegex =
+            if (target is WebViewRequest.Headers) target.interceptUrlRegex else null
+        val timeout = target.maxTimeout
+        val bridge = Bridge()
+        val requests = mutableListOf<NetworkRequest>()
+        val timeoutJob = if (!skipTimeout) scope.launch {
+            delay(timeout)
+            onComplete(
+                Result.failure(
+                    Exception(
+                        "WebView request timed out after $timeout ms\nParsed Links:\n" +
+                                requests.joinToString("\n") { it.url }
+                    )
+                )
+            )
+        } else null
+        webViewClient = object : RequestInspectorWebViewClient(this@load) {
+            override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
+                callback.isEnabled = canGoBack()
+            }
+
+            var done = false
+            override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
+                super.onPageStarted(view, url, favicon)
+                progress.show()
+                if (done) return
+                if (target !is WebViewRequest.Evaluate) return
+                target.javascriptToEvaluateOnPageStart?.let { js ->
+                    scope.launch {
+                        runCatching { evalJS(null, js) }.onFailure {
+                            stop(callback)
+                            onComplete(Result.failure(it))
+                        }
+                    }
+                }
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                progress.hide()
+            }
+
+            val mutex = Mutex()
+            fun intercept(request: NetworkRequest) {
+                if (target is WebViewRequest.Headers) {
+                    if (interceptRegex == null || interceptRegex.matches(request.url)) {
+                        requests.add(request)
+                    }
+                }
+                if (stopRegex.find(request.url) == null) return
+                timeoutJob?.cancel()
+                scope.launch(Dispatchers.IO) {
+                    mutex.withLock {
+                        if (done) return@withLock
+                        done = true
+                        onComplete(null)
+                        val result = runCatching {
+                            val headerRes = if (target is WebViewRequest.Headers)
+                                target.onStop(requests)
+                            else null
+                            val cookieRes = if (target is WebViewRequest.Cookie) {
+                                val cookie =
+                                    CookieManager.getInstance().getCookie(request.url) ?: ""
+                                target.onStop(request, cookie)
+                            } else null
+                            val evalRes = if (target is WebViewRequest.Evaluate)
+                                target.onStop(
+                                    request,
+                                    evalJS(bridge, target.javascriptToEvaluate)
+                                )
+                            else null
+                            evalRes ?: cookieRes ?: headerRes!!
+                        }
+                        stop(callback)
+                        onComplete(result)
+                    }
+                }
+            }
+
+            override fun shouldInterceptRequest(
+                view: WebView, webViewRequest: com.acsbendi.requestinspectorwebview.WebViewRequest,
+            ): WebResourceResponse? {
+                intercept(
+                    webViewRequest.run {
+                        NetworkRequest(
+                            NetworkRequest.Method.valueOf(method),
+                            url,
+                            headers,
+                            body.encodeToByteArray()
+                        )
+                    }
+                )
+                return null
+            }
+
+            override fun shouldOverrideUrlLoading(
+                view: WebView?, request: WebResourceRequest?,
+            ): Boolean {
+                request?.run {
+                    val headers = requestHeaders?.toMutableMap() ?: mutableMapOf()
+                    val cookie = CookieManager.getInstance().getCookie(url.toString())
+                    if (cookie != null) headers["Cookie"] = cookie
+                    intercept(NetworkRequest(url.toString(), headers))
+                }
+                return false
+            }
+        }
+
+        addJavascriptInterface(bridge, "bridge")
+        settings.cacheMode =
+            if (runCatching { target.dontCache }.getOrNull() == true) WebSettings.LOAD_NO_CACHE
+            else WebSettings.LOAD_DEFAULT
+        target.initialUrl.run {
+            settings.userAgentString = lowerCaseHeaders["user-agent"] ?: settings.userAgentString
+            loadUrl(url, headers)
+        }
+    }
+
+    suspend fun WebView.evalJS(bridge: Bridge?, js: String) = withContext(Dispatchers.Main) {
+        suspendCancellableCoroutine {
+            bridge?.onResult = it::resume
+            bridge?.onError = it::resumeWithException
+            val asyncFunction = if (js.startsWith("async function")) js
+            else if (js.startsWith("function")) "async $js"
+            else {
+                it.resumeWithException(Exception("Invalid JS function, must start with async or function"))
+                return@suspendCancellableCoroutine
+            }
+            val newJs = """
+            (function() {
+                try {
+                    const fun = $asyncFunction;
+                    fun().then((result) => {
+                        bridge.putJsResult(result);
+                    }).catch((error) => {
+                        bridge.putJsError(error.message || error.toString());
+                    });
+                } catch (error) {
+                    bridge.putJsError(error.message || error.toString());
+                }
+            })()
+            """.trimIndent()
+            evaluateJavascript(newJs, null)
+
+            it.invokeOnCancellation {
+                evaluateJavascript("javascript:window.stop();", null)
+            }
+        }
+    }
+
+    suspend fun WebView.stop(
+        callback: OnBackPressedCallback,
+    ) = withContext(Dispatchers.Main) {
+        loadUrl("about:blank")
+        callback.isEnabled = false
+    }
+
+    @Suppress("unused")
+    class Bridge {
+        var onError: ((Throwable) -> Unit)? = null
+        var onResult: ((String?) -> Unit)? = null
+
+        @JavascriptInterface
+        fun putJsResult(result: String?) {
+            onResult?.invoke(result)
+        }
+
+        @JavascriptInterface
+        fun putJsError(error: String?) {
+            onError?.invoke(Exception(error ?: "Unknown JavaScript error"))
+        }
+    }
+
+    fun FragmentActivity.onWebViewIntent(
+        intent: Intent,
+    ) {
+        val id = intent.getIntExtra("webViewRequest", -1)
+        if (id == -1) return
+        val extensionLoader by inject<ExtensionLoader>()
+        val webViewClient = extensionLoader.webViewClientFactory
+        val wrapper = webViewClient.requests[id] ?: return
+        createSnack(Message(getString(R.string.opening_webview_x, wrapper.reason)))
+        if (wrapper.showWebView) openFragment<WithAppbar>(null, getBundle(id))
+        else supportFragmentManager.commit {
+            add<Hidden>(R.id.hiddenWebViewContainer, null, getBundle(id))
+        }
+    }
+
+    private fun getBundle(id: Int) = Bundle().apply {
+        putInt("webViewRequest", id)
+    }
+
+    class Hidden : Fragment(R.layout.fragment_webview) {
+        private val vm by activityViewModel<ExtensionsViewModel>()
+        private val webViewClient by lazy { vm.extensionLoader.webViewClientFactory }
+        private val wrapper by lazy {
+            val id = requireArguments().getInt("webViewRequest")
+            webViewClient.requests[id]
+        }
+        private val shouldRemove by lazy {
+            requireArguments().getBoolean("hidden", true)
+        }
+
+        private fun removeSelf() {
+            if (shouldRemove) parentFragmentManager.commit(true) { remove(this@Hidden) }
+            else parentFragment?.parentFragmentManager?.popBackStack()
+        }
+
+        override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+            val binding = FragmentWebviewBinding.bind(view)
+            val wrapper = wrapper ?: run {
+                removeSelf()
+                return
+            }
+            val callback = requireActivity().configure(
+                binding.webview,
+                binding.progress,
+                wrapper.request,
+                false
+            ) {
+                webViewClient.responseFlow.emit(wrapper to it)
+                if (it == null) runCatching { removeSelf() }
+            }
+            if (!shouldRemove) {
+                requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
+                applyBackPressCallback()
+            }
+        }
+    }
+
+    class WithAppbar : Fragment(R.layout.fragment_generic_collapsable) {
+        private val vm by activityViewModel<ExtensionsViewModel>()
+        private val webViewClient by lazy { vm.extensionLoader.webViewClientFactory }
+        private val wrapper by lazy {
+            val id = requireArguments().getInt("webViewRequest")
+            webViewClient.requests[id] ?: throw IllegalStateException("Invalid webview request")
+        }
+
+        override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+            val binding = FragmentGenericCollapsableBinding.bind(view)
+            binding.bind(this)
+            binding.toolBar.title = wrapper.extension.name
+            wrapper.extension.icon.loadAsCircle(
+                binding.extensionIcon, R.drawable.ic_extension_32dp
+            ) {
+                binding.extensionIcon.setImageDrawable(it)
+            }
+            addIfNull<Hidden>(R.id.genericFragmentContainer, "webview", arguments?.apply {
+                putBoolean("hidden", false)
+            })
+        }
+    }
+}
+
+
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\add\AddViewModel.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions.add
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.joaomagdaleno.music_hub.common.helpers.ContinuationCallback.Companion.await
+import com.joaomagdaleno.music_hub.di.App
+import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
+import com.joaomagdaleno.music_hub.extensions.exceptions.InvalidExtensionListException
+import com.joaomagdaleno.music_hub.ui.extensions.ExtensionsViewModel
+import com.joaomagdaleno.music_hub.utils.AppUpdater.downloadUpdate
+import com.joaomagdaleno.music_hub.utils.AppUpdater.getUpdateFileUrl
+import com.joaomagdaleno.music_hub.utils.Serializer.toData
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.io.File
+
+class AddViewModel(
+    private val app: App,
+    private val extensionLoader: ExtensionLoader
+) : ViewModel() {
+
+    fun getList() = (addingFlow.value as? AddState.AddList)?.list.orEmpty()
+
+    fun selectAll(select: Boolean) {
+        val list = getList()
+        addingFlow.value = AddState.AddList(list.map { it.copy(isChecked = select) })
+    }
+
+    fun toggleItem(item: ExtensionAssetResponse, isChecked: Boolean) {
+        val list = getList()
+        val index = list.indexOfFirst { it.item.id == item.id }
+        if (index == -1) return
+        val currentItem = list[index]
+        addingFlow.value = AddState.AddList(list.toMutableList().apply {
+            set(index, currentItem.copy(isChecked = isChecked))
+        })
+    }
+
+    private val client = OkHttpClient()
+    private suspend fun getExtensionList(
+        link: String,
+        client: OkHttpClient
+    ) = withContext(Dispatchers.IO) {
+        runCatching {
+            val request = Request.Builder()
+                .addHeader("Cookie", "preview=1")
+                .url(link).build()
+            client.newCall(request).await().body.string()
+                .toData<List<ExtensionAssetResponse>>().getOrThrow()
+        }
+    }.getOrElse {
+        throw InvalidExtensionListException(link, it)
+    }
+
+    @Serializable
+    data class ExtensionAssetResponse(
+        val id: String,
+        val name: String,
+        val subtitle: String? = null,
+        val iconUrl: String? = null,
+        val updateUrl: String
+    )
+
+    sealed class AddState {
+        data object Init : AddState()
+        data object Loading : AddState()
+        data class AddList(val list: List<ExtensionsAddListAdapter.Item>?) : AddState()
+        data class Downloading(val item: ExtensionAssetResponse) : AddState()
+        data class Final(val files: List<File>) : AddState()
+    }
+
+    var opened = false
+    val addingFlow = MutableStateFlow<AddState>(AddState.Init)
+    fun addFromLinkOrCode(link: String) = viewModelScope.launch {
+        addingFlow.value = AddState.Loading
+        val actualLink = when {
+            link.startsWith("http://") or link.startsWith("https://") -> link
+            else -> "https://v.gd/$link"
+        }
+
+        val list = runCatching { getExtensionList(actualLink, client) }.getOrElse {
+            app.throwFlow.emit(it)
+            null
+        }
+        val installed = extensionLoader.all.value.map { it.id }
+        val shouldBeChecked = (list?.size ?: 0) <= 3
+        addingFlow.value = AddState.AddList(list?.map {
+            val isInstalled = it.id in installed
+            ExtensionsAddListAdapter.Item(
+                it,
+                isChecked = shouldBeChecked && !isInstalled,
+                isInstalled = isInstalled
+            )
+        })
+    }
+
+    fun download(
+        download: Boolean, extensionsViewModel: ExtensionsViewModel
+    ) = viewModelScope.launch {
+        val selected =
+            if (download) getList().filter { it.isChecked }.map { it.item } else listOf()
+        val files = selected.mapNotNull { item ->
+            addingFlow.value = AddState.Downloading(item)
+            val url = getUpdateFileUrl("", item.updateUrl, client).getOrElse {
+                app.throwFlow.emit(it)
+                null
+            } ?: return@mapNotNull null
+            downloadUpdate(app.context, url, client).getOrElse {
+                app.throwFlow.emit(it)
+                null
+            }
+        }
+        extensionsViewModel.installWithPrompt(files)
+        addingFlow.value = AddState.Final(files)
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\add\ExtensionsAddBottomSheet.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions.add
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.databinding.DialogExtensionAddBinding
+import com.joaomagdaleno.music_hub.extensions.InstallationUtils.openFileSelector
+import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler.Companion.createSnack
+import com.joaomagdaleno.music_hub.ui.extensions.ExtensionsViewModel
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
+
+class ExtensionsAddBottomSheet : BottomSheetDialogFragment() {
+
+    var binding by autoCleared<DialogExtensionAddBinding>()
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        binding = DialogExtensionAddBinding.inflate(inflater)
+        return binding.root
+    }
+
+    val viewModel by viewModel<AddViewModel>()
+    private val extensionViewModel by activityViewModel<ExtensionsViewModel>()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val context = requireActivity()
+        binding.topAppBar.setNavigationOnClickListener { dismiss() }
+        binding.installationTypeGroup.addOnButtonCheckedListener { group, _, _ ->
+            val isLink = group.checkedButtonId == R.id.linkAdd
+            binding.textInputLayout.isVisible = isLink
+        }
+
+        binding.editText.setOnEditorActionListener { _, _, _ ->
+            binding.installButton.performClick()
+            true
+        }
+
+        binding.installButton.setOnClickListener {
+            val isLink = binding.installationTypeGroup.checkedButtonId == R.id.linkAdd
+            if (!isLink) lifecycleScope.launch {
+                val file = runCatching { requireActivity().openFileSelector() }.getOrNull()
+                extensionViewModel.installWithPrompt(listOfNotNull(file))
+                dismissAllowingStateLoss()
+            } else {
+                val link = binding.editText.text.toString()
+                if (link.isEmpty()) return@setOnClickListener
+                viewModel.addFromLinkOrCode(link)
+            }
+        }
+
+        observe(viewModel.addingFlow) {
+            val loading = it != AddViewModel.AddState.Init
+            binding.loading.root.isVisible = loading
+            binding.nestedScrollView.isVisible = !loading
+            when (it) {
+                AddViewModel.AddState.Init -> {}
+                AddViewModel.AddState.Loading -> {
+                    binding.loading.textView.text = context.getString(R.string.loading)
+                }
+
+                is AddViewModel.AddState.AddList -> if (it.list != null) {
+                    if (it.list.isEmpty()) {
+                        createSnack(R.string.list_is_empty)
+                        dismiss()
+                    } else {
+                        if (viewModel.opened) return@observe
+                        viewModel.opened = true
+                        ExtensionsAddListBottomSheet().show(childFragmentManager, null)
+                    }
+                } else dismiss()
+
+                is AddViewModel.AddState.Downloading -> {
+                    binding.loading.textView.text = context.getString(
+                        R.string.downloading_x, it.item.name
+                    )
+                }
+
+                is AddViewModel.AddState.Final -> {
+                    viewModel.opened = false
+                    viewModel.addingFlow.value = AddViewModel.AddState.Init
+                    dismiss()
+                }
+            }
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\add\ExtensionsAddListAdapter.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions.add
+
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.ImageHolder.Companion.toImageHolder
+import com.joaomagdaleno.music_hub.databinding.ItemExtensionAddBinding
+import com.joaomagdaleno.music_hub.databinding.ItemExtensionAddFooterBinding
+import com.joaomagdaleno.music_hub.databinding.ItemExtensionAddHeaderBinding
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadAsCircle
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
+
+class ExtensionsAddListAdapter(
+    val listener: Listener
+) : ListAdapter<ExtensionsAddListAdapter.Item, ExtensionsAddListAdapter.ViewHolder>(DiffCallback) {
+
+    data class Item(
+        val item: AddViewModel.ExtensionAssetResponse,
+        val isChecked: Boolean,
+        val isInstalled: Boolean
+    )
+
+    object DiffCallback : DiffUtil.ItemCallback<Item>() {
+        override fun areItemsTheSame(oldItem: Item, newItem: Item) =
+            oldItem.item.id == newItem.item.id
+
+        override fun areContentsTheSame(oldItem: Item, newItem: Item) =
+            oldItem == newItem
+    }
+
+    fun interface Listener {
+        fun onChecked(item: AddViewModel.ExtensionAssetResponse, isChecked: Boolean)
+    }
+
+    inner class ViewHolder(
+        val binding: ItemExtensionAddBinding
+    ) : ScrollAnimViewHolder(binding.root) {
+        init {
+            binding.extensionSwitch.setOnCheckedChangeListener { _, checked ->
+                val item = runCatching { getItem(bindingAdapterPosition) }.getOrNull()
+                if (item == null) return@setOnCheckedChangeListener
+                listener.onChecked(item.item, checked)
+            }
+            binding.root.setOnClickListener {
+                binding.extensionSwitch.isChecked = !binding.extensionSwitch.isChecked
+            }
+            binding.extensionSwitch.isClickable = false
+        }
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        val binding = ItemExtensionAddBinding.inflate(inflater, parent, false)
+        return ViewHolder(binding)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val (item, isChecked, isInstalled) = getItem(position)
+        val binding = holder.binding
+        binding.extensionName.text = if (!isInstalled) item.name
+        else binding.root.context.getString(R.string.extension_installed, item.name)
+        binding.extensionSubtitle.text = item.subtitle ?: item.id
+        binding.itemExtension.apply {
+            item.iconUrl?.toImageHolder().loadAsCircle(this, R.drawable.ic_extension_32dp) {
+                setImageDrawable(it)
+            }
+        }
+        binding.extensionSwitch.isChecked = isChecked
+    }
+
+    class Header(
+        val listener: Listener
+    ) : RecyclerView.Adapter<Header.ViewHolder>() {
+
+        interface Listener {
+            fun onClose()
+            fun onSelectAllChanged(select: Boolean)
+        }
+
+        class ViewHolder(val binding: ItemExtensionAddHeaderBinding) :
+            ScrollAnimViewHolder(binding.root)
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            val inflater = LayoutInflater.from(parent.context)
+            val binding = ItemExtensionAddHeaderBinding.inflate(inflater, parent, false)
+            binding.toolBar.setNavigationOnClickListener { listener.onClose() }
+            binding.selectAll.setOnCheckedChangeListener { _, isChecked ->
+                listener.onSelectAllChanged(isChecked)
+            }
+            return ViewHolder(binding)
+        }
+
+        override fun getItemCount() = 1
+
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {}
+
+    }
+
+    class Footer(
+        val listener: Listener
+    ) : RecyclerView.Adapter<Footer.ViewHolder>() {
+
+        fun interface Listener {
+            fun onAdd()
+        }
+
+        class ViewHolder(val binding: ItemExtensionAddFooterBinding) :
+            ScrollAnimViewHolder(binding.root)
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            val inflater = LayoutInflater.from(parent.context)
+            val binding = ItemExtensionAddFooterBinding.inflate(inflater, parent, false)
+            return ViewHolder(binding)
+        }
+
+        override fun getItemCount() = 1
+
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            holder.binding.root.setOnClickListener { listener.onAdd() }
+        }
+
+    }
+}
+
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\add\ExtensionsAddListBottomSheet.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions.add
+
+import android.content.DialogInterface
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.recyclerview.widget.ConcatAdapter
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.joaomagdaleno.music_hub.databinding.DialogExtensionsAddListBinding
+import com.joaomagdaleno.music_hub.ui.extensions.ExtensionsViewModel
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
+
+class ExtensionsAddListBottomSheet : BottomSheetDialogFragment() {
+    var binding by autoCleared<DialogExtensionsAddListBinding>()
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
+        binding = DialogExtensionsAddListBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    private var clicked = false
+    private val viewModel by lazy {
+        requireParentFragment().viewModel<AddViewModel>().value
+    }
+    private val extensionsViewModel by activityViewModel<ExtensionsViewModel>()
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val extensionListAdapter = ExtensionsAddListAdapter { item, isChecked ->
+            viewModel.toggleItem(item, isChecked)
+        }
+
+        val headerAdapter = ExtensionsAddListAdapter.Header(
+            object : ExtensionsAddListAdapter.Header.Listener {
+                override fun onClose() = dismiss()
+                override fun onSelectAllChanged(select: Boolean) {
+                    viewModel.selectAll(select)
+                }
+            }
+        )
+
+        val footerAdapter = ExtensionsAddListAdapter.Footer {
+            clicked = true
+            dismiss()
+        }
+        binding.root.adapter = ConcatAdapter(headerAdapter, extensionListAdapter, footerAdapter)
+        observe(viewModel.addingFlow) {
+            val list = viewModel.getList()
+            extensionListAdapter.submitList(list)
+        }
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        viewModel.download(clicked, extensionsViewModel)
+        super.onDismiss(dialog)
+    }
+}
+
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\list\ExtensionListViewModel.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions.list
+
+import androidx.lifecycle.ViewModel
+import com.joaomagdaleno.music_hub.common.Extension
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+
+abstract class ExtensionListViewModel<T : Extension<*>> : ViewModel() {
+    abstract val extensionsFlow: StateFlow<List<T>>
+    abstract val currentSelectionFlow: MutableStateFlow<T?>
+    fun selectExtension(index: Int) {
+        val extension = extensionsFlow.value.getOrNull(index) ?: return
+        currentSelectionFlow.value = extension
+        onExtensionSelected(extension)
+    }
+
+    open fun onExtensionSelected(extension: T) {}
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\list\ExtensionsListBottomSheet.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions.list
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.button.MaterialButtonToggleGroup
+import com.google.android.material.button.MaterialButtonToggleGroup.OnButtonCheckedListener
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.ExtensionType
+import com.joaomagdaleno.music_hub.databinding.DialogExtensionsListBinding
+import com.joaomagdaleno.music_hub.databinding.ItemExtensionButtonBinding
+import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
+import com.joaomagdaleno.music_hub.ui.extensions.ExtensionInfoFragment
+import com.joaomagdaleno.music_hub.ui.extensions.ExtensionInfoPreference.Companion.getType
+import com.joaomagdaleno.music_hub.ui.extensions.ExtensionsViewModel
+import com.joaomagdaleno.music_hub.ui.extensions.add.ExtensionsAddBottomSheet
+import com.joaomagdaleno.music_hub.ui.extensions.manage.ManageExtensionsFragment
+import com.joaomagdaleno.music_hub.ui.player.more.lyrics.LyricsViewModel
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadAsCircle
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+
+class ExtensionsListBottomSheet : BottomSheetDialogFragment() {
+
+    companion object {
+        fun newInstance(type: ExtensionType) = ExtensionsListBottomSheet().apply {
+            arguments = Bundle().apply {
+                putString("type", type.name)
+            }
+        }
+    }
+
+    private var binding by autoCleared<DialogExtensionsListBinding>()
+    private val args by lazy { requireArguments() }
+    private val type by lazy { ExtensionType.valueOf(args.getString("type")!!) }
+
+    override fun onCreateView(inflater: LayoutInflater, parent: ViewGroup?, state: Bundle?): View {
+        binding = DialogExtensionsListBinding.inflate(inflater, parent, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        binding.topAppBar.setNavigationOnClickListener { dismiss() }
+        binding.topAppBar.title = getString(R.string.x_extensions, getString(getType(type)))
+
+        binding.addExtension.setOnClickListener {
+            dismiss()
+            ExtensionsAddBottomSheet().show(parentFragmentManager, null)
+        }
+
+        binding.manageExtension.setOnClickListener {
+            dismiss()
+            requireActivity().openFragment<ManageExtensionsFragment>()
+        }
+
+        val viewModel = when (type) {
+            ExtensionType.MUSIC -> activityViewModel<ExtensionsViewModel>().value
+            ExtensionType.LYRICS -> activityViewModel<LyricsViewModel>().value
+            else -> throw IllegalStateException("Not supported")
+        }
+
+        binding.topAppBar.setOnMenuItemClickListener {
+            val extension =
+                viewModel.currentSelectionFlow.value ?: return@setOnMenuItemClickListener false
+            requireActivity().openFragment<ExtensionInfoFragment>(
+                null, ExtensionInfoFragment.getBundle(extension)
+            )
+            dismiss()
+            true
+        }
+
+        val listener = object : OnButtonCheckedListener {
+            var enabled = false
+            override fun onButtonChecked(
+                group: MaterialButtonToggleGroup?, checkedId: Int, isChecked: Boolean
+            ) {
+                if (isChecked && enabled) {
+                    viewModel.selectExtension(checkedId)
+                    dismiss()
+                }
+            }
+        }
+        binding.buttonToggleGroup.addOnButtonCheckedListener(listener)
+        val extensionFlow = viewModel.extensionsFlow
+        observe(extensionFlow) { list ->
+            binding.buttonToggleGroup.removeAllViews()
+            listener.enabled = false
+            val selected = viewModel.currentSelectionFlow.value
+            list.forEachIndexed { index, extension ->
+                if (!extension.isEnabled) return@forEachIndexed
+                val button = ItemExtensionButtonBinding.inflate(
+                    layoutInflater,
+                    binding.buttonToggleGroup,
+                    false
+                ).root
+                button.text = extension.name
+                binding.buttonToggleGroup.addView(button)
+                button.isChecked = extension == selected
+                extension.metadata.icon.loadAsCircle(button) {
+                    if (it != null) {
+                        button.icon = it
+                        button.iconTint = null
+                    } else button.setIconResource(R.drawable.ic_extension_32dp)
+                }
+                button.id = index
+            }
+
+            val checked = list.indexOf(selected).takeIf { it != -1 }
+            if (checked != null) binding.buttonToggleGroup.check(checked)
+            listener.enabled = true
+        }
+    }
+
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\login\LoginFragment.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions.login
+
+import android.os.Bundle
+import android.text.InputType.TYPE_CLASS_NUMBER
+import android.text.InputType.TYPE_CLASS_TEXT
+import android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+import android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+import android.text.InputType.TYPE_TEXT_VARIATION_URI
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
+import androidx.core.widget.doAfterTextChanged
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.commit
+import androidx.fragment.app.replace
+import androidx.lifecycle.lifecycleScope
+import com.google.android.material.transition.MaterialSharedAxis
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.clients.LoginClient
+import com.joaomagdaleno.music_hub.common.clients.LoginClient.InputField.Type
+import com.joaomagdaleno.music_hub.common.models.ExtensionType
+import com.joaomagdaleno.music_hub.common.models.Message
+import com.joaomagdaleno.music_hub.databinding.FragmentExtensionLoginCustomInputBinding
+import com.joaomagdaleno.music_hub.databinding.FragmentExtensionLoginSelectorBinding
+import com.joaomagdaleno.music_hub.databinding.FragmentGenericCollapsableBinding
+import com.joaomagdaleno.music_hub.databinding.FragmentWebviewBinding
+import com.joaomagdaleno.music_hub.databinding.ItemExtensionButtonBinding
+import com.joaomagdaleno.music_hub.databinding.ItemInputBinding
+import com.joaomagdaleno.music_hub.extensions.exceptions.AppException
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyBackPressCallback
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyContentInsets
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
+import com.joaomagdaleno.music_hub.ui.extensions.WebViewUtils.configure
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadAsCircle
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils.configureAppBar
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
+
+class LoginFragment : Fragment() {
+    companion object {
+        fun getBundle(extId: String, extName: String, extensionType: ExtensionType) = bundleOf(
+            "extId" to extId,
+            "extName" to extName,
+            "extensionType" to extensionType.name,
+        )
+
+        fun getBundle(error: AppException.LoginRequired) =
+            getBundle(error.extension.id, error.extension.name, error.extension.type)
+
+
+        fun FragmentGenericCollapsableBinding.bind(
+            fragment: Fragment, applyInsets: Boolean = true
+        ) = with(fragment) {
+            setupTransition(root)
+            if (applyInsets) applyInsets {
+                genericFragmentContainer.applyContentInsets(it)
+            }
+            applyBackPressCallback()
+            appBarLayout.configureAppBar { offset ->
+                toolbarOutline.alpha = offset
+                iconContainer.alpha = 1 - offset
+            }
+            toolBar.setNavigationOnClickListener {
+                parentFragmentManager.popBackStack()
+            }
+        }
+
+        private fun getIcon(type: Type) = when (type) {
+            Type.Email -> R.drawable.ic_email
+            Type.Password -> R.drawable.ic_password
+            Type.Number -> R.drawable.ic_numbers
+            Type.Url -> R.drawable.ic_language
+            Type.Username -> R.drawable.ic_account_circle
+            Type.Misc -> R.drawable.ic_input
+        }
+    }
+
+    private var binding by autoCleared<FragmentGenericCollapsableBinding>()
+    private val clientType by lazy {
+        val type = requireArguments().getString("extensionType")!!
+        ExtensionType.valueOf(type)
+    }
+    private val extId by lazy { requireArguments().getString("extId")!! }
+    private val extName by lazy { requireArguments().getString("extName")!! }
+    private val loginViewModel by viewModel<LoginViewModel> {
+        parametersOf(clientType, extId)
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
+        binding = FragmentGenericCollapsableBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    private inline fun <reified T : Fragment> add(args: Bundle? = null) {
+        if (!isAdded) return
+        childFragmentManager.run {
+            loginViewModel.loading.value = false
+            commit {
+                setReorderingAllowed(true)
+                if (fragments.isNotEmpty()) addToBackStack(null)
+                replace<T>(R.id.genericFragmentContainer, null, args)
+            }
+        }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        binding.bind(this)
+        binding.toolBar.setNavigationOnClickListener {
+            parentFragmentManager.popBackStack()
+        }
+        binding.toolBar.title = getString(R.string.x_login, extName)
+
+        observe(loginViewModel.extension) { ext ->
+            ext?.metadata?.icon.loadAsCircle(binding.extensionIcon, R.drawable.ic_extension_32dp) {
+                binding.extensionIcon.setImageDrawable(it)
+                lifecycleScope.launch {
+                    delay(2000)
+                    binding.appBarLayout.setExpanded(false)
+                }
+            }
+        }
+
+        observe(loginViewModel.loading) {
+            binding.genericFragmentContainer.isVisible = !it
+            binding.loading.root.isVisible = it
+        }
+
+        observe(loginViewModel.loadingOver) {
+            repeat(childFragmentManager.backStackEntryCount) {
+                parentFragmentManager.popBackStack()
+            }
+            parentFragmentManager.popBackStack()
+        }
+
+        observe(loginViewModel.addFragmentFlow) {
+            when (it) {
+                LoginViewModel.FragmentType.Selector -> add<Selector>(arguments)
+                LoginViewModel.FragmentType.WebView -> add<WebView>(arguments)
+                is LoginViewModel.FragmentType.CustomInput -> add<CustomInput>(Bundle().apply {
+                    putAll(arguments)
+                    putInt("formIndex", it.index ?: 0)
+                })
+            }
+        }
+    }
+
+    class Selector : Fragment(R.layout.fragment_extension_login_selector) {
+        private val loginViewModel by lazy {
+            requireParentFragment().viewModel<LoginViewModel>().value
+        }
+
+        override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+            setupTransition(view)
+            val binding = FragmentExtensionLoginSelectorBinding.bind(view)
+            val client = loginViewModel.extension.value?.instance?.value
+            val clients = listOfNotNull(
+                if (client is LoginClient.WebView) {
+                    val button = ItemExtensionButtonBinding.inflate(
+                        layoutInflater, binding.loginToggleGroup, false
+                    ).root
+                    button.text = getString(R.string.webview)
+                    button.setIconResource(R.drawable.ic_language)
+                    button to { loginViewModel.changeFragment(LoginViewModel.FragmentType.WebView) }
+                } else null,
+                *(if (client is LoginClient.CustomInput) {
+                    val forms = runCatching { client.forms }.getOrNull().orEmpty()
+                    forms.mapIndexed { index, it ->
+                        val button = ItemExtensionButtonBinding.inflate(
+                            layoutInflater, binding.loginToggleGroup, false
+                        ).root
+                        button.text = it.label
+                        button.setIconResource(getIcon(it.icon))
+                        button to {
+                            loginViewModel.changeFragment(
+                                LoginViewModel.FragmentType.CustomInput(index)
+                            )
+                        }
+                    }
+                } else listOf()).toTypedArray(),
+            )
+            clients.forEachIndexed { index, pair ->
+                val button = pair.first
+                button.setOnClickListener { pair.second() }
+                binding.loginToggleGroup.addView(button)
+                button.id = index
+            }
+        }
+    }
+
+    class WebView : Fragment(R.layout.fragment_webview) {
+        private val loginViewModel by lazy {
+            requireParentFragment().viewModel<LoginViewModel>().value
+        }
+        private val extension by lazy {
+            loginViewModel.extension.value
+        }
+        private val webViewRequest by lazy {
+            (extension?.instance?.value as? LoginClient.WebView)?.webViewRequest
+        }
+
+        override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+            setupTransition(view, axis = MaterialSharedAxis.X)
+            val binding = FragmentWebviewBinding.bind(view)
+            val req = webViewRequest ?: return
+            val callback = requireActivity().configure(
+                binding.webview, binding.progress, req, true
+            ) {
+                if (it == null) loginViewModel.loading.value = true
+                else loginViewModel.onWebViewStop(it)
+            }
+            requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
+        }
+    }
+
+    class CustomInput : Fragment(R.layout.fragment_extension_login_custom_input) {
+        private val loginViewModel by lazy {
+            requireParentFragment().viewModel<LoginViewModel>().value
+        }
+        private val extension by lazy { loginViewModel.extension.value }
+        private val formIndex by lazy { requireArguments().getInt("formIndex", 0) }
+        private val form by lazy {
+            (extension?.instance?.value as? LoginClient.CustomInput)?.forms?.getOrNull(formIndex)
+        }
+
+        override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+            setupTransition(view, axis = MaterialSharedAxis.X)
+            val form = form ?: run {
+                message(Message("No form found for extension ${extension?.id}"))
+                parentFragmentManager.popBackStack()
+                return
+            }
+            val binding = FragmentExtensionLoginCustomInputBinding.bind(view)
+            binding.run {
+                form.inputFields.forEachIndexed { index, field ->
+                    val input = ItemInputBinding.inflate(
+                        layoutInflater, customInput, false
+                    )
+                    input.root.id = field.key.hashCode()
+                    input.editText.id = "${field.key}_input".hashCode()
+                    input.root.hint = field.label
+                    input.root.setStartIconDrawable(getIcon(field.type))
+                    @Suppress("DEPRECATION")
+                    input.root.isPasswordVisibilityToggleEnabled = field.type == Type.Password
+                    input.editText.inputType = when (field.type) {
+                        Type.Email -> TYPE_CLASS_TEXT or TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+                        Type.Password -> TYPE_CLASS_TEXT or TYPE_TEXT_VARIATION_PASSWORD
+                        Type.Number -> TYPE_CLASS_TEXT or TYPE_CLASS_NUMBER
+                        Type.Url -> TYPE_CLASS_TEXT or TYPE_TEXT_VARIATION_URI
+                        else -> TYPE_CLASS_TEXT
+                    }
+                    input.editText.setText(loginViewModel.inputs[field.key])
+                    input.editText.doAfterTextChanged { editable ->
+                        loginViewModel.inputs[field.key] =
+                            editable.toString().takeIf { it.isNotBlank() }
+                    }
+                    input.editText.setOnEditorActionListener { _, _, _ ->
+                        if (index < form.inputFields.size - 1) {
+                            customInput.getChildAt(index + 1).requestFocus()
+                        } else loginCustomSubmit.performClick()
+                        true
+                    }
+
+                    customInput.addView(input.root)
+                }
+                loginCustomSubmit.setOnClickListener {
+                    form.inputFields.forEach {
+                        if (it.isRequired && loginViewModel.inputs[it.key].isNullOrEmpty()) {
+                            message(Message(getString(R.string.x_is_required, it.label)))
+                            return@setOnClickListener
+                        }
+                        val regex = it.regex
+                        if (regex != null && !loginViewModel.inputs[it.key].isNullOrEmpty()) {
+                            if (!loginViewModel.inputs[it.key]!!.matches(regex)) {
+                                message(
+                                    Message(
+                                        getString(R.string.regex_invalid, it.label, regex.pattern)
+                                    )
+                                )
+                                return@setOnClickListener
+                            }
+                        }
+                    }
+                    loginViewModel.onCustomTextInputSubmit(form)
+                }
+            }
+        }
+
+        private fun message(m: Message) {
+            lifecycleScope.launch {
+                loginViewModel.messageFlow.emit(m)
+            }
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\login\LoginUserListBottomSheet.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions.login
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.button.MaterialButtonToggleGroup.OnButtonCheckedListener
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.databinding.DialogLoginUserListBinding
+import com.joaomagdaleno.music_hub.databinding.ItemExtensionButtonBinding
+import com.joaomagdaleno.music_hub.extensions.db.models.CurrentUser
+import com.joaomagdaleno.music_hub.extensions.db.models.UserEntity.Companion.toEntity
+import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadAsCircle
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+
+class LoginUserListBottomSheet : BottomSheetDialogFragment() {
+
+    var binding by autoCleared<DialogLoginUserListBinding>()
+    val viewModel by activityViewModel<LoginUserListViewModel>()
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        binding = DialogLoginUserListBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        binding.title.setNavigationOnClickListener { dismiss() }
+
+        var listener: OnButtonCheckedListener? = null
+        observe(viewModel.allUsers) { (ext, list) ->
+            binding.accountListLoading.root.isVisible = ext == null
+            binding.accountListToggleGroup.isVisible = ext != null
+            binding.title.title = getString(R.string.select_x_account, ext?.name ?: "")
+            binding.accountListToggleGroup.removeAllViews()
+            listener?.let { binding.accountListToggleGroup.removeOnButtonCheckedListener(it) }
+
+            ext ?: return@observe
+
+            binding.title.setOnMenuItemClickListener {
+                dismiss()
+                viewModel.setLoginUser(CurrentUser(ext.type, ext.id, null))
+                true
+            }
+
+            binding.addAccount.setOnClickListener {
+                dismiss()
+                requireActivity().openFragment<LoginFragment>(
+                    null,
+                    LoginFragment.getBundle(ext.id, ext.name, ext.type)
+                )
+            }
+
+            val selectedUser = viewModel.currentUser.value
+
+            binding.logout.isEnabled = selectedUser != null
+            binding.logout.setOnClickListener {
+                viewModel.logout(selectedUser?.toEntity(ext.type, ext.id))
+                viewModel.setLoginUser(CurrentUser(ext.type, ext.id, null))
+            }
+
+            list.forEachIndexed { index, (user, selected) ->
+                val button = ItemExtensionButtonBinding.inflate(
+                    layoutInflater, binding.accountListToggleGroup, false
+                ).root
+                button.text = user.name
+                binding.accountListToggleGroup.addView(button)
+                button.isChecked = selected
+                user.cover.loadAsCircle(button) {
+                    if (it != null) {
+                        button.icon = it
+                        button.iconTint = null
+                    } else button.setIconResource(R.drawable.ic_account_circle)
+                }
+                button.id = index
+            }
+
+            val checked = list.indexOfFirst { it.second }.takeIf { it != -1 }
+            if (checked != null) binding.accountListToggleGroup.check(checked)
+
+            listener = OnButtonCheckedListener { _, id, isChecked ->
+                if (isChecked) {
+                    val user = list[id].first
+                    viewModel.setLoginUser(user.toEntity(ext.type, ext.id))
+                    dismiss()
+                }
+            }
+            binding.accountListToggleGroup.addOnButtonCheckedListener(listener)
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\login\LoginUserListViewModel.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions.login
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.joaomagdaleno.music_hub.common.Extension
+import com.joaomagdaleno.music_hub.common.clients.LoginClient
+import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.isClient
+import com.joaomagdaleno.music_hub.extensions.db.models.CurrentUser
+import com.joaomagdaleno.music_hub.extensions.db.models.UserEntity
+import com.joaomagdaleno.music_hub.extensions.db.models.UserEntity.Companion.toCurrentUser
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+class LoginUserListViewModel(
+    val extensionLoader: ExtensionLoader,
+) : ViewModel() {
+
+    private val userDao = extensionLoader.db.userDao()
+    val currentExtension = MutableStateFlow<Extension<*>?>(null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val allUsers = currentExtension
+        .combine(extensionLoader.all) { ext, all ->
+            if (ext == null) return@combine null
+            all.find { it.type == ext.type && it.id == ext.id }
+        }
+        .combine(userDao.observeCurrentUser()) { a, b -> a to b }
+        .flatMapLatest { (ext, current) ->
+            val curr = current.find { it.extId == ext?.id && it.type == ext.type }
+            val flow = if (ext != null) userDao.observeAllUsers(ext.type, ext.id)
+            else null
+            flow?.map { entities ->
+                val users = entities.mapNotNull { ent ->
+                    val selected = ent.id == curr?.userId
+                    ent.user.getOrNull()?.let { it to selected }
+                }
+                ext to users
+            } ?: emptyFlow()
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, null to listOf())
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val allUsersWithClient = allUsers.mapLatest {
+        val (ext, users) = it
+        val isLoginClient = ext?.isClient<LoginClient>() ?: false
+        Triple(ext, isLoginClient, users)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, Triple(null, false, emptyList()))
+
+    val currentUser = allUsers.map {
+        it.second.find { user -> user.second }?.first
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    fun logout(user: UserEntity?) {
+        if (user == null) return
+        viewModelScope.launch(Dispatchers.IO) {
+            userDao.deleteUser(user)
+        }
+    }
+
+    fun setLoginUser(user: UserEntity?) {
+        val currentUser = user?.toCurrentUser()
+            ?: currentExtension.value?.let { CurrentUser(it.type, it.id, null) }
+            ?: return
+        setLoginUser(currentUser)
+    }
+
+    fun setLoginUser(currentUser: CurrentUser) {
+        viewModelScope.launch(Dispatchers.IO) {
+            userDao.setCurrentUser(currentUser)
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\login\LoginViewModel.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions.login
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.clients.LoginClient
+import com.joaomagdaleno.music_hub.common.models.ExtensionType
+import com.joaomagdaleno.music_hub.common.models.Message
+import com.joaomagdaleno.music_hub.common.models.User
+import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.get
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getAs
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtensionFlow
+import com.joaomagdaleno.music_hub.extensions.db.models.UserEntity.Companion.toCurrentUser
+import com.joaomagdaleno.music_hub.extensions.db.models.UserEntity.Companion.toEntity
+import com.joaomagdaleno.music_hub.extensions.exceptions.AppException.Companion.toAppException
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+class LoginViewModel(
+    val extensionLoader: ExtensionLoader,
+    val extensionType: ExtensionType,
+    val extensionId: String? = null,
+) : ViewModel() {
+    val extension = extensionLoader.getFlow(extensionType).getExtensionFlow(extensionId)
+        .stateIn(viewModelScope, Eagerly, null)
+
+    private val app = extensionLoader.app
+    val messageFlow = app.messageFlow
+    private val userDao = extensionLoader.db.userDao()
+    val loading = MutableStateFlow(true)
+    val loadingOver = MutableSharedFlow<Unit>()
+    val addFragmentFlow = MutableSharedFlow<FragmentType>()
+
+    sealed class FragmentType {
+        data object Selector : FragmentType()
+        data object WebView : FragmentType()
+        data class CustomInput(val index: Int?) : FragmentType()
+    }
+
+    private suspend fun loginNotSupported(extName: String?) {
+        val login = app.context.getString(R.string.login)
+        val message =
+            app.context.getString(R.string.x_is_not_supported_in_x, login, extName.toString())
+        messageFlow.emit(Message(message))
+        loadingOver.emit(Unit)
+    }
+
+    fun changeFragment(type: FragmentType) = viewModelScope.launch {
+        addFragmentFlow.emit(type)
+    }
+
+    private suspend fun afterLogin(
+        result: Result<List<User>>
+    ) {
+        val users = result.getOrElse {
+            app.throwFlow.emit(it)
+            loading.value = false
+            loadingOver.emit(Unit)
+            return@afterLogin
+        }
+        if (users.isEmpty()) {
+            app.messageFlow.emit(Message(app.context.getString(R.string.no_user_found)))
+        } else {
+            val entities = users.map { it.toEntity(extensionType, extensionId!!) }
+            userDao.insertUsers(entities)
+            val user = entities.first()
+            userDao.setCurrentUser(user.toCurrentUser())
+        }
+        loading.value = false
+        loadingOver.emit(Unit)
+    }
+
+    fun onWebViewStop(
+        result: Result<List<User>>,
+    ) = viewModelScope.launch {
+        val extension = extension.first { it != null }!!
+        val users = runCatching { result.getOrElse { throw it.toAppException(extension) } }
+        afterLogin(users)
+    }
+
+    val inputs = mutableMapOf<String, String?>()
+    fun onCustomTextInputSubmit(form: LoginClient.Form) = viewModelScope.launch {
+        loading.value = true
+        val extension = extension.first { it != null }!!
+        val users = extension.getAs<LoginClient.CustomInput, List<User>> {
+            onLogin(form.key, inputs.toMap())
+        }
+        afterLogin(users)
+    }
+
+    init {
+        viewModelScope.launch {
+            val extension = extension.first { it != null }!!
+            val totalClients = extension.get {
+                listOfNotNull(
+                    if (this is LoginClient.WebView) 1 else 0,
+                    if (this is LoginClient.CustomInput) forms.size
+                    else 0,
+                ).sum()
+            }.getOrNull() ?: 0
+            val client = extension.instance.value().getOrNull()
+            when (totalClients) {
+                0 -> loginNotSupported(extension.name)
+                1 -> when (client) {
+                    is LoginClient.WebView -> addFragmentFlow.emit(FragmentType.WebView)
+                    is LoginClient.CustomInput -> addFragmentFlow.emit(FragmentType.CustomInput(null))
+                    null -> loginNotSupported(extension.name)
+                }
+
+                else -> addFragmentFlow.emit(FragmentType.Selector)
+            }
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\manage\ExtensionAdapter.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions.manage
+
+import android.annotation.SuppressLint
+import android.content.SharedPreferences
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.content.edit
+import androidx.core.view.isVisible
+import androidx.paging.LoadState
+import androidx.paging.PagingData
+import androidx.paging.PagingDataAdapter
+import androidx.recyclerview.widget.ConcatAdapter
+import androidx.recyclerview.widget.DiffUtil
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.Extension
+import com.joaomagdaleno.music_hub.common.models.ExtensionType
+import com.joaomagdaleno.music_hub.databinding.ItemExtensionBinding
+import com.joaomagdaleno.music_hub.extensions.ExtensionLoader.Companion.priorityKey
+import com.joaomagdaleno.music_hub.ui.feed.EmptyAdapter
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadAsCircle
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
+
+class
+ExtensionAdapter(
+    val listener: Listener
+) : PagingDataAdapter<Extension<*>, ExtensionAdapter.ViewHolder>(DiffCallback) {
+
+    interface Listener {
+        fun onClick(extension: Extension<*>, view: View)
+        fun onDragHandleTouched(viewHolder: ViewHolder)
+        fun onOpenClick(extension: Extension<*>)
+    }
+
+    object DiffCallback : DiffUtil.ItemCallback<Extension<*>>() {
+        override fun areItemsTheSame(oldItem: Extension<*>, newItem: Extension<*>) =
+            oldItem.id == newItem.id
+
+        override fun areContentsTheSame(oldItem: Extension<*>, newItem: Extension<*>) =
+            oldItem == newItem
+    }
+
+    private val empty = EmptyAdapter()
+    fun withEmptyAdapter() = ConcatAdapter(empty, this)
+
+    class ViewHolder(val binding: ItemExtensionBinding, val listener: Listener) :
+        ScrollAnimViewHolder(binding.root) {
+        @SuppressLint("SetTextI18n")
+        fun bind(extension: Extension<*>) {
+            val metadata = extension.metadata
+            binding.root.transitionName = metadata.id
+            binding.root.setOnClickListener {
+                listener.onClick(extension, binding.root)
+            }
+            binding.extensionName.apply {
+                text = if (metadata.isEnabled) metadata.name
+                else context.getString(R.string.x_disabled, metadata.name)
+            }
+            binding.extensionVersion.text = "${metadata.version} • ${metadata.importType.name}"
+            binding.itemExtension.apply {
+                metadata.icon.loadAsCircle(this, R.drawable.ic_extension_32dp) {
+                    setImageDrawable(it)
+                }
+            }
+
+            binding.extensionDrag.setOnTouchListener { v, _ ->
+                v.performClick()
+                listener.onDragHandleTouched(this)
+                true
+            }
+
+            binding.extensionUse.isVisible = extension.type == ExtensionType.MUSIC
+            binding.extensionUse.setOnClickListener {
+                listener.onOpenClick(extension)
+            }
+        }
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return ViewHolder(ItemExtensionBinding.inflate(inflater, parent, false), listener)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val download = runCatching { getItem(position) }.getOrNull() ?: return
+        holder.bind(download)
+    }
+
+    suspend fun submit(list: List<Extension<*>>, selectedIndex: Int, settings: SharedPreferences) {
+        submitData(PagingData.from(list))
+        empty.loadState = if (list.isEmpty()) LoadState.Loading
+        else LoadState.NotLoading(true)
+        // Update priority map of extensions
+        val key = ExtensionType.entries[selectedIndex].priorityKey()
+        val extIds = list.joinToString(",") { it.id }
+        settings.edit { putString(key, extIds) }
+    }
+}
+
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\extensions\manage\ManageExtensionsFragment.kt ----------
+package com.joaomagdaleno.music_hub.ui.extensions.manage
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.tabs.TabLayout
+import com.joaomagdaleno.music_hub.common.Extension
+import com.joaomagdaleno.music_hub.common.MusicExtension
+import com.joaomagdaleno.music_hub.common.models.ExtensionType
+import com.joaomagdaleno.music_hub.databinding.FragmentManageExtensionsBinding
+import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyBackPressCallback
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsetsWithChild
+import com.joaomagdaleno.music_hub.ui.extensions.ExtensionInfoFragment
+import com.joaomagdaleno.music_hub.ui.extensions.ExtensionInfoPreference.Companion.getType
+import com.joaomagdaleno.music_hub.ui.extensions.ExtensionsViewModel
+import com.joaomagdaleno.music_hub.ui.extensions.add.ExtensionsAddBottomSheet
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import com.joaomagdaleno.music_hub.utils.ui.FastScrollerHelper
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils.configureAppBar
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+
+class ManageExtensionsFragment : Fragment() {
+    private var binding by autoCleared<FragmentManageExtensionsBinding>()
+    private val viewModel by activityViewModel<ExtensionsViewModel>()
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
+        binding = FragmentManageExtensionsBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        setupTransition(view)
+        applyInsetsWithChild(binding.appBarLayout, binding.recyclerView, 104) {
+            binding.fabContainer.applyInsets(it)
+        }
+        applyBackPressCallback()
+        binding.appBarLayout.configureAppBar { offset ->
+            binding.appBarOutline.alpha = offset
+            binding.appBarOutline.isVisible = offset > 0
+            binding.toolBar.alpha = 1 - offset
+        }
+        binding.toolBar.setNavigationOnClickListener {
+            parentFragmentManager.popBackStack()
+        }
+        binding.toolBar.setOnMenuItemClickListener {
+            viewModel.update(requireActivity(), true)
+            true
+        }
+
+        FastScrollerHelper.applyTo(binding.recyclerView)
+        binding.fabAddExtensions.setOnClickListener {
+            ExtensionsAddBottomSheet().show(parentFragmentManager, null)
+        }
+
+        val tabs = ExtensionType.entries.map {
+            binding.tabLayout.newTab().apply {
+                setText(getType(it))
+            }
+        }
+        binding.tabLayout.run {
+            tabs.forEach { addTab(it) }
+        }
+
+        val callback = object : ItemTouchHelper.SimpleCallback(
+            ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0
+        ) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                val fromPos = viewHolder.bindingAdapterPosition
+                val toPos = target.bindingAdapterPosition
+                viewModel.moveExtensionItem(toPos, fromPos)
+                return true
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
+
+            override fun getMovementFlags(
+                recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder
+            ) = makeMovementFlags(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0)
+
+        }
+
+        val touchHelper = ItemTouchHelper(callback)
+        val extensionAdapter = ExtensionAdapter(object : ExtensionAdapter.Listener {
+            override fun onClick(extension: Extension<*>, view: View) {
+                openFragment<ExtensionInfoFragment>(
+                    view, ExtensionInfoFragment.getBundle(extension)
+                )
+            }
+
+            override fun onDragHandleTouched(viewHolder: ExtensionAdapter.ViewHolder) {
+                touchHelper.startDrag(viewHolder)
+            }
+
+            override fun onOpenClick(extension: Extension<*>) {
+                viewModel.onExtensionSelected(extension as MusicExtension)
+                parentFragmentManager.popBackStack()
+                parentFragmentManager.popBackStack()
+            }
+        })
+
+        observe(viewModel.manageExtListFlow) { list ->
+            extensionAdapter.submit(list, viewModel.lastSelectedManageExt.value, viewModel.app.settings)
+        }
+
+        binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            fun select(tab: TabLayout.Tab) {
+                viewModel.lastSelectedManageExt.value = tab.position
+            }
+
+            override fun onTabSelected(tab: TabLayout.Tab) = select(tab)
+            override fun onTabReselected(tab: TabLayout.Tab) = select(tab)
+            override fun onTabUnselected(tab: TabLayout.Tab) {}
+        })
+
+        binding.tabLayout.selectTab(tabs[viewModel.lastSelectedManageExt.value])
+        binding.recyclerView.adapter = extensionAdapter.withEmptyAdapter()
+        touchHelper.attachToRecyclerView(binding.recyclerView)
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\main\HeaderAdapter.kt ----------
+package com.joaomagdaleno.music_hub.ui.main
+
+import android.content.res.ColorStateList
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import androidx.fragment.app.Fragment
+import com.google.android.material.color.MaterialColors
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.Extension
+import com.joaomagdaleno.music_hub.common.MusicExtension
+import com.joaomagdaleno.music_hub.common.models.ExtensionType
+import com.joaomagdaleno.music_hub.common.models.ImageHolder
+import com.joaomagdaleno.music_hub.common.models.User
+import com.joaomagdaleno.music_hub.databinding.ItemMainHeaderBinding
+import com.joaomagdaleno.music_hub.extensions.db.models.UserEntity.Companion.toEntity
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter
+import com.joaomagdaleno.music_hub.ui.extensions.list.ExtensionsListBottomSheet
+import com.joaomagdaleno.music_hub.ui.extensions.login.LoginUserListViewModel
+import com.joaomagdaleno.music_hub.ui.settings.SettingsBottomSheet
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadAsCircle
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimRecyclerAdapter
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+
+class HeaderAdapter(
+    private val fragment: Fragment,
+) : ScrollAnimRecyclerAdapter<HeaderAdapter.ViewHolder>(), GridAdapter {
+    private val viewModel by fragment.activityViewModel<LoginUserListViewModel>()
+
+    override val adapter = this
+    override fun getSpanSize(position: Int, width: Int, count: Int) = count
+    override fun getItemCount() = 1
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val holder = ViewHolder(parent)
+        val binding = holder.binding
+        val parentFragmentManager = fragment.parentFragmentManager
+//        binding.extensionsCont.setOnClickListener {
+//            ExtensionsListBottomSheet.newInstance(ExtensionType.MUSIC)
+//                .show(parentFragmentManager, null)
+//        }
+        binding.extensionsCont.visibility = View.GONE
+
+        binding.accountsCont.setOnClickListener {
+            SettingsBottomSheet().show(parentFragmentManager, null)
+        }
+        return holder
+    }
+
+    private var extension: MusicExtension? = null
+        set(value) {
+            field = value
+            notifyItemChanged(0)
+        }
+
+    private var triple: Triple<Extension<*>?, Boolean, List<Pair<User, Boolean>>> =
+        Triple(null, false, emptyList())
+        set(value) {
+            field = value
+            notifyItemChanged(0)
+        }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) = with(holder.binding) {
+        super.onBindViewHolder(holder, position)
+        val context = root.context
+        title.text = context.getString(R.string.app_name)
+//        extensions.loadBigIcon(extension?.metadata?.icon, R.drawable.ic_extension_32dp)
+//        extensionsCont.setLoopedLongClick(
+//            viewModel.extensionLoader.music.value.filter { it.isEnabled },
+//            { viewModel.extensionLoader.current.value }
+//        ) {
+//            viewModel.extensionLoader.setupMusicExtension(it, true)
+//        }
+
+        val (ext, isLoginClient, all) = triple
+        accounts.loadBigIcon(
+            viewModel.currentUser.value?.cover,
+            if (isLoginClient) R.drawable.ic_account_circle_32dp else R.drawable.ic_settings_outline_32dp
+        )
+        accountsCont.setLoopedLongClick(all, { all.find { it.second } }) {
+            ext ?: return@setLoopedLongClick
+            viewModel.setLoginUser(it.first.toEntity(ext.type, ext.id))
+        }
+    }
+
+    class ViewHolder(
+        parent: ViewGroup,
+        val binding: ItemMainHeaderBinding = ItemMainHeaderBinding.inflate(
+            LayoutInflater.from(parent.context), parent, false
+        ),
+    ) : ScrollAnimViewHolder(binding.root)
+
+    init {
+        with(fragment) {
+
+            observe(viewModel.extensionLoader.current) {
+                viewModel.currentExtension.value = it
+                extension = it
+            }
+            observe(viewModel.allUsersWithClient) {
+                triple = it
+            }
+        }
+    }
+
+    companion object {
+        fun <T> View.setLoopedLongClick(
+            list: List<T>,
+            getCurrent: (View) -> T?,
+            onSelect: (T) -> Unit,
+        ) {
+            setOnLongClickListener {
+                val current = getCurrent(this)
+                val index = list.indexOf(current)
+                if (index == -1) return@setOnLongClickListener false
+                val next = list[(index + 1) % list.size]
+                if (next == current) return@setOnLongClickListener false
+                onSelect(next)
+                true
+            }
+        }
+
+        fun ImageView.loadBigIcon(image: ImageHolder?, placeholder: Int) {
+            val color = ColorStateList.valueOf(
+                MaterialColors.getColor(
+                    this,
+                    androidx.appcompat.R.attr.colorControlNormal
+                )
+            )
+            image.loadAsCircle(this) {
+                if (it == null) {
+                    imageTintList = color
+                    setImageResource(placeholder)
+                } else {
+                    imageTintList = null
+                    setImageDrawable(it)
+                }
+            }
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\main\HomeFragment.kt ----------
+package com.joaomagdaleno.music_hub.ui.main
+
+import android.os.Bundle
+import android.view.View
+import androidx.fragment.app.Fragment
+import com.google.android.material.transition.MaterialSharedAxis
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.clients.HomeFeedClient
+import com.joaomagdaleno.music_hub.common.models.ExtensionType
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Feed.Buttons.Companion.EMPTY
+import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.databinding.FragmentHomeBinding
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getAs
+import com.joaomagdaleno.music_hub.extensions.cache.Cached
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyBackPressCallback
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.configure
+import com.joaomagdaleno.music_hub.ui.extensions.list.ExtensionsListBottomSheet
+import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getFeedAdapter
+import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getTouchHelper
+import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener.Companion.getFeedListener
+import com.joaomagdaleno.music_hub.ui.feed.FeedData
+import com.joaomagdaleno.music_hub.ui.feed.FeedViewModel
+import com.joaomagdaleno.music_hub.ui.main.MainFragment.Companion.applyInsets
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
+import kotlinx.coroutines.flow.combine
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
+
+class HomeFragment : Fragment(R.layout.fragment_home) {
+
+    private val feedData by lazy {
+        val vm by viewModel<FeedViewModel>()
+        val id = "home"
+        vm.getFeedData(id, EMPTY, cached = {
+            val curr = current.value!!
+            val feed = Cached.getFeedShelf(app, curr.id, id).getOrThrow()
+            FeedData.State(curr.id, null, feed)
+        }) {
+            val curr = current.value!!
+            val feed = Cached.savingFeed(
+                app, curr, id,
+                curr.getAs<HomeFeedClient, Feed<Shelf>> { loadHomeFeed() }.getOrThrow()
+            )
+            FeedData.State(curr.id, null, feed)
+        }
+    }
+
+    private val listener by lazy { getFeedListener(requireParentFragment()) }
+    private val feedAdapter by lazy { getFeedAdapter(feedData, listener) }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val binding = FragmentHomeBinding.bind(view)
+        setupTransition(view, false, MaterialSharedAxis.Y)
+        applyInsets(binding.recyclerView, binding.appBarOutline) {
+            binding.swipeRefresh.configure(it)
+        }
+        val uiViewModel by activityViewModel<UiViewModel>()
+        observe(uiViewModel.navigationReselected) {
+            if (it != 0) return@observe
+            // Removed extension selection logic to keep a native feel
+            binding.recyclerView.smoothScrollToPosition(0)
+        }
+        observe(
+            uiViewModel.navigation.combine(feedData.backgroundImageFlow) { a, b -> a to b }
+        ) { (curr, bg) ->
+            if (curr != 0) return@observe
+            uiViewModel.currentNavBackground.value = bg
+        }
+        applyBackPressCallback()
+        getTouchHelper(listener).attachToRecyclerView(binding.recyclerView)
+        configureGridLayout(
+            binding.recyclerView,
+            feedAdapter.withLoading(this, HeaderAdapter(this))
+        )
+        binding.swipeRefresh.run {
+            setOnRefreshListener { feedData.refresh() }
+            observe(feedData.isRefreshingFlow) {
+                isRefreshing = it
+            }
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\main\LibraryFragment.kt ----------
+package com.joaomagdaleno.music_hub.ui.main
+
+import android.os.Bundle
+import android.view.View
+import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
+import com.google.android.material.transition.MaterialSharedAxis
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.clients.LibraryFeedClient
+import com.joaomagdaleno.music_hub.common.clients.PlaylistEditClient
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Message
+import com.joaomagdaleno.music_hub.common.models.Playlist
+import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.databinding.FragmentLibraryBinding
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getAs
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.isClient
+import com.joaomagdaleno.music_hub.extensions.cache.Cached
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
+import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler.Companion.createSnack
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyBackPressCallback
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.configure
+import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getFeedAdapter
+import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getTouchHelper
+import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener.Companion.getFeedListener
+import com.joaomagdaleno.music_hub.ui.feed.FeedData
+import com.joaomagdaleno.music_hub.ui.feed.FeedViewModel
+import com.joaomagdaleno.music_hub.ui.main.MainFragment.Companion.applyInsets
+import com.joaomagdaleno.music_hub.ui.playlist.create.CreatePlaylistBottomSheet
+import com.joaomagdaleno.music_hub.ui.settings.SettingsBottomSheet
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.Serializer.getSerialized
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
+import kotlinx.coroutines.flow.combine
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
+
+class LibraryFragment : Fragment(R.layout.fragment_library) {
+    private val feedData by lazy {
+        val vm by viewModel<FeedViewModel>()
+        val id = "library"
+        vm.getFeedData(id, cached = {
+            val curr = current.value!!
+            val feed = Cached.getFeedShelf(app, curr.id, id).getOrThrow()
+            FeedData.State(curr.id, null, feed)
+        }) {
+            val curr = current.value!!
+            val feed = Cached.savingFeed(
+                app, curr, id,
+                curr.getAs<LibraryFeedClient, Feed<Shelf>> { loadLibraryFeed() }.getOrThrow()
+            )
+            FeedData.State(curr.id, null, feed)
+        }
+    }
+
+    private val listener by lazy { getFeedListener(requireParentFragment()) }
+    private val feedAdapter by lazy { getFeedAdapter(feedData, listener) }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val binding = FragmentLibraryBinding.bind(view)
+        setupTransition(view, false, MaterialSharedAxis.Y)
+        val headerAdapter = HeaderAdapter(this)
+        val uiViewModel by activityViewModel<UiViewModel>()
+        observe(uiViewModel.navigationReselected) {
+            if (it != 2) return@observe
+            SettingsBottomSheet().show(parentFragmentManager, null)
+        }
+        observe(
+            uiViewModel.navigation.combine(feedData.backgroundImageFlow) { a, b -> a to b }
+        ) { (curr, bg) ->
+            if (curr != 2) return@observe
+            uiViewModel.currentNavBackground.value = bg
+        }
+        applyInsets(binding.recyclerView, binding.appBarOutline, 72) {
+            binding.createPlaylistContainer.applyInsets(it)
+            binding.swipeRefresh.configure(it)
+        }
+        applyBackPressCallback()
+        getTouchHelper(listener).attachToRecyclerView(binding.recyclerView)
+        configureGridLayout(
+            binding.recyclerView,
+            feedAdapter.withLoading(this, headerAdapter)
+        )
+        binding.swipeRefresh.run {
+            setOnRefreshListener { feedData.refresh() }
+            observe(feedData.isRefreshingFlow) {
+                isRefreshing = it
+            }
+        }
+
+        observe(feedData.current) {
+            binding.createPlaylist.isVisible = it?.isClient<PlaylistEditClient>() ?: false
+        }
+        val parent = requireParentFragment()
+        binding.createPlaylist.setOnClickListener {
+            CreatePlaylistBottomSheet().show(parent.parentFragmentManager, null)
+        }
+
+        parent.parentFragmentManager.setFragmentResultListener("createPlaylist", this) { _, data ->
+            val extensionId = data.getString("extensionId")
+            val playlist = data.getSerialized<Playlist>("playlist")?.getOrNull()
+            if (extensionId != null && playlist != null) createSnack(
+                Message(
+                    getString(R.string.x_created, playlist.title),
+                    Message.Action(getString(R.string.view)) {
+                        listener.onMediaClicked(null, extensionId, playlist, null)
+                    }
+                )
+            )
+            feedData.refresh()
+        }
+
+        parent.parentFragmentManager.setFragmentResultListener("deleted", this) { _, _ ->
+            feedData.refresh()
+        }
+
+        parent.parentFragmentManager.setFragmentResultListener("reloadLibrary", this) { _, _ ->
+            feedData.refresh()
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\main\MainFragment.kt ----------
+package com.joaomagdaleno.music_hub.ui.main
+
+import android.graphics.Rect
+import android.graphics.drawable.Drawable
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.view.updatePadding
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.commit
+import androidx.recyclerview.widget.RecyclerView
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.databinding.FragmentMainBinding
+import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.addIfNull
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.BACKGROUND_GRADIENT
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyGradient
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
+import com.joaomagdaleno.music_hub.ui.main.search.SearchFragment
+import com.joaomagdaleno.music_hub.utils.ContextUtils.getSettings
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import com.joaomagdaleno.music_hub.utils.ui.FastScrollerHelper
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils.dpToPx
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils.isRTL
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import kotlin.math.max
+
+class MainFragment : Fragment() {
+
+    private var binding by autoCleared<FragmentMainBinding>()
+    private val viewModel by activityViewModel<UiViewModel>()
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
+        binding = FragmentMainBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    private inline fun <reified F : Fragment> Fragment.addIfNull(tag: String): String {
+        addIfNull<F>(R.id.main_fragment_container_view, tag)
+        return tag
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        setupTransition(view)
+        applyPlayerBg(view) {
+            mainBgDrawable.combine(currentNavBackground) { a, b -> b ?: a }
+        }
+        observe(viewModel.navigation) {
+            val toShow = when (it) {
+                1 -> addIfNull<SearchFragment>("search")
+                2 -> addIfNull<LibraryFragment>("library")
+                else -> addIfNull<HomeFragment>("home")
+            }
+
+            childFragmentManager.commit(true) {
+                childFragmentManager.fragments.forEach { fragment ->
+                    if (fragment.tag != toShow) hide(fragment)
+                    else show(fragment)
+                }
+                setReorderingAllowed(true)
+            }
+        }
+    }
+
+    companion object {
+        fun Fragment.applyPlayerBg(
+            view: View,
+            imageFlow: UiViewModel.() -> Flow<Drawable?>
+        ): UiViewModel {
+            val uiViewModel by activityViewModel<UiViewModel>()
+            val combined = uiViewModel.imageFlow()
+            observe(combined) { applyGradient(view, it) }
+            return uiViewModel
+        }
+
+        fun Fragment.applyInsets(
+            recyclerView: RecyclerView,
+            outline: View,
+            bottom: Int = 0,
+            block: UiViewModel.(UiViewModel.Insets) -> Unit = {}
+        ) {
+            recyclerView.run {
+                val height = 48.dpToPx(context)
+                val settings = context.getSettings()
+                val isGradient = settings.getBoolean(BACKGROUND_GRADIENT, true)
+                val extra = if (isGradient) 0.5f else 0f
+                setOnScrollChangeListener { _, _, _, _, _ ->
+                    val offset =
+                        computeVerticalScrollOffset().coerceAtMost(height) / height.toFloat()
+                    outline.alpha = max(0f, offset - extra)
+                }
+            }
+            val scroller = FastScrollerHelper.applyTo(recyclerView)
+            applyInsets {
+                recyclerView.applyInsets(it, 20, 20, bottom + 4)
+                outline.updatePadding(top = it.top)
+                scroller?.setPadding(recyclerView.run {
+                    val pad = 8.dpToPx(context)
+                    val isRtl = context.isRTL()
+                    val left = if (!isRtl) it.start else it.end
+                    val right = if (!isRtl) it.end else it.start
+                    Rect(left + pad, it.top + pad, right + pad, it.bottom + bottom + pad)
+                })
+                block(it)
+            }
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\main\search\QuickSearchAdapter.kt ----------
+package com.joaomagdaleno.music_hub.ui.main.search
+
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import androidx.recyclerview.widget.DiffUtil
+import com.joaomagdaleno.music_hub.common.models.QuickSearchItem
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimListAdapter
+
+class QuickSearchAdapter(
+    val listener: Listener,
+) : ScrollAnimListAdapter<QuickSearchAdapter.Item, QuickSearchViewHolder>(DiffCallback) {
+    data class Item(
+        val extensionId: String,
+        val actual: QuickSearchItem,
+    )
+
+    object DiffCallback : DiffUtil.ItemCallback<Item>() {
+        override fun areItemsTheSame(oldItem: Item, newItem: Item): Boolean {
+            if (oldItem.extensionId != newItem.extensionId) return false
+            return oldItem.actual.sameAs(newItem.actual)
+        }
+
+        override fun areContentsTheSame(oldItem: Item, newItem: Item) = oldItem == newItem
+    }
+
+    interface Listener {
+        fun onClick(item: Item, transitionView: View)
+        fun onLongClick(item: Item, transitionView: View): Boolean
+        fun onInsert(item: Item)
+        fun onDeleteClick(item: Item)
+    }
+
+    override fun getItemViewType(position: Int) = when (getItem(position).actual) {
+        is QuickSearchItem.Query -> 0
+        is QuickSearchItem.Media -> 1
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = when (viewType) {
+        0 -> QuickSearchViewHolder.Query.create(parent)
+        1 -> QuickSearchViewHolder.Media.create(parent)
+        else -> throw IllegalArgumentException("Unknown viewType: $viewType")
+    }
+
+    override fun onBindViewHolder(holder: QuickSearchViewHolder, position: Int) {
+        val item = getItem(position) ?: return
+        holder.bind(item)
+        holder.itemView.setOnClickListener {
+            listener.onClick(item, holder.transitionView)
+        }
+        holder.itemView.setOnLongClickListener {
+            listener.onLongClick(item, holder.transitionView)
+        }
+        holder.insertView.setOnClickListener {
+            listener.onInsert(item)
+        }
+
+        holder.deleteView.isVisible = item.actual.searched
+        holder.deleteView.setOnClickListener {
+            listener.onDeleteClick(item)
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\main\search\QuickSearchViewHolder.kt ----------
+package com.joaomagdaleno.music_hub.ui.main.search
+
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import com.joaomagdaleno.music_hub.common.models.QuickSearchItem
+import com.joaomagdaleno.music_hub.databinding.ItemQuickSearchMediaBinding
+import com.joaomagdaleno.music_hub.databinding.ItemQuickSearchQueryBinding
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.placeHolder
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.subtitle
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadInto
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
+
+sealed class QuickSearchViewHolder(itemView: View) : ScrollAnimViewHolder(itemView) {
+    abstract fun bind(item: QuickSearchAdapter.Item)
+    abstract val insertView: View
+    abstract val deleteView: View
+    open val transitionView: View
+        get() = this.insertView
+
+    class Query(val binding: ItemQuickSearchQueryBinding) : QuickSearchViewHolder(binding.root) {
+        override val insertView: View
+            get() = binding.insert
+
+        override val deleteView: View
+            get() = binding.delete
+
+        override fun bind(item:  QuickSearchAdapter.Item) {
+            val item = item.actual as QuickSearchItem.Query
+            binding.history.visibility = if (item.searched) View.VISIBLE else View.INVISIBLE
+            binding.query.text = item.query
+        }
+
+        companion object {
+            fun create(
+                parent: ViewGroup
+            ): QuickSearchViewHolder {
+                val layoutInflater = LayoutInflater.from(parent.context)
+                return Query(
+                    ItemQuickSearchQueryBinding.inflate(layoutInflater, parent, false)
+                )
+            }
+        }
+    }
+
+    class Media(val binding: ItemQuickSearchMediaBinding) : QuickSearchViewHolder(binding.root) {
+        override val insertView: View
+            get() = binding.insert
+
+        override val deleteView: View
+            get() = binding.delete
+
+        override val transitionView: View
+            get() = binding.coverContainer
+
+        override fun bind(item:  QuickSearchAdapter.Item) {
+            val item = item.actual as QuickSearchItem.Media
+            binding.title.text = item.media.title
+            val subtitle = item.media.subtitle(binding.root.context)
+            binding.subtitle.text = subtitle
+            binding.subtitle.isVisible = !subtitle.isNullOrEmpty()
+            transitionView.transitionName = ("quick" + item.media.id).hashCode().toString()
+            item.media.cover.loadInto(binding.cover, item.media.placeHolder)
+        }
+
+        companion object {
+            fun create(
+                parent: ViewGroup
+            ): QuickSearchViewHolder {
+                val layoutInflater = LayoutInflater.from(parent.context)
+                return Media(
+                    ItemQuickSearchMediaBinding.inflate(layoutInflater, parent, false)
+                )
+            }
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\main\search\SearchBarAdapter.kt ----------
+package com.joaomagdaleno.music_hub.ui.main.search
+
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import com.google.android.material.search.SearchView
+import com.joaomagdaleno.music_hub.databinding.ItemSearchBarBinding
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimRecyclerAdapter
+import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
+
+class SearchBarAdapter(
+    val viewModel: SearchViewModel,
+    val searchView: SearchView,
+) : ScrollAnimRecyclerAdapter<SearchBarAdapter.ViewHolder>(), GridAdapter {
+    override val adapter = this
+    override fun getSpanSize(position: Int, width: Int, count: Int) = count
+    override fun getItemCount() = 1
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
+        ViewHolder(parent, viewModel, searchView)
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        super.onBindViewHolder(holder, position)
+        holder.bind()
+    }
+
+    class ViewHolder(
+        parent: ViewGroup,
+        val viewModel: SearchViewModel,
+        val searchView: SearchView,
+        private val binding: ItemSearchBarBinding = ItemSearchBarBinding.inflate(
+            LayoutInflater.from(parent.context), parent, false
+        )
+    ) : ScrollAnimViewHolder(binding.root) {
+        fun bind() {
+            searchView.setupWithSearchBar(binding.root)
+            binding.root.setText(viewModel.queryFlow.value.takeIf { it.isNotBlank() })
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\main\search\SearchFragment.kt ----------
+package com.joaomagdaleno.music_hub.ui.main.search
+
+import android.os.Bundle
+import android.view.View
+import androidx.activity.OnBackPressedCallback
+import androidx.core.widget.doOnTextChanged
+import androidx.fragment.app.Fragment
+import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+import com.google.android.material.transition.MaterialSharedAxis
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.clients.SearchFeedClient
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Feed.Buttons.Companion.EMPTY
+import com.joaomagdaleno.music_hub.common.models.QuickSearchItem
+import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.databinding.FragmentSearchBinding
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getAs
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtension
+import com.joaomagdaleno.music_hub.extensions.cache.Cached
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyBackPressCallback
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.configure
+import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getFeedAdapter
+import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getTouchHelper
+import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener.Companion.getFeedListener
+import com.joaomagdaleno.music_hub.ui.feed.FeedData
+import com.joaomagdaleno.music_hub.ui.feed.FeedViewModel
+import com.joaomagdaleno.music_hub.ui.main.HeaderAdapter
+import com.joaomagdaleno.music_hub.ui.main.MainFragment.Companion.applyInsets
+import com.joaomagdaleno.music_hub.ui.main.search.SearchViewModel.Companion.saveInHistory
+import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
+import kotlinx.coroutines.flow.combine
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
+
+class SearchFragment : Fragment(R.layout.fragment_search) {
+
+    private val argId by lazy { arguments?.getString("extensionId") }
+    private val searchViewModel by viewModel<SearchViewModel>()
+
+    private var extensionId = ""
+
+    private val feedData by lazy {
+        val vm by viewModel<FeedViewModel>()
+        val id = "search"
+        vm.getFeedData(
+            id,
+            EMPTY,
+            false,
+            searchViewModel.queryFlow,
+            cached = {
+                val curr = music.getExtension(argId) ?: current.value!!
+                val query = searchViewModel.queryFlow.value
+                val feed = Cached.getFeedShelf(app, curr.id, "$id-$query")
+                FeedData.State(curr.id, null, feed.getOrThrow())
+            }
+        ) {
+            val curr = music.getExtension(argId) ?: current.value!!
+            val query = searchViewModel.queryFlow.value
+            curr.saveInHistory(vm.app.context, query)
+            val feed = Cached.savingFeed(
+                app, curr, "$id-$query",
+                curr.getAs<SearchFeedClient, Feed<Shelf>> { loadSearchFeed(query) }.getOrThrow()
+            )
+            extensionId = curr.id
+            FeedData.State(curr.id, null, feed)
+        }
+    }
+
+    private val listener by lazy {
+        getFeedListener(if (argId == null) requireParentFragment() else this)
+    }
+
+    private val feedAdapter by lazy {
+        getFeedAdapter(feedData, listener)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val binding = FragmentSearchBinding.bind(view)
+        setupTransition(view, false, MaterialSharedAxis.Y)
+        applyInsets(binding.recyclerView, binding.appBarOutline) {
+            binding.swipeRefresh.configure(it)
+        }
+        val uiViewModel by activityViewModel<UiViewModel>()
+        observe(uiViewModel.navigationReselected) {
+            if (it != 1) return@observe
+            binding.quickSearchView.show()
+        }
+        observe(uiViewModel.navigation) {
+            binding.quickSearchView.hide()
+        }
+        observe(
+            uiViewModel.navigation.combine(feedData.backgroundImageFlow) { a, b -> a to b }
+        ) { (curr, bg) ->
+            if (curr != 1) return@observe
+            uiViewModel.currentNavBackground.value = bg
+        }
+        val backCallback = object : OnBackPressedCallback(false) {
+            override fun handleOnBackPressed() {
+                binding.quickSearchView.hide()
+            }
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backCallback)
+        binding.quickSearchView.addTransitionListener { v, _, _ ->
+            backCallback.isEnabled = v.isShowing
+        }
+        applyBackPressCallback {
+            if (it == STATE_EXPANDED) binding.quickSearchView.hide()
+        }
+        val searchAdapter = SearchBarAdapter(searchViewModel, binding.quickSearchView)
+        observe(searchViewModel.queryFlow) {
+            searchAdapter.notifyItemChanged(0)
+            binding.quickSearchView.setText(it)
+        }
+        getTouchHelper(listener).attachToRecyclerView(binding.recyclerView)
+        configureGridLayout(
+            binding.recyclerView,
+            feedAdapter.withLoading(this, HeaderAdapter(this), searchAdapter)
+        )
+        binding.swipeRefresh.run {
+            setOnRefreshListener { feedData.refresh() }
+            observe(feedData.isRefreshingFlow) {
+                isRefreshing = it
+            }
+        }
+        binding.quickSearchView.editText.setText(searchViewModel.queryFlow.value)
+        binding.quickSearchView.editText.doOnTextChanged { text, _, _, _ ->
+            searchViewModel.quickSearch(extensionId, text.toString())
+        }
+        binding.quickSearchView.editText.setOnEditorActionListener { textView, _, _ ->
+            val query = textView.text.toString()
+            binding.quickSearchView.hide()
+            searchViewModel.queryFlow.value = query
+            false
+        }
+        val quickSearchAdapter = QuickSearchAdapter(object : QuickSearchAdapter.Listener {
+            override fun onClick(item: QuickSearchAdapter.Item, transitionView: View) {
+                when (val actualItem = item.actual) {
+                    is QuickSearchItem.Query -> {
+                        binding.quickSearchView.editText.run {
+                            setText(actualItem.query)
+                            onEditorAction(imeOptions)
+                        }
+                    }
+
+                    is QuickSearchItem.Media -> {
+                        val extensionId = item.extensionId
+                        listener.onMediaClicked(transitionView, extensionId, actualItem.media, null)
+                    }
+                }
+            }
+
+            override fun onDeleteClick(item: QuickSearchAdapter.Item) =
+                searchViewModel.deleteSearch(
+                    item.extensionId,
+                    item.actual,
+                    binding.quickSearchView.editText.text.toString()
+                )
+
+            override fun onLongClick(item: QuickSearchAdapter.Item, transitionView: View) =
+                when (val actualItem = item.actual) {
+                    is QuickSearchItem.Query -> {
+                        onDeleteClick(item)
+                        true
+                    }
+
+                    is QuickSearchItem.Media -> {
+                        val extensionId = item.extensionId
+                        listener.onMediaLongClicked(
+                            transitionView, extensionId, actualItem.media,
+                            null, null, -1
+                        )
+                        true
+                    }
+                }
+
+            override fun onInsert(item: QuickSearchAdapter.Item) {
+                binding.quickSearchView.editText.run {
+                    setText(item.actual.title)
+                    setSelection(length())
+                }
+            }
+        })
+
+        binding.quickSearchRecyclerView.adapter = quickSearchAdapter
+        observe(searchViewModel.quickFeed) { list ->
+            quickSearchAdapter.submitList(list.map {
+                QuickSearchAdapter.Item(extensionId, it)
+            })
+        }
+    }
+}
+
+---------- FILE: app\src\main\java\com\joaomagdaleno\music_hub\ui\main\search\SearchViewModel.kt ----------
+package com.joaomagdaleno.music_hub.ui.main.search
+
+import android.content.Context
+import android.content.SharedPreferences
+import androidx.core.content.edit
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.joaomagdaleno.music_hub.common.Extension
+import com.joaomagdaleno.music_hub.common.clients.QuickSearchClient
+import com.joaomagdaleno.music_hub.common.models.QuickSearchItem
+import com.joaomagdaleno.music_hub.di.App
+import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtension
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getIf
+import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.prefs
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+
+class SearchViewModel(
+    private val app: App,
+    extensionLoader: ExtensionLoader
+) : ViewModel() {
+    val queryFlow = MutableStateFlow("")
+    private val music = extensionLoader.music
+    val quickFeed = MutableStateFlow<List<QuickSearchItem>>(emptyList())
+    fun quickSearch(extensionId: String, query: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val extension = music.getExtension(extensionId)
+            val list = extension?.getIf<QuickSearchClient, List<QuickSearchItem>>(app.throwFlow) {
+                quickSearch(query)
+            } ?: defaultQuickSearch(extension, app.context, query)
+            quickFeed.value = list
+        }
+    }
+
+    fun deleteSearch(extensionId: String, item: QuickSearchItem, query: String) {
+        viewModelScope.launch {
+            val extension = music.getExtension(extensionId)
+            extension?.getIf<QuickSearchClient, Unit>(app.throwFlow) {
+                deleteQuickSearch(item)
+            } ?: defaultDeleteSearch(extension, app.context, item)
+            quickSearch(extensionId, query)
+        }
+    }
+
+    companion object {
+        fun defaultQuickSearch(
+            extension: Extension<*>?, context: Context, query: String
+        ): List<QuickSearchItem> {
+            val setting = extension?.prefs(context) ?: return emptyList()
+            if (query.isNotBlank()) return emptyList()
+            return getHistory(setting).map { QuickSearchItem.Query(it, true) }
+        }
+
+        fun defaultDeleteSearch(extension: Extension<*>?, context: Context, item: QuickSearchItem) {
+            val setting = extension?.prefs(context) ?: return
+            val history = getHistory(setting).toMutableList()
+            history.remove(item.title)
+            setting.edit { putString("search_history", history.joinToString(",")) }
+        }
+
+        private fun getHistory(setting: SharedPreferences): List<String> {
+            return setting.getString("search_history", "")
+                ?.split(",")?.mapNotNull {
+                    it.takeIf { it.isNotBlank() }
+                }?.distinct()?.take(5)
+                ?: emptyList()
+        }
+
+        fun Extension<*>.saveInHistory(context: Context, query: String) {
+            if (query.isBlank()) return
+            val setting = prefs(context)
+            val history = getHistory(setting).toMutableList()
+            history.add(0, query)
+            setting.edit { putString("search_history", history.joinToString(",")) }
+        }
+    }
+}
+
+---------- FILE: app\src\nightly\res\values\colors.xml ----------
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="app_color">#9999FF</color>
+    <color name="app_color_highlight">#FFFFBFDB</color>
+    <color name="app_color_shadow">#FF477BD1</color>
+</resources>
+
+---------- FILE: jitpack.yml ----------
+jdk:
+  - openjdk17
+before_install:
+  - sdk install java 17.0.1-open
+  - sdk use java 17.0.1-open
+install:
+  - ./gradlew clean common:build publishToMavenLocal
+

@@ -8,11 +8,9 @@ import androidx.paging.LoadState
 import com.joaomagdaleno.music_hub.databinding.ItemShelfErrorBinding
 import com.joaomagdaleno.music_hub.databinding.ItemShelfLoginRequiredBinding
 import com.joaomagdaleno.music_hub.databinding.ItemShelfNotLoadingBinding
-import com.joaomagdaleno.music_hub.extensions.cache.Cached
-import com.joaomagdaleno.music_hub.extensions.exceptions.AppException
+import com.joaomagdaleno.music_hub.common.helpers.ClientException
 import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.getFinalTitle
 import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.getMessage
-import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.openLoginException
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
 import com.joaomagdaleno.music_hub.ui.common.PagedSource
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimLoadStateAdapter
@@ -26,7 +24,7 @@ class FeedLoadingAdapter(
     interface Listener {
         fun onRetry()
         fun onError(view: View, error: Throwable)
-        fun onLoginRequired(view: View, error: AppException.LoginRequired)
+        fun onLoginRequired(view: View, error: ClientException.LoginRequired)
     }
 
     abstract class ViewHolder(val view: View) : ScrollAnimViewHolder(view) {
@@ -79,7 +77,7 @@ class FeedLoadingAdapter(
     ) : ViewHolder(binding.root) {
         override fun bind(loadState: LoadState) {
             val error = (loadState as LoadState.Error).error
-            val appError = error as AppException.LoginRequired
+            val appError = error as ClientException.LoginRequired
             binding.error.run {
                 text = context.getFinalTitle(appError)
             }
@@ -107,9 +105,8 @@ class FeedLoadingAdapter(
             is LoadState.NotLoading -> 1
             is LoadState.Error -> {
                 when (loadState.error) {
-                    is AppException.LoginRequired -> 3
+                    is ClientException.LoginRequired -> 3
                     is PagedSource.LoadingException -> 0
-                    is Cached.NotFound -> 1
                     else -> 2
                 }
             }
@@ -135,8 +132,8 @@ class FeedLoadingAdapter(
                     requireActivity().getMessage(error, view).action?.handler?.invoke()
                 }
 
-                override fun onLoginRequired(view: View, error: AppException.LoginRequired) {
-                    requireActivity().openLoginException(error, view)
+                override fun onLoginRequired(view: View, error: ClientException.LoginRequired) {
+                    onError(view, error)
                 }
             }
     }

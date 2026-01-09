@@ -5,19 +5,15 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import com.google.android.material.transition.MaterialSharedAxis
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.clients.HomeFeedClient
-import com.joaomagdaleno.music_hub.common.models.ExtensionType
 import com.joaomagdaleno.music_hub.common.models.Feed
 import com.joaomagdaleno.music_hub.common.models.Feed.Buttons.Companion.EMPTY
 import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.common.models.Feed.Companion.toFeed
 import com.joaomagdaleno.music_hub.databinding.FragmentHomeBinding
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getAs
-import com.joaomagdaleno.music_hub.extensions.cache.Cached
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyBackPressCallback
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.configure
-import com.joaomagdaleno.music_hub.ui.extensions.list.ExtensionsListBottomSheet
 import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getFeedAdapter
 import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getTouchHelper
 import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener.Companion.getFeedListener
@@ -36,16 +32,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val vm by viewModel<FeedViewModel>()
         val id = "home"
         vm.getFeedData(id, EMPTY, cached = {
-            val curr = current.value!!
-            val feed = Cached.getFeedShelf(app, curr.id, id).getOrThrow()
-            FeedData.State(curr.id, null, feed)
+            // Simplified caching: skip or use simple cache
+            // For now, returning null to force load
+            null
         }) {
-            val curr = current.value!!
-            val feed = Cached.savingFeed(
-                app, curr, id,
-                curr.getAs<HomeFeedClient, Feed<Shelf>> { loadHomeFeed() }.getOrThrow()
-            )
-            FeedData.State(curr.id, null, feed)
+            val feed = getHomeFeed().toFeed()
+            FeedData.State("native", null, feed)
         }
     }
 

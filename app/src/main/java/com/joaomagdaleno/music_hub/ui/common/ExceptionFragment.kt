@@ -79,7 +79,7 @@ class ExceptionFragment : Fragment() {
     private fun copyException() {
         createSnack(R.string.copying_the_error)
         lifecycleScope.launch {
-            val toCopy = getPasteLink(data).getOrElse { data.trace }
+            val toCopy = getPasteLink(data).getOrElse { data.trace } ?: data.trace
             requireContext().copyToClipboard("Error", toCopy)
         }
     }

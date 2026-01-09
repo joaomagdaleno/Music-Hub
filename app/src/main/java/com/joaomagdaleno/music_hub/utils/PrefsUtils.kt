@@ -4,7 +4,6 @@ package com.joaomagdaleno.music_hub.utils
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.edit
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.extensionPrefId
 import com.joaomagdaleno.music_hub.playback.listener.EffectsListener.Companion.CUSTOM_EFFECTS
 import com.joaomagdaleno.music_hub.playback.listener.EffectsListener.Companion.GLOBAL_FX
 import com.joaomagdaleno.music_hub.utils.ContextUtils.SETTINGS_NAME
@@ -90,54 +89,6 @@ fun Context.importSettings(uri: Uri) {
                     is JsonNull -> remove(key)
                     else -> throw IllegalArgumentException("Unsupported type for deserialization: ${value::class.java}")
                 }
-            }
-        }
-    }
-}
-
-
-fun Context.exportExtensionSettings(extensionType: String, extensionId: String, uri: Uri) {
-    val prefName = extensionPrefId(extensionType, extensionId)
-    val settingsPrefs = getSharedPreferences(prefName, Context.MODE_PRIVATE)
-    val settingsJson = settingsPrefs.all.toJsonElementMap()
-
-    contentResolver.openOutputStream(uri, "w")?.use { out ->
-        out.write(Json.encodeToString(settingsJson).toByteArray())
-    }
-}
-
-
-fun Context.importExtensionSettings(extensionType: String, extensionId: String, uri: Uri) {
-    val jsonString = contentResolver.openInputStream(uri)?.use { inputStream ->
-        BufferedReader(InputStreamReader(inputStream)).readText()
-    } ?: return
-
-    val settingsJson = Json.decodeFromString<Map<String, JsonElement>>(jsonString)
-    val prefName = extensionPrefId(extensionType, extensionId)
-
-    getSharedPreferences(prefName, Context.MODE_PRIVATE).edit {
-        settingsJson.forEach { (key, value) ->
-            when (value) {
-                is JsonPrimitive if value.booleanOrNull != null -> putBoolean(
-                    key,
-                    value.booleanOrNull!!
-                )
-
-                is JsonPrimitive if value.intOrNull != null -> putInt(key, value.intOrNull!!)
-                is JsonPrimitive if value.longOrNull != null -> putLong(key, value.longOrNull!!)
-                is JsonPrimitive if value.floatOrNull != null -> putFloat(
-                    key,
-                    value.floatOrNull!!
-                )
-
-                is JsonPrimitive if value.isString -> putString(key, value.content)
-                is JsonArray -> putStringSet(
-                    key,
-                    value.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }.toSet()
-                )
-
-                is JsonNull -> remove(key)
-                else -> throw IllegalArgumentException("Unsupported type for deserialization: ${value::class.java}")
             }
         }
     }

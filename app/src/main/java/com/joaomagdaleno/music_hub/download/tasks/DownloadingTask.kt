@@ -18,7 +18,7 @@ class DownloadingTask(
         val server = downloader.getServer(trackId, download)
         val source = server.sources[index]
         val downloadContext = getDownloadContext()
-        val file = withDownloadExtension { download(progressFlow, downloadContext, source) }
+        val file = downloadSource.download(progressFlow, downloadContext, source)
         download = getDownload()
         download =
             download.copy(toMergeFilesData = (download.toMergeFiles + file.toString()).toJson())

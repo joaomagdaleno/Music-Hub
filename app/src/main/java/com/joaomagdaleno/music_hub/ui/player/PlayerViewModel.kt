@@ -15,17 +15,13 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.session.MediaController
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.clients.LikeClient
 import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
 import com.joaomagdaleno.music_hub.common.models.Message
 import com.joaomagdaleno.music_hub.common.models.Streamable
 import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.download.Downloader
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtension
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.isClient
-import com.joaomagdaleno.music_hub.extensions.MediaState
+import com.joaomagdaleno.music_hub.common.models.MediaState
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.serverWithDownloads
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.sourceIndex
@@ -57,7 +53,7 @@ class PlayerViewModel(
     val playerState: PlayerState,
     val settings: SharedPreferences,
     val cache: SimpleCache,
-    val extensions: ExtensionLoader,
+    val repository: com.joaomagdaleno.music_hub.data.repository.MusicRepository,
     downloader: Downloader,
 ) : ViewModel() {
     private val downloadFlow = downloader.flow
@@ -145,9 +141,7 @@ class PlayerViewModel(
         withBrowser { it.repeatMode = repeatMode }
     }
 
-    suspend fun isLikeClient(extensionId: String): Boolean = withContext(Dispatchers.IO) {
-        extensions.music.getExtension(extensionId)?.isClient<LikeClient>() ?: false
-    }
+    suspend fun isLikeClient(extensionId: String): Boolean = true
 
     private fun createException(throwable: Throwable) {
         viewModelScope.launch { app.throwFlow.emit(throwable) }

@@ -83,8 +83,6 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":common"))
-    implementation(libs.kotlin.reflect)
     implementation(libs.bundles.androidx)
     implementation(libs.material)
     implementation(libs.bundles.paging)
@@ -92,6 +90,7 @@ dependencies {
     implementation(libs.bundles.room)
     ksp(libs.room.compiler)
     implementation(libs.bundles.koin)
+    implementation(libs.bundles.kotlinx)
     implementation(libs.bundles.media3)
     implementation(libs.bundles.coil)
 

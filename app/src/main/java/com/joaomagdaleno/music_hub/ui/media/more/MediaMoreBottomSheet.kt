@@ -6,18 +6,13 @@ import androidx.fragment.app.Fragment
 import androidx.paging.LoadState
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.clients.ExtensionClient
-import com.joaomagdaleno.music_hub.common.clients.PlaylistEditClient
-import com.joaomagdaleno.music_hub.common.clients.TrackClient
 import com.joaomagdaleno.music_hub.common.models.Artist
 import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
 import com.joaomagdaleno.music_hub.common.models.Playlist
 import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.databinding.DialogMediaMoreBinding
 import com.joaomagdaleno.music_hub.download.Downloader
-import com.joaomagdaleno.music_hub.extensions.MediaState
-import com.joaomagdaleno.music_hub.extensions.builtin.offline.OfflineExtension
-import com.joaomagdaleno.music_hub.extensions.builtin.unified.UnifiedExtension.Companion.EXTENSION_ID
+import com.joaomagdaleno.music_hub.common.models.MediaState
 import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
@@ -82,7 +77,7 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     private val delete by lazy { args.getBoolean("delete", false) }
 
     private val vm by viewModel<MediaViewModel> {
-        parametersOf(false, extensionId, item, loaded, delete)
+        parametersOf(false, extensionId, item, loaded)
     }
     private val playerViewModel by activityViewModel<PlayerViewModel>()
 
@@ -109,11 +104,10 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
         val actionFlow =
             combine(vm.downloadsFlow, vm.uiResultFlow) { _, _ -> }
         observe(actionFlow) {
-            val client = vm.extensionFlow.value?.instance?.value()?.getOrNull()
             val result = vm.uiResultFlow.value?.getOrNull()
             val downloads = vm.downloadsFlow.value.filter { it.download.finalFile != null }
             val loaded = if (result != null) true else loaded
-            val list = getButtons(client, result, loaded, downloads)
+            val list = getButtons(result, loaded, downloads)
             actionAdapter.submitList(list)
             headerAdapter.item = result?.item ?: item
         }
@@ -133,14 +127,13 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     }
 
     private fun getButtons(
-        client: ExtensionClient?,
         state: MediaState.Loaded<*>?,
         loaded: Boolean,
         downloads: List<Downloader.Info>
     ) = getPlayerButtons() +
-            getPlayButtons(client, state?.item ?: item, loaded) +
-            getPlaylistEditButtons(client, state, loaded) +
-            getDownloadButtons(client, state, downloads) +
+            getPlayButtons(state?.item ?: item, loaded) +
+            getPlaylistEditButtons(state, loaded) +
+            getDownloadButtons(state, downloads) +
             getActionButtons(state) +
             getItemButtons(state?.item ?: item)
 
@@ -157,8 +150,8 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     ) else listOf()
 
     private fun getPlayButtons(
-        client: ExtensionClient?, item: EchoMediaItem, loaded: Boolean
-    ) = if (client is TrackClient) listOfNotNull(
+        item: EchoMediaItem, loaded: Boolean
+    ) = if (item is Track) listOfNotNull(
         button("play", R.string.play, R.drawable.ic_play) {
             playerViewModel.play(extensionId, item, loaded)
         },
@@ -175,13 +168,14 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     ) else listOf()
 
     fun getPlaylistEditButtons(
-        client: ExtensionClient?, state: MediaState<*>?, loaded: Boolean
+        state: MediaState<*>?, loaded: Boolean
     ) = run {
-        if (client !is PlaylistEditClient) return@run listOf()
         val item = state?.item ?: item
         val isEditable = item is Playlist && item.isEditable
+        // In monolithic mode, always show save to playlist for tracks
+        // and always show edit/delete for editable playlists
         listOfNotNull(
-            if (loaded) button(
+            if (item is Track && loaded) button(
                 "save_to_playlist", R.string.save_to_playlist, R.drawable.ic_library_music
             ) {
                 SaveToPlaylistBottomSheet.newInstance(extensionId, item)
@@ -210,15 +204,15 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     }
 
     fun getDownloadButtons(
-        client: ExtensionClient?, state: MediaState<*>?, downloads: List<Downloader.Info>
+        state: MediaState<*>?, downloads: List<Downloader.Info>
     ) = run {
         val item = state?.item ?: item
         val shouldShowDelete = when (item) {
             is Track -> downloads.any { it.download.trackId == item.id }
             else -> downloads.any { it.context?.itemId == item.id }
         }
-        val downloadable =
-            state != null && client is TrackClient && state.item.extras[EXTENSION_ID] != OfflineExtension.metadata.id
+        // In monolithic mode, everything is downloadable if it's a track
+        val downloadable = item is Track
 
         listOfNotNull(
             if (downloadable) button(
@@ -234,7 +228,6 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
                 downloadViewModel.deleteDownload(item)
             } else null
         )
-
     }
 
     fun getActionButtons(

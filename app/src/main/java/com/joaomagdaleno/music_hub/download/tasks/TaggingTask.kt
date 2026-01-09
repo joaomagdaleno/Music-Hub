@@ -17,9 +17,7 @@ class TaggingTask(
     override suspend fun work(trackId: Long) {
         val downloadContext = getDownloadContext()
         val download = getDownload()
-        val file = withDownloadExtension {
-            tag(progressFlow, downloadContext, File(download.toTagFile!!))
-        }
+        val file = downloadSource.tag(progressFlow, downloadContext, File(download.toTagFile!!))
         dao.insertDownloadEntity(download.copy(finalFile = file.toString()))
         MediaScannerConnection.scanFile(
             app, arrayOf(file.toString()), null, null

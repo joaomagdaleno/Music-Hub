@@ -15,9 +15,7 @@ class MergingTask(
     override suspend fun work(trackId: Long) {
         val downloadContext = getDownloadContext()
         val download = getDownload()
-        val file = withDownloadExtension {
-            merge(progressFlow, downloadContext, download.toMergeFiles.map { File(it) })
-        }
+        val file = downloadSource.merge(progressFlow, downloadContext, download.toMergeFiles.map { File(it) })
         dao.insertDownloadEntity(download.copy(toTagFile = file.toString()))
     }
 

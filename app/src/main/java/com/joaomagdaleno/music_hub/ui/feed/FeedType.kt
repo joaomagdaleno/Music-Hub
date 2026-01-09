@@ -4,7 +4,6 @@ import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
 import com.joaomagdaleno.music_hub.common.models.Feed
 import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.common.models.Track
-import com.joaomagdaleno.music_hub.extensions.builtin.unified.UnifiedExtension.Companion.EXTENSION_ID
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -29,9 +28,7 @@ sealed interface FeedType {
     val extras: Map<String, String>?
 
     val extensionId: String
-        get() = extras?.let {
-            if (it["cached"] == "true") it[EXTENSION_ID] else null
-        } ?: extId
+        get() = extras?.get("extension_id") ?: extId
 
     val context: EchoMediaItem?
     val tabId: String?

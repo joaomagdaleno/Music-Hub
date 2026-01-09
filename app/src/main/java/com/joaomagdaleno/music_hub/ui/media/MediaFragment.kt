@@ -50,7 +50,7 @@ class MediaFragment : Fragment(R.layout.fragment_media), MediaDetailsFragment.Pa
     override val feedId by lazy { item.id }
 
     override val viewModel by viewModel<MediaViewModel> {
-        parametersOf(true, extensionId, item, loaded, false)
+        parametersOf(true, extensionId, item, loaded)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

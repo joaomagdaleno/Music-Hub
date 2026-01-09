@@ -1,0 +1,86 @@
+Configuration on demand is an incubating feature.
+Reusing configuration cache.
+> Task :app:preBuild UP-TO-DATE
+> Task :common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :common:androidPreBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :common:preAndroidMainBuild UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:extractDebugSupportedLocales UP-TO-DATE
+> Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :common:generateAndroidMainEmptyResourceFiles UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :common:writeAndroidMainAarMetadata UP-TO-DATE
+> Task :app:generateDebugLocaleConfig UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :common:compileAndroidMain UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :common:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :common:processAndroidMainManifest UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :common:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :common:processAndroidMainJavaRes UP-TO-DATE
+> Task :common:bundleLibRuntimeToDirAndroidMain UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :common:mergeAndroidMainJniLibFolders UP-TO-DATE
+> Task :common:mergeAndroidMainNativeLibs NO-SOURCE
+> Task :common:copyAndroidMainJniLibsProjectOnly UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:mergeDebugNativeLibs NO-SOURCE
+> Task :app:stripDebugDebugSymbols NO-SOURCE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:kspDebugKotlin
+> Task :app:compileDebugKotlin
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/di/DI.kt:73:9 'fun <reified T : ViewModel> Module.viewModel(qualifier: Qualifier? = ..., noinline definition: Scope.(ParametersHolder) -> T): KoinDefinition<T>' is deprecated. Moved ViewModel DSL package. Remove old imports and use org.koin.core.module.dsl.*.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCommands.kt:27:37 'constructor(): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCommands.kt:30:14 'fun setIconResId(p0: Int): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCommands.kt:34:14 'fun setIconResId(p0: Int): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCommands.kt:40:37 'constructor(): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCommands.kt:44:18 'fun setIconResId(p0: Int): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCommands.kt:49:18 'fun setIconResId(p0: Int): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCommands.kt:54:18 'fun setIconResId(p0: Int): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedFragment.kt:77:74 'fun onBackPressed(): Unit' is deprecated. This method has been deprecated in favor of using the
+      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.
+      The OnBackPressedDispatcher controls how back button events are dispatched
+      to one or more {@link OnBackPressedCallback} objects.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/settings/AudioEffectsFragment.kt:36:74 'fun onBackPressed(): Unit' is deprecated. This method has been deprecated in favor of using the
+      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.
+      The OnBackPressedDispatcher controls how back button events are dispatched
+      to one or more {@link OnBackPressedCallback} objects.
+
+> Task :app:processDebugJavaRes
+> Task :app:mergeDebugJavaResource
+> Task :app:compileDebugJavaWithJavac
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics
+> Task :app:mergeProjectDexDebug
+> Task :app:packageDebug
+> Task :app:assembleDebug
+> Task :app:createDebugApkListingFileRedirect
+
+BUILD SUCCESSFUL in 3m 28s
+50 actionable tasks: 10 executed, 40 up-to-date
+Configuration cache entry reused.

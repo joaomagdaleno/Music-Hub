@@ -34,8 +34,8 @@
     <string name="saved">Saved</string>
     <string name="tabs">Tabs</string>
     <string name="show_tabs">Show Tabs</string>
-    <string name="show_tab_summary">will show tabs of the extensions as category</string>
-    <string name="unified_liked_playlist_summary">Your liked tracks from various extensions</string>
+    <string name="show_tab_summary">will show category tabs</string>
+    <string name="unified_liked_playlist_summary">Your liked tracks from various sources</string>
     <string name="n_items">%1$d Items</string>
     <string name="item">Item</string>
     <plurals name="number_items">
@@ -54,9 +54,7 @@
     <string name="search">Search</string>
     <string name="library">Library</string>
     <string name="more">More</string>
-    <string name="extension">Extension</string>
     <string name="downloading_x">Downloading %1$s</string>
-    <string name="cancel_all">Cancel All</string>
     <string name="download_progress">Download Progress</string>
     <string name="downloads">Downloads</string>
 
@@ -66,17 +64,13 @@
     <string name="login">Login</string>
     <string name="view">View</string>
 
-    <string name="extension_out_of_date">Out of date</string>
     <string name="no_internet">No Internet</string>
-    <string name="error_loading_extension_from_x">Error loading extension from %1$s</string>
-    <string name="extension_x_not_found">Extension %1$s not found</string>
-    <string name="required_extensions_missing_x">Required extensions missing: %1$s</string>
     <string name="x_login_required">%1$s login required</string>
-    <string name="x_is_not_supported_in_x">%1$s is not supported in %2$s</string>
+    <string name="x_is_not_supported">%1$s is not supported</string>
     <string name="account_session_expired_in_x">Account session expired in %1$s</string>
     <string name="error_x">Error: %1$s</string>
     <string name="str_copy">Copy</string>
-    <string name="extensions">Extensions</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">Choose a color</string>
     <string name="random">Random</string>
     <string name="add">Add</string>
@@ -102,7 +96,7 @@
 
     <string name="stream_quality">Stream Quality</string>
     <string name="stream_quality_summary">Select the default quality of the stream</string>
-    <string name="x_specific_quality_summary">%1$s specific stream quality, will override the default stream quality selection</string>
+    <string name="source_specific_quality_summary">%1$s specific stream quality</string>
 
     <string-array name="stream_qualities">
         <item>Highest</item>
@@ -134,28 +128,19 @@
     <string name="select_language">Select Language</string>
     <string name="system">System</string>
     <string name="check_for_updates">Check for Updates</string>
-    <string name="check_for_updates_summary">Look for new updates of both app and extensions, when you open the app.</string>
+    <string name="check_for_updates_summary">Look for new updates when you open the app.</string>
 
     <string name="install">Install</string>
     <string name="app">App</string>
     <string name="file">File</string>
-    <string name="installation_type">Installation Type</string>
-    <string name="installation_type_summary">App installation will allow the following links to open in Echo:</string>
-    <string name="installation_type_warning">Not available if you install the extension as a File.</string>
     <string name="could_not_find_the_file">Could not find the file.</string>
-    <string name="extension_installer">Extension Installer</string>
-    <string name="extension_installed_successfully">Extension installed successfully.</string>
-    <string name="extension_uninstalled_successfully">Extension uninstalled successfully.</string>
     <string name="allow_opening_links">Allow opening links</string>
-    <string name="open_links_instruction">To allow opening these links, you need to:\n- Scroll down and click on \"Open by Default\"\n- Click on \"+ Add Link\"</string>
     <string name="downloading_update_for_x">Downloading update for %1$s</string>
-    <string name="extension_updated_successfully">%1$s updated successfully</string>
+    <string name="open_links_instruction">To allow opening these links, you need to:\n- Scroll down and click on \"Open by Default\"\n- Click on \"+ Add Link\"</string>
+    <string name="source_updated_successfully">%1$s updated successfully</string>
     <string name="link">Link</string>
     <string name="link_or_code">Link or Code</string>
     <string name="list_is_empty">List is empty</string>
-    <string name="extension_installed">%1$s (Installed)</string>
-    <string name="add_extensions">Add Extensions</string>
-    <string name="invalid_extension_list">Invalid extensions list</string>
     <string name="checking_for_updates">Checking for updates</string>
 
     <string name="look_and_feel">Look and Feel</string>
@@ -206,15 +191,14 @@
     <string name="tracker">Tracker</string>
     <string name="lyrics">Lyrics</string>
     <string name="misc">Misc</string>
-    <string name="x_extensions">%1$s Extensions</string>
-    <string name="x_extension">%1$s Extension</string>
+    <string name="x_sources">%1$s Sources</string>
+    <string name="x_source">%1$s Source</string>
     <string name="enabled">Enabled</string>
     <string name="disabled">Disabled</string>
-    <string name="error_updating_extension">Error while updating</string>
+    <string name="error_updating">Error while updating</string>
 
     <string name="no_user_found">No user found</string>
     <string name="select_x_account">Select %1$s account</string>
-    <string name="add_extension">Add Extension</string>
     <string name="webview">Webview</string>
     <string name="logout">Logout</string>
     <string name="switch_account">Switch Account</string>
@@ -381,7 +365,7 @@
     <string name="moving_x">Moving %1$s</string>
     <string name="removing_x">Removing %1$s</string>
 
-    <string name="no_download_extension">No download extension found, use code \"echodown\" to get it.</string>
+    <string name="no_download_source">No download sources found.</string>
     <string name="nothing_to_download_in_x">Nothing to download in %1$s</string>
     <string name="download_started">Download Started</string>
     <string name="merging_x">Merging %1$s</string>

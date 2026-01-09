@@ -5,24 +5,16 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import com.joaomagdaleno.music_hub.common.clients.DownloadClient
-import com.joaomagdaleno.music_hub.common.clients.TrackClient
 import com.joaomagdaleno.music_hub.common.models.DownloadContext
 import com.joaomagdaleno.music_hub.common.models.Progress
 import com.joaomagdaleno.music_hub.common.models.Streamable
+import com.joaomagdaleno.music_hub.common.models.Streamable.Media.Companion.toServerMedia
 import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.download.db.DownloadDatabase
 import com.joaomagdaleno.music_hub.download.db.models.ContextEntity
 import com.joaomagdaleno.music_hub.download.db.models.DownloadEntity
 import com.joaomagdaleno.music_hub.download.db.models.TaskType
-import com.joaomagdaleno.music_hub.download.exceptions.DownloaderExtensionNotFoundException
 import com.joaomagdaleno.music_hub.download.tasks.TaskManager
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getAs
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtensionOrThrow
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.isClient
-import com.joaomagdaleno.music_hub.extensions.builtin.unified.UnifiedExtension.Companion.EXTENSION_ID
-import com.joaomagdaleno.music_hub.extensions.builtin.unified.UnifiedExtension.Companion.withExtensionId
 import com.joaomagdaleno.music_hub.utils.Serializer.toJson
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -41,14 +33,11 @@ import java.util.WeakHashMap
 
 class Downloader(
     val app: App,
-    val extensionLoader: ExtensionLoader,
+    val repository: com.joaomagdaleno.music_hub.data.repository.MusicRepository,
     database: DownloadDatabase,
 ) {
-    val unified = extensionLoader.unified.value
-
-    suspend fun downloadExtension() = extensionLoader.misc.value
-        .find { it.isClient<DownloadClient>() && it.isEnabled }
-        ?: throw DownloaderExtensionNotFoundException()
+    // val unified = extensionLoader.unified.value // REMOVED
+    val downloadFeed = kotlinx.coroutines.flow.MutableStateFlow<List<com.joaomagdaleno.music_hub.common.models.EchoMediaItem>>(emptyList())
 
     val scope = CoroutineScope(Dispatchers.IO) + CoroutineName("Downloader")
 
@@ -67,9 +56,7 @@ class Downloader(
     fun add(
         downloads: List<DownloadContext>
     ) = scope.launch {
-        val concurrentDownloads = downloadExtension()
-            .getAs<DownloadClient, Int> { concurrentDownloads }
-            .getOrNull()?.takeIf { it > 0 } ?: 2
+        val concurrentDownloads = app.settings.getInt("concurrent_downloads", 2)
         taskManager.setConcurrency(concurrentDownloads)
         val contexts = downloads.mapNotNull { it.context }.distinctBy { it.id }.associate {
             it.id to dao.insertContextEntity(ContextEntity(0, it.id, it.toJson()))
@@ -78,7 +65,7 @@ class Downloader(
             dao.insertDownloadEntity(
                 DownloadEntity(
                     0,
-                    it.track.extras[EXTENSION_ID] ?: it.extensionId,
+                    it.track.sourceName.takeIf { s -> s != "UNKNOWN" } ?: it.extensionId,
                     it.track.id,
                     contexts[it.context?.id],
                     it.sortOrder,
@@ -108,18 +95,14 @@ class Downloader(
         trackId: Long, download: DownloadEntity
     ): Streamable.Media.Server = mutexes.getOrPut(trackId) { Mutex() }.withLock {
         servers.getOrPut(trackId) {
-            val extensionId = download.extensionId
-            val extension = extensionLoader.music.getExtensionOrThrow(extensionId)
-            val streamable = download.track.getOrThrow()
-                .streamables.find { it.id == download.streamableId }!!
-            extension.getAs<TrackClient, Streamable.Media.Server> {
-                val media =
-                    loadStreamableMedia(streamable, true) as Streamable.Media.Server
-                media.sources.ifEmpty {
-                    throw Exception("${trackId}: No sources found")
-                }
-                media
-            }.getOrThrow()
+            val track = download.track.getOrThrow()
+            // Using download.extensionId as sourceName if unknown
+            val effectiveTrack = if (track.sourceName == "UNKNOWN" && download.extensionId.isNotBlank()) {
+                 track.copy(sourceName = download.extensionId)
+            } else track
+            
+            val url = repository.getStreamUrl(effectiveTrack)
+            url.toServerMedia()
         }
     }
 
@@ -209,15 +192,14 @@ class Downloader(
                 info.filter { it.download.fullyDownloaded }.groupBy {
                     it.context?.id
                 }.flatMap { (id, infos) ->
-                    if (id == null) infos.mapNotNull {
-                        it.download.track.getOrNull()
-                            ?.withExtensionId(it.download.extensionId, false)
-                    }
-                    else listOfNotNull(infos.first().runCatching {
-                        unified.db.getPlaylist(context?.mediaItem!!.getOrThrow())
-                    }.getOrNull())
+                    // Logic to retrieve items. Unified used to convert contexts to Playlists or lists of Tracks.
+                    // For now, mapping downloads to Tracks directly.
+                    // Contexts were used for grouping by Album/Playlist.
+                    // If context exists, we should try to reconstruct grouping.
+                    // Simplified: Return list of tracks.
+                    infos.mapNotNull { it.download.track.getOrNull() }
                 }
-            }.collect(unified.downloadFeed)
+            }.collect(downloadFeed)
         }
     }
 

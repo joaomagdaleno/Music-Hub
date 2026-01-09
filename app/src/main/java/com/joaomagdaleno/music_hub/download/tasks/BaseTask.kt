@@ -13,35 +13,35 @@ import androidx.media3.common.util.NotificationUtil
 import androidx.media3.common.util.NotificationUtil.createNotificationChannel
 import androidx.media3.common.util.UnstableApi
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.clients.DownloadClient
 import com.joaomagdaleno.music_hub.common.models.DownloadContext
 import com.joaomagdaleno.music_hub.common.models.Progress
 import com.joaomagdaleno.music_hub.download.DownloadWorker.Companion.getMainIntent
 import com.joaomagdaleno.music_hub.download.Downloader
 import com.joaomagdaleno.music_hub.download.db.models.TaskType
 import com.joaomagdaleno.music_hub.download.exceptions.DownloadException
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getAs
+import com.joaomagdaleno.music_hub.data.sources.InternalDownloadSource
 import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.toData
 import com.joaomagdaleno.music_hub.utils.CoroutineUtils.throttleLatest
 import com.joaomagdaleno.music_hub.utils.Serializer.toJson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import java.io.File
 
 abstract class BaseTask(
     private val context: Context,
     val downloader: Downloader,
     open val trackId: Long,
-) {
+) : KoinComponent {
     abstract val type: TaskType
     val progressFlow = MutableStateFlow(Progress())
     val throttledProgressFlow = progressFlow.throttleLatest(500L)
     val running = MutableStateFlow(false)
-    suspend fun <T> withDownloadExtension(block: suspend DownloadClient.() -> T) =
-        downloader.downloadExtension().getAs<DownloadClient, T> { block() }.getOrThrow()
-
     val dao = downloader.dao
+    
+    val downloadSource: InternalDownloadSource by inject()
 
     suspend fun doWork() = withContext(Dispatchers.IO) {
         running.value = true

@@ -4,18 +4,12 @@ import androidx.lifecycle.viewModelScope
 import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
 import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.download.Downloader
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
-import com.joaomagdaleno.music_hub.extensions.MediaState
-import com.joaomagdaleno.music_hub.extensions.cache.Cached
-import com.joaomagdaleno.music_hub.extensions.cache.Cached.loadMedia
+import com.joaomagdaleno.music_hub.common.models.MediaState
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 
 class MediaViewModel(
-    extensionLoader: ExtensionLoader,
+    repository: com.joaomagdaleno.music_hub.data.repository.MusicRepository,
     downloader: Downloader,
     val app: App,
     loadFeeds: Boolean,
@@ -23,8 +17,7 @@ class MediaViewModel(
     val item: EchoMediaItem,
     val loaded: Boolean,
 ) : MediaDetailsViewModel(
-    downloader, app, loadFeeds,
-    extensionLoader.music.map { list -> list.find { it.id == extensionId } }
+    downloader, app, loadFeeds, repository
 ) {
 
     override fun getItem(): Triple<String, EchoMediaItem, Boolean> {
@@ -37,19 +30,19 @@ class MediaViewModel(
     }
 
     init {
-        var force = false
         viewModelScope.launch(Dispatchers.IO) {
-            listOf(extensionFlow, refreshFlow).merge().collectLatest {
-                itemResultFlow.value = null
-                cacheResultFlow.value = null
-                cacheResultFlow.value = Cached.getMedia<EchoMediaItem>(app, extensionId, item.id)
-                    .getOrNull()?.let { Result.success(it) }
-                val extension = extensionFlow.value ?: return@collectLatest
-                itemResultFlow.value = loadMedia(
-                    app, extension, MediaState.Unloaded(extension.id, item)
-                )
-                force = true
-            }
+             // Simply load item logic using Repository
+             val loadedItem = when(item) {
+                 is com.joaomagdaleno.music_hub.common.models.Track -> repository.getTrack(item.id)
+                 // Others need implementing in Repository.
+                 // If not implemented, just return the item as is (if we can't fully load it yet).
+                 else -> item
+             }
+             
+             if (loadedItem != null) {
+                 val state = MediaState.Loaded(extensionId = "native", item = loadedItem)
+                 itemResultFlow.value = Result.success(state)
+             }
         }
     }
 }

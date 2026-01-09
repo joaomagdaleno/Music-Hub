@@ -14,14 +14,11 @@ import com.joaomagdaleno.music_hub.common.models.Feed
 import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.databinding.FragmentGenericCollapsableBinding
 import com.joaomagdaleno.music_hub.databinding.FragmentRecyclerWithRefreshBinding
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtensionOrThrow
-import com.joaomagdaleno.music_hub.extensions.cache.Cached
-import com.joaomagdaleno.music_hub.extensions.cache.Cached.savingFeed
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyContentInsets
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.configure
-import com.joaomagdaleno.music_hub.ui.extensions.login.LoginFragment.Companion.bind
+import com.joaomagdaleno.music_hub.common.models.Feed.Companion.toFeed
 import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getFeedAdapter
 import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getTouchHelper
 import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener.Companion.getFeedListener
@@ -59,16 +56,17 @@ class FeedFragment : Fragment(R.layout.fragment_generic_collapsable) {
         }
         feedViewModel.getFeedData(
             vm.feedId ?: "",
-            cached = {
-                val extId = vm.extensionId!!
-                val feed = Cached.getFeedShelf(app, extId, vm.feedId!!)
-                FeedData.State(extId, null, feed.getOrThrow())
-            }
+            cached = { null }
         ) {
-            val extension = music.getExtensionOrThrow(vm.extensionId)
-            val feed = savingFeed(app, extension, vm.feedId!!, vm.feed!!)
-            FeedData.State(extension.id, null, feed)
+            val feedId = vm.feedId!!
+            val shelves = getFeed(feedId)
+            FeedData.State("native", null, shelves.toFeed())
         }
+    }
+
+    private suspend fun getFeed(id: String): List<Shelf> {
+        // Stubbed: Implement actual feed fetching from repository if needed
+        return emptyList()
     }
 
     private val title by lazy { arguments?.getString("title")!! }
@@ -76,7 +74,7 @@ class FeedFragment : Fragment(R.layout.fragment_generic_collapsable) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = FragmentGenericCollapsableBinding.bind(view)
-        binding.bind(this, false)
+        binding.toolBar.setNavigationOnClickListener { requireActivity().onBackPressed() }
         binding.extensionIcon.isVisible = false
         binding.toolBar.title = title
         binding.toolBar.subtitle = subtitle
