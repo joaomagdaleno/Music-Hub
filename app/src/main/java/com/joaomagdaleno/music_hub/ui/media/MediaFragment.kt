@@ -34,15 +34,15 @@ import org.koin.core.parameter.parametersOf
 
 class MediaFragment : Fragment(R.layout.fragment_media), MediaDetailsFragment.Parent {
     companion object {
-        fun getBundle(extensionId: String, item: EchoMediaItem, loaded: Boolean) = Bundle().apply {
-            putString("extensionId", extensionId)
+        fun getBundle(origin: String, item: EchoMediaItem, loaded: Boolean) = Bundle().apply {
+            putString("origin", origin)
             putSerialized("item", item)
             putBoolean("loaded", loaded)
         }
     }
 
     val args by lazy { requireArguments() }
-    val extensionId by lazy { args.getString("extensionId")!! }
+    val origin by lazy { args.getString("origin")!! }
     val item by lazy { args.getSerialized<EchoMediaItem>("item")!!.getOrThrow() }
     val loaded by lazy { args.getBoolean("loaded") }
 
@@ -50,7 +50,7 @@ class MediaFragment : Fragment(R.layout.fragment_media), MediaDetailsFragment.Pa
     override val feedId by lazy { item.id }
 
     override val viewModel by viewModel<MediaViewModel> {
-        parametersOf(true, extensionId, item, loaded)
+        parametersOf(true, origin, item, loaded)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -68,7 +68,7 @@ class MediaFragment : Fragment(R.layout.fragment_media), MediaDetailsFragment.Pa
         binding.toolBar.setOnMenuItemClickListener {
             val item = viewModel.itemResultFlow.value?.getOrNull()?.item ?: item
             MediaMoreBottomSheet.newInstance(
-                id, extensionId, item, !viewModel.isRefreshing
+                id, origin, item, !viewModel.isRefreshing
             ).show(parentFragmentManager, null)
             true
         }
@@ -94,7 +94,7 @@ class MediaFragment : Fragment(R.layout.fragment_media), MediaDetailsFragment.Pa
             binding.fabEditPlaylist.setOnClickListener {
                 val playlist = item as? Playlist ?: return@setOnClickListener
                 openFragment<EditPlaylistFragment>(
-                    it, EditPlaylistFragment.getBundle(extensionId, playlist, loaded)
+                    it, EditPlaylistFragment.getBundle(origin, playlist, loaded)
                 )
             }
         }
@@ -104,7 +104,7 @@ class MediaFragment : Fragment(R.layout.fragment_media), MediaDetailsFragment.Pa
         parentFragmentManager.setFragmentResultListener("delete", this) { _, data ->
             val playlist = item as? Playlist ?: return@setFragmentResultListener
             DeletePlaylistBottomSheet.show(
-                requireActivity(), extensionId, playlist, !viewModel.isRefreshing
+                requireActivity(), origin, playlist, !viewModel.isRefreshing
             )
         }
         parentFragmentManager.setFragmentResultListener("deleted", this) { _, data ->

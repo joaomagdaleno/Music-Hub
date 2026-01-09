@@ -13,7 +13,7 @@ class MediaViewModel(
     downloader: Downloader,
     val app: App,
     loadFeeds: Boolean,
-    val extensionId: String,
+    val origin: String,
     val item: EchoMediaItem,
     val loaded: Boolean,
 ) : MediaDetailsViewModel(
@@ -23,7 +23,7 @@ class MediaViewModel(
     override fun getItem(): Triple<String, EchoMediaItem, Boolean> {
         val result = itemResultFlow.value?.getOrNull()?.item
         return Triple(
-            extensionId,
+            origin,
             result ?: item,
             loaded || result != null
         )
@@ -40,7 +40,7 @@ class MediaViewModel(
              }
              
              if (loadedItem != null) {
-                 val state = MediaState.Loaded(extensionId = "native", item = loadedItem)
+                 val state = MediaState.Loaded(origin = "native", item = loadedItem)
                  itemResultFlow.value = Result.success(state)
              }
         }

@@ -34,10 +34,10 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class SearchFragment : Fragment(R.layout.fragment_search) {
 
-    private val argId by lazy { arguments?.getString("extensionId") }
+    private val argId by lazy { arguments?.getString("origin") }
     private val searchViewModel by viewModel<SearchViewModel>()
 
-    private var extensionId = ""
+    private var origin = ""
 
     private val feedData by lazy {
         val vm by viewModel<FeedViewModel>()

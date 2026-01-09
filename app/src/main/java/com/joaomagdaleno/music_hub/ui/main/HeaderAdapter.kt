@@ -28,8 +28,6 @@ class HeaderAdapter(
         val holder = ViewHolder(parent)
         val binding = holder.binding
         val parentFragmentManager = fragment.parentFragmentManager
-        
-        binding.extensionsCont.visibility = View.GONE
 
         binding.accountsCont.setOnClickListener {
             SettingsBottomSheet().show(parentFragmentManager, null)

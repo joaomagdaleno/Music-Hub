@@ -38,7 +38,7 @@ class FeedFragment : Fragment(R.layout.fragment_generic_collapsable) {
 
     class VM : ViewModel() {
         var initialized = false
-        var extensionId: String? = null
+        var origin: String? = null
         var feedId: String? = null
         var feed: Feed<Shelf>? = null
     }
@@ -50,7 +50,7 @@ class FeedFragment : Fragment(R.layout.fragment_generic_collapsable) {
         val feedViewModel by viewModel<FeedViewModel>()
         if (!vm.initialized) {
             vm.initialized = true
-            vm.extensionId = activityVm.extensionId
+            vm.origin = activityVm.origin
             vm.feedId = activityVm.feedId
             vm.feed = activityVm.feed
         }
@@ -75,7 +75,6 @@ class FeedFragment : Fragment(R.layout.fragment_generic_collapsable) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = FragmentGenericCollapsableBinding.bind(view)
         binding.toolBar.setNavigationOnClickListener { requireActivity().onBackPressed() }
-        binding.extensionIcon.isVisible = false
         binding.toolBar.title = title
         binding.toolBar.subtitle = subtitle
         applyPlayerBg(view) {

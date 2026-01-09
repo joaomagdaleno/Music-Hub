@@ -1,6 +1,6 @@
 package com.joaomagdaleno.music_hub.di
 
-import com.joaomagdaleno.music_hub.data.sources.InternalDownloadSource
+import com.joaomagdaleno.music_hub.data.providers.InternalDownloadProvider
 
 import com.joaomagdaleno.music_hub.download.DownloadWorker
 import com.joaomagdaleno.music_hub.download.Downloader
@@ -35,8 +35,8 @@ object DI {
     private val baseModule = module {
         single { androidApplication().getSettings() }
         singleOf(::App)
-        single { com.joaomagdaleno.music_hub.data.sources.LocalSource(androidApplication()) }
-        single { InternalDownloadSource(androidApplication()) }
+        single { com.joaomagdaleno.music_hub.data.providers.LocalProvider(androidApplication()) }
+        single { InternalDownloadProvider(androidApplication()) }
         singleOf(::MusicRepository)
         single { com.joaomagdaleno.music_hub.data.db.UnifiedDatabase.create(androidApplication()) }
     }
@@ -70,8 +70,8 @@ object DI {
 
         viewModelOf(::FeedViewModel)
         viewModelOf(::SearchViewModel)
-        viewModel { (loadFeeds: Boolean, extensionId: String, item: EchoMediaItem, loaded: Boolean) ->
-            MediaViewModel(get(), get(), get(), loadFeeds, extensionId, item, loaded)
+        viewModel { (loadFeeds: Boolean, origin: String, item: EchoMediaItem, loaded: Boolean) ->
+            MediaViewModel(get(), get(), get(), loadFeeds, origin, item, loaded)
         }
 
         viewModelOf(::CreatePlaylistViewModel)

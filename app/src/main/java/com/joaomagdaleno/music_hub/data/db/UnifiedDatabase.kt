@@ -23,9 +23,9 @@ import com.joaomagdaleno.music_hub.utils.Serializer.toJson
 import java.io.File
 import java.util.Calendar
 
-const val EXTENSION_ID = "extensionId"
+const val ORIGIN = "origin"
 const val UNIFIED_ID = "unified"
-// val Map<String, String>.extensionId get() = get(EXTENSION_ID) ?: ""
+// val Map<String, String>.origin get() = get(ORIGIN) ?: ""
 
 // Removed extension helpers or simplified them
 fun Playlist.toEntity(): PlaylistEntity = PlaylistEntity(
@@ -45,7 +45,7 @@ fun Track.toTrackEntity(): PlaylistTrackEntity {
 }
 
 fun EchoMediaItem.toEntity(): SavedEntity {
-    // Legacy extId field, using 'native' as default
+    // Legacy origin field, using 'native' as default
     return SavedEntity(id, "native", this.toJson())
 }
 
@@ -286,8 +286,8 @@ abstract class UnifiedDatabase : RoomDatabase() {
         @Query("SELECT * FROM SavedEntity")
         suspend fun getSaved(): List<SavedEntity>
 
-        @Query("SELECT EXISTS(SELECT 1 FROM SavedEntity WHERE id = :id AND extId = :extId)")
-        suspend fun isSaved(id: String, extId: String): Boolean
+        @Query("SELECT EXISTS(SELECT 1 FROM SavedEntity WHERE id = :id AND origin = :origin)")
+        suspend fun isSaved(id: String, origin: String): Boolean
 
         @Insert(onConflict = REPLACE)
         suspend fun insertSaved(saved: SavedEntity): Long
@@ -327,7 +327,7 @@ data class PlaylistEntity(
             creationDate = modified.toData<Date>().getOrNull(),
             description = description.takeIf { it.isNotBlank() },
             extras = mapOf(
-                EXTENSION_ID to UNIFIED_ID,
+                ORIGIN to UNIFIED_ID,
                 "listData" to listData,
                 "actualId" to actualId
             )
@@ -341,7 +341,7 @@ data class PlaylistTrackEntity(
     val eid: Long,
     val playlistId: Long,
     val trackId: String,
-    val extId: String,
+    val origin: String,
     val data: String,
 )
 
@@ -357,10 +357,10 @@ fun PlaylistTrackEntity.toTrack(): Track {
     }
 }
 
-@Entity(primaryKeys = ["id", "extId"])
+@Entity(primaryKeys = ["id", "origin"])
 data class SavedEntity(
     val id: String,
-    val extId: String,
+    val origin: String,
     val data: String,
 ) {
     val item by lazy { data.toData<EchoMediaItem>() }
