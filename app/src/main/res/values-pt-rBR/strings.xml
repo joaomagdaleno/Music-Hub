@@ -28,8 +28,8 @@
     <string name="saved">Salvo</string>
     <string name="tabs">Abas</string>
     <string name="show_tabs">Mostrar abas</string>
-    <string name="show_tab_summary">Mostrar abas das extensões como categorias</string>
-    <string name="unified_liked_playlist_summary">Suas faixas curtidas de várias extensões</string>
+    <string name="show_tab_summary">Mostrar abas das provedores como categorias</string>
+    <string name="internal_liked_playlist_summary">Suas faixas curtidas de várias provedores</string>
     <string name="n_items">%1$d Itens</string>
     <string name="playlist_liked">Curtidas</string>
     <string name="playlist_liked_desc">Suas faixas curtidas</string>
@@ -46,7 +46,7 @@
     <string name="account_session_expired_in_x">Sessão da conta expirada em %1$s</string>
     <string name="error_x">Erro: %1$s</string>
     <string name="str_copy">Copiar</string>
-    <string name="extensions">Extensões</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">Escolha uma cor</string>
     <string name="random">Aleatório</string>
     <string name="add">Adicionar</string>
@@ -358,7 +358,7 @@
     <string name="unmetered_stream_quality_summary">A qualidade de stream quando está conectado em uma rede limitada. Isso irá substituir a qualidade de stream padrão.</string>
     <string name="select_language">­Selecionar linguagem</string>
     <string name="check_for_updates">Verificar por atualizações</string>
-    <string name="check_for_updates_summary">Olhe por novas atualização para o app e as extensões, quando você abrir o app.</string>
+    <string name="check_for_updates_summary">Olhe por novas atualização para o app e as provedores, quando você abrir o app.</string>
     <string name="checking_for_updates">Verificando por atualizações</string>
     <string name="currently_playing">Atualmente tocando</string>
 </resources>

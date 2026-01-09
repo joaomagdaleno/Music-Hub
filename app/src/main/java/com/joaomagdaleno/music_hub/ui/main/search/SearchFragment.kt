@@ -188,7 +188,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         binding.quickSearchRecyclerView.adapter = quickSearchAdapter
         observe(searchViewModel.quickFeed) { list ->
             quickSearchAdapter.submitList(list.map {
-                QuickSearchAdapter.Item(extensionId, it)
+                QuickSearchAdapter.Item(origin, it)
             })
         }
     }

@@ -22,13 +22,13 @@ class DeletePlaylistBottomSheet : BottomSheetDialogFragment(R.layout.item_loadin
 
     companion object {
         fun show(
-            activity: FragmentActivity, extensionId: String, item: Playlist, loaded: Boolean = false
+            activity: FragmentActivity, origin: String, item: Playlist, loaded: Boolean = false
         ): AlertDialog = with(activity) {
             MaterialAlertDialogBuilder(this)
                 .setTitle(getString(R.string.confirmation))
                 .setMessage(getString(R.string.delete_playlist_confirmation, item.title))
                 .setPositiveButton(getString(R.string.confirm)) { _, _ ->
-                    newInstance(extensionId, item, loaded).show(supportFragmentManager, null)
+                    newInstance(origin, item, loaded).show(supportFragmentManager, null)
                 }
                 .setNegativeButton(getString(R.string.cancel)) { dialog, _ ->
                     dialog.dismiss()
@@ -36,11 +36,11 @@ class DeletePlaylistBottomSheet : BottomSheetDialogFragment(R.layout.item_loadin
         }
 
         private fun newInstance(
-            extensionId: String, item: Playlist, loaded: Boolean
+            origin: String, item: Playlist, loaded: Boolean
         ): DeletePlaylistBottomSheet {
             return DeletePlaylistBottomSheet().apply {
                 arguments = Bundle().apply {
-                    putString("extensionId", extensionId)
+                    putString("origin", origin)
                     putSerialized("item", item)
                     putBoolean("loaded", loaded)
                 }
@@ -49,12 +49,12 @@ class DeletePlaylistBottomSheet : BottomSheetDialogFragment(R.layout.item_loadin
     }
 
     val args by lazy { requireArguments() }
-    val extensionId by lazy { args.getString("extensionId")!! }
+    val origin by lazy { args.getString("origin")!! }
     val item by lazy { args.getSerialized<Playlist>("item")!!.getOrThrow() }
     val loaded by lazy { args.getBoolean("loaded", false) }
 
     val vm by viewModel<DeletePlaylistViewModel> {
-        parametersOf(extensionId, item, loaded)
+        parametersOf(origin, item, loaded)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

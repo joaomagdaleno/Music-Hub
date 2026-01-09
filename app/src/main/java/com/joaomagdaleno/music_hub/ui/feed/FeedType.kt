@@ -27,8 +27,8 @@ sealed interface FeedType {
     val extId: String
     val extras: Map<String, String>?
 
-    val extensionId: String
-        get() = extras?.get("extension_id") ?: extId
+    val origin: String
+        get() = extras?.get("origin_id") ?: extId
 
     val context: EchoMediaItem?
     val tabId: String?

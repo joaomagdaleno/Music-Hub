@@ -57,7 +57,7 @@ class CreatePlaylistBottomSheet : BottomSheetDialogFragment() {
                     if (it.playlist != null) parentFragmentManager.setFragmentResult(
                         "createPlaylist",
                         Bundle().apply {
-                            putString("extensionId", it.extensionId)
+                            putString("origin", it.origin)
                             putSerialized("playlist", it.playlist)
                         }
                     )

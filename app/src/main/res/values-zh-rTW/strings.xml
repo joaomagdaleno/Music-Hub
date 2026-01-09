@@ -36,7 +36,7 @@
     <string name="view">檢視</string>
     <string name="no_internet">無網際網路連線</string>
     <string name="str_copy">複製</string>
-    <string name="extensions">擴充功能</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">選擇顏色</string>
     <string name="random">隨機</string>
     <string name="add">新增</string>
@@ -173,7 +173,7 @@
     <string name="write_storage">寫入存儲</string>
     <string name="remove">刪除</string>
     <string name="x_radio">%1$s 無線電</string>
-    <string name="unified_liked_playlist_summary">您喜歡的各種擴展名的曲目</string>
+    <string name="internal_liked_playlist_summary">您喜歡的各種擴展名的曲目</string>
     <string name="n_items">%1$d 個專案</string>
     <string name="playlist_liked_desc">您點讚的曲目</string>
     <string name="repeat_all">全部重複</string>

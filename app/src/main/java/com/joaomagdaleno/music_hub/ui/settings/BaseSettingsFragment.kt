@@ -42,16 +42,12 @@ abstract class BaseSettingsFragment : Fragment() {
         applyBackPressCallback()
         binding.appBarLayout.configureAppBar { offset ->
             binding.toolbarOutline.alpha = offset
-            binding.extensionIcon.alpha = 1 - offset
         }
         binding.toolBar.setNavigationOnClickListener {
             parentFragmentManager.popBackStack()
         }
 
         binding.toolBar.title = title
-        icon.loadAsCircle(binding.extensionIcon, R.drawable.ic_extension_32dp) {
-            binding.extensionIcon.setImageDrawable(it)
-        }
 
         childFragmentManager.beginTransaction().replace(R.id.genericFragmentContainer, creator())
             .commit()

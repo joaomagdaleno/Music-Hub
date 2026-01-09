@@ -39,8 +39,8 @@
     <string name="blacklist_folder_keywords_summary">Palabras clave para incluir carpetas en la lista negra. Use la coma para separar</string>
     <string name="saved">Guardadas</string>
     <string name="show_tabs">Mostrar pestañas</string>
-    <string name="show_tab_summary">Mostrar pestañas de las extensiones como categorías</string>
-    <string name="unified_liked_playlist_summary">Sus pistas favoritas de varias extensiones</string>
+    <string name="show_tab_summary">Mostrar pestañas de las proveedores como categorías</string>
+    <string name="internal_liked_playlist_summary">Sus pistas favoritas de varias proveedores</string>
     <string name="n_items">%1$d elementos</string>
     <string name="playlist_liked">Favoritas</string>
     <string name="playlist_liked_desc">Sus pistas favoritas</string>
@@ -66,7 +66,7 @@
     <string name="account_session_expired_in_x">La sesión de la cuenta caducó el %1$s</string>
     <string name="error_x">Error: %1$s</string>
     <string name="str_copy">Copiar</string>
-    <string name="extensions">Extensiones</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">Elegir un color</string>
     <string name="random">Al azar</string>
     <string name="add">Añadir</string>
@@ -273,7 +273,7 @@
     <string name="unmetered_stream_quality_summary">La calidad de la transmisión al conectarse a una red sin límite de consumo. Esto anulará la calidad de transmisión predeterminada.</string>
     <string name="select_language">Seleccionar Idioma</string>
     <string name="check_for_updates">Buscar actualizaciones</string>
-    <string name="check_for_updates_summary">Busque nuevas actualizaciones tanto de la aplicación como de las extensiones cuando abra la aplicación.</string>
+    <string name="check_for_updates_summary">Busque nuevas actualizaciones tanto de la aplicación como de las proveedores cuando abra la aplicación.</string>
     <string name="checking_for_updates">Buscando actualizaciones</string>
     <string name="back_animations_summary">Puede causar un error visual debido a Android, pero puedes abrir Recientes para solucionarlo.</string>
     <string name="n_hours">%1$d Horas</string>

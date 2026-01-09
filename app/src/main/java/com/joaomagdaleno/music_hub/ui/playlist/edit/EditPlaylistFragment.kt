@@ -34,21 +34,21 @@ class EditPlaylistFragment : Fragment() {
 
     companion object {
         fun getBundle(extension: String, playlist: Playlist, loaded: Boolean) = Bundle().apply {
-            putString("extensionId", extension)
+            putString("origin", extension)
             putSerialized("playlist", playlist)
             putBoolean("loaded", loaded)
         }
     }
 
     private val args by lazy { requireArguments() }
-    private val extensionId by lazy { args.getString("extensionId")!! }
+    private val origin by lazy { args.getString("origin")!! }
     private val playlist by lazy { args.getSerialized<Playlist>("playlist")!!.getOrThrow() }
     private val loaded by lazy { args.getBoolean("loaded", false) }
     private val selectedTab by lazy { args.getString("selectedTabId").orEmpty() }
 
     private var binding: FragmentPlaylistEditBinding by autoCleared()
     private val vm by viewModel<EditPlaylistViewModel> {
-        parametersOf(extensionId, playlist, loaded, selectedTab, -1)
+        parametersOf(origin, playlist, loaded, selectedTab, -1)
     }
 
     private val adapter by lazy {
@@ -98,7 +98,7 @@ class EditPlaylistFragment : Fragment() {
 
         binding.add.setOnClickListener {
             openFragment<EditPlaylistSearchFragment>(
-                it, EditPlaylistSearchFragment.getBundle(extensionId)
+                it, EditPlaylistSearchFragment.getBundle(origin)
             )
         }
         parentFragmentManager.setFragmentResultListener("searchedTracks", this) { _, bundle ->

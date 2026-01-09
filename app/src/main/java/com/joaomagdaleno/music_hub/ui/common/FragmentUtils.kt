@@ -109,7 +109,7 @@ object FragmentUtils {
     private fun FragmentActivity.openItemFragmentFromUri(uri: Uri) {
         when (val extensionType = uri.host) {
             "music" -> {
-                val extensionId = uri.pathSegments.firstOrNull() ?: "native"
+                val origin = uri.pathSegments.firstOrNull() ?: "native"
                 val type = uri.pathSegments.getOrNull(1)
                 val id = uri.pathSegments.getOrNull(2) ?: return
                 
@@ -125,7 +125,7 @@ object FragmentUtils {
                     createSnack("Invalid item type")
                     return
                 }
-                openFragment<MediaFragment>(null, MediaFragment.getBundle(extensionId, item, false))
+                openFragment<MediaFragment>(null, MediaFragment.getBundle(origin, item, false))
             }
 
             else -> {

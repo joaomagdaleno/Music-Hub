@@ -34,7 +34,7 @@
     <string name="tabs">Fülek</string>
     <string name="show_tabs">Fülek mutatása</string>
     <string name="show_tab_summary">A bővítmény fülek mutatása mint fülek</string>
-    <string name="unified_liked_playlist_summary">Kedvelt dalaid különböző bővítményekből</string>
+    <string name="internal_liked_playlist_summary">Kedvelt dalaid különböző bővítményekből</string>
     <string name="n_items">%1$d tétel</string>
     <string name="item">Tétel</string>
     <plurals name="number_items">
@@ -65,7 +65,7 @@
     <string name="account_session_expired_in_x">A %1$s felhasználói munkamenete lejárt</string>
     <string name="error_x">Hiba: %1$s</string>
     <string name="str_copy">Másolás</string>
-    <string name="extensions">Bővítmények</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">Válassz egy színt</string>
     <string name="random">Véletlenszerű</string>
     <string name="add">Hozzá ad</string>

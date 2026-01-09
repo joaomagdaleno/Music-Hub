@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 class DeletePlaylistViewModel(
     private val app: App,
     private val repository: MusicRepository,
-    private val extensionId: String,
+    private val origin: String,
     private val item: Playlist,
     private val loaded: Boolean,
 ) : ViewModel() {

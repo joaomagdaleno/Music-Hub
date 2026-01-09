@@ -108,7 +108,7 @@ class DownloadsAdapter(
     data class Download(
         val context: ContextEntity?,
         val downloadEntity: DownloadEntity,
-        val extensionId: String?,
+        val origin: String?,
     ) : Item
 
     data class Task(val taskType: TaskType, val progress: Progress, val id: Long) : Item
@@ -150,7 +150,7 @@ class DownloadsAdapter(
             it.download.finalFile == null
         }.flatMap { info ->
             val download = info.download
-            listOf(Download(info.context, download, download.extensionId)) + info.workers.map {
+            listOf(Download(info.context, download, download.origin)) + info.workers.map {
                 Task(it.first, it.second, download.id)
             }
         }

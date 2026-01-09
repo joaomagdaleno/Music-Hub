@@ -87,18 +87,18 @@ data class FeedData(
         state: Result<State<Feed<Shelf>>?>, tab: Tab?
     ) = withContext(Dispatchers.IO) {
         runCatching {
-            val (extensionId, item, feed) = state.getOrThrow() ?: return@runCatching null
-            State(extensionId, item, feed.getPagedData(tab))
+            val (origin, item, feed) = state.getOrThrow() ?: return@runCatching null
+            State(origin, item, feed.getPagedData(tab))
         }
     }
 
     val dataFlow = cachedDataFlow.combine(loadedDataFlow) { cached, loaded ->
-        val extensionId = (loaded?.getOrNull() ?: cached?.getOrNull())?.extensionId
+        val origin = (loaded?.getOrNull() ?: cached?.getOrNull())?.origin
         val tabId = selectedTabFlow.value?.id
         searchQuery = null
         searchToggled = false
-        val id = "$extensionId-$feedId-$tabId"
-        feedSortState.value = extensionId?.let { app.context.getFromCache(id, "sort") }
+        val id = "$origin-$feedId-$tabId"
+        feedSortState.value = origin?.let { app.context.getFromCache(id, "sort") }
         loadedShelves.value = null
         cached to loaded
     }
@@ -111,7 +111,7 @@ data class FeedData(
     val tabsFlow = stateFlow.map { (cached, loaded) ->
         val state = (loaded?.getOrNull() ?: cached?.getOrNull()) ?: return@map listOf()
         state.feed.tabs.map {
-            FeedTab(feedId, state.extensionId, it)
+            FeedTab(feedId, state.origin, it)
         }
     }
 
@@ -121,13 +121,13 @@ data class FeedData(
 
     data class FeedTab(
         val feedId: String,
-        val extensionId: String,
+        val origin: String,
         val tab: Tab
     )
 
     data class Buttons(
         val feedId: String,
-        val extensionId: String,
+        val origin: String,
         val buttons: Feed.Buttons,
         val item: EchoMediaItem? = null,
         val sortState: FeedSort.State? = null,
@@ -137,7 +137,7 @@ data class FeedData(
         val feed = data.run { second?.getOrNull() ?: first?.getOrNull() } ?: return@combine null
         Buttons(
             feedId,
-            feed.extensionId,
+            feed.origin,
             feed.feed.buttons ?: defaultButtons,
             feed.item,
             state,
@@ -178,7 +178,7 @@ data class FeedData(
         val data = if (feedSortState.value != null || searchQuery != null) {
             result.mapCatching { state ->
                 state ?: return@mapCatching PagedData.empty()
-                val extensionId = state.extensionId
+                val origin = state.origin
                 val data = state.feed.pagedData
 
                 val sortState = feedSortState.value
@@ -200,7 +200,7 @@ data class FeedData(
                     shelves = sortState.feedSort?.sorter?.invoke(app.context, shelves) ?: shelves
                     if (sortState.reversed) shelves = shelves.reversed()
                     if (sortState.save)
-                        app.context.saveToCache("$extensionId-$feedId-$tabId", sortState, "sort")
+                        app.context.saveToCache("$origin-$feedId-$tabId", sortState, "sort")
                 }
                 if (query != null) {
                     shelves = shelves.filter { it.title.contains(query, true) }
@@ -208,7 +208,7 @@ data class FeedData(
                 PagedData.Single {
                     shelves.toFeedType(
                         feedId,
-                        extensionId,
+                        origin,
                         state.item,
                         tabId,
                         noVideos
@@ -217,7 +217,7 @@ data class FeedData(
             }
         } else result.mapCatching { state ->
             state ?: return@mapCatching PagedData.empty()
-            val extId = state.extensionId
+            val extId = state.origin
             val data = state.feed.pagedData
             data.loadPage(null)
             var start = 0L
@@ -247,10 +247,10 @@ data class FeedData(
         loadedFeedTypeFlow.value == null
     }.stateIn(scope, Lazily, true)
 
-    fun selectTab(extensionId: String?, pos: Int) {
+    fun selectTab(origin: String?, pos: Int) {
         val state = stateFlow.value.run { second?.getOrNull() ?: first?.getOrNull() }
         val tab = state?.feed?.tabs?.getOrNull(pos)
-            ?.takeIf { state.extensionId == extensionId }
+            ?.takeIf { state.origin == origin }
         app.context.saveToCache(feedId, tab?.id, "selected_tab")
         selectedTabFlow.value = tab
     }
@@ -280,7 +280,7 @@ data class FeedData(
     }
 
     data class State<T>(
-        val extensionId: String,
+        val origin: String,
         val item: EchoMediaItem?,
         val feed: T,
     )

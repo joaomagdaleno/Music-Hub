@@ -42,7 +42,7 @@ sealed class ShelfViewHolder<T : ShelfType>(view: View) : ScrollAnimViewHolder(v
             binding.root.setOnClickListener {
                 listener.openFeed(
                     it,
-                    item?.extensionId,
+                    item?.origin,
                     item?.id,
                     item?.category?.title,
                     item?.category?.subtitle,
@@ -75,18 +75,18 @@ sealed class ShelfViewHolder<T : ShelfType>(view: View) : ScrollAnimViewHolder(v
                 when (val item = shelf?.media) {
                     is Track -> {
                         if (item.isPlayable != Track.Playable.Yes) {
-                            listener.onMediaClicked(it, shelf?.extensionId, item, shelf?.context)
+                            listener.onMediaClicked(it, shelf?.origin, item, shelf?.context)
                         } else listener.onTracksClicked(
-                            it, shelf?.extensionId, shelf?.context, listOf(item), 0
+                            it, shelf?.origin, shelf?.context, listOf(item), 0
                         )
                     }
 
-                    else -> listener.onMediaClicked(it, shelf?.extensionId, item, shelf?.context)
+                    else -> listener.onMediaClicked(it, shelf?.origin, item, shelf?.context)
                 }
             }
             binding.root.setOnLongClickListener {
                 listener.onMediaLongClicked(
-                    it, shelf?.extensionId, shelf?.media,
+                    it, shelf?.origin, shelf?.media,
                     shelf?.context, shelf?.tabId, bindingAdapterPosition
                 )
                 true
@@ -127,21 +127,21 @@ sealed class ShelfViewHolder<T : ShelfType>(view: View) : ScrollAnimViewHolder(v
                     val pos = shelf?.number?.let { it * 3 + index } ?: index
                     val track = tracks.getOrNull(index)
                     if (track?.isPlayable != Track.Playable.Yes) listener.onMediaClicked(
-                        view, shelf?.extensionId, track, shelf?.context
+                        view, shelf?.origin, track, shelf?.context
                     ) else listener.onTracksClicked(
-                        view, shelf?.extensionId, shelf?.context, tracks, pos
+                        view, shelf?.origin, shelf?.context, tracks, pos
                     )
                 }
                 binding.root.setOnLongClickListener {
                     listener.onMediaLongClicked(
-                        it, shelf?.extensionId, shelf?.tracks?.toList()?.getOrNull(index),
+                        it, shelf?.origin, shelf?.tracks?.toList()?.getOrNull(index),
                         shelf?.context, shelf?.tabId, actualIndex
                     )
                     true
                 }
                 binding.more.setOnClickListener {
                     listener.onMediaLongClicked(
-                        it, shelf?.extensionId, shelf?.tracks?.toList()?.getOrNull(index),
+                        it, shelf?.origin, shelf?.tracks?.toList()?.getOrNull(index),
                         shelf?.context, shelf?.tabId, actualIndex
                     )
                 }

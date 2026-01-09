@@ -44,7 +44,7 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     companion object {
         fun newInstance(
             contId: Int,
-            extensionId: String,
+            origin: String,
             item: EchoMediaItem,
             loaded: Boolean,
             fromPlayer: Boolean = false,
@@ -54,7 +54,7 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
         ) = MediaMoreBottomSheet().apply {
             arguments = Bundle().apply {
                 putInt("contId", contId)
-                putString("extensionId", extensionId)
+                putString("origin", origin)
                 putSerialized("item", item)
                 putBoolean("loaded", loaded)
                 putSerialized("context", context)
@@ -67,7 +67,7 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
 
     private val args by lazy { requireArguments() }
     private val contId by lazy { args.getInt("contId", -1).takeIf { it != -1 }!! }
-    private val extensionId by lazy { args.getString("extensionId")!! }
+    private val origin by lazy { args.getString("origin")!! }
     private val item by lazy { args.getSerialized<EchoMediaItem>("item")!!.getOrThrow() }
     private val loaded by lazy { args.getBoolean("loaded") }
     private val itemContext by lazy { args.getSerialized<EchoMediaItem?>("context")?.getOrThrow() }
@@ -77,14 +77,14 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     private val delete by lazy { args.getBoolean("delete", false) }
 
     private val vm by viewModel<MediaViewModel> {
-        parametersOf(false, extensionId, item, loaded)
+        parametersOf(false, origin, item, loaded)
     }
     private val playerViewModel by activityViewModel<PlayerViewModel>()
 
     private val actionAdapter by lazy { MoreButtonAdapter() }
     private val headerAdapter by lazy {
         MoreHeaderAdapter({ dismiss() }, {
-            openItemFragment(extensionId, item, loaded)
+            openItemFragment(origin, item, loaded)
             dismiss()
         })
     }
@@ -153,16 +153,16 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
         item: EchoMediaItem, loaded: Boolean
     ) = if (item is Track) listOfNotNull(
         button("play", R.string.play, R.drawable.ic_play) {
-            playerViewModel.play(extensionId, item, loaded)
+            playerViewModel.play(origin, item, loaded)
         },
         if (playerViewModel.queue.isNotEmpty())
             button("next", R.string.add_to_next, R.drawable.ic_playlist_play) {
-                playerViewModel.addToNext(extensionId, item, loaded)
+                playerViewModel.addToNext(origin, item, loaded)
             }
         else null,
         if (playerViewModel.queue.size > 1)
             button("queue", R.string.add_to_queue, R.drawable.ic_playlist_add) {
-                playerViewModel.addToQueue(extensionId, item, loaded)
+                playerViewModel.addToQueue(origin, item, loaded)
             }
         else null
     ) else listOf()
@@ -178,26 +178,26 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
             if (item is Track && loaded) button(
                 "save_to_playlist", R.string.save_to_playlist, R.drawable.ic_library_music
             ) {
-                SaveToPlaylistBottomSheet.newInstance(extensionId, item)
+                SaveToPlaylistBottomSheet.newInstance(origin, item)
                     .show(parentFragmentManager, null)
             } else null,
             if (isEditable) button(
                 "edit_playlist", R.string.edit_playlist, R.drawable.ic_edit_note
             ) {
                 openFragment<EditPlaylistFragment>(
-                    EditPlaylistFragment.getBundle(extensionId, item, loaded)
+                    EditPlaylistFragment.getBundle(origin, item, loaded)
                 )
             } else null,
             if (isEditable) button(
                 "delete_playlist", R.string.delete_playlist, R.drawable.ic_delete
             ) {
-                DeletePlaylistBottomSheet.show(requireActivity(), extensionId, item, loaded)
+                DeletePlaylistBottomSheet.show(requireActivity(), origin, item, loaded)
             } else null,
             if ((itemContext as? Playlist)?.isEditable == true && item is Track) button(
                 "remove_from_playlist", R.string.remove, R.drawable.ic_cancel
             ) {
                 EditPlaylistBottomSheet.newInstance(
-                    extensionId, itemContext as Playlist, tabId, pos
+                    origin, itemContext as Playlist, tabId, pos
                 ).show(parentFragmentManager, null)
             } else null
         )
@@ -219,7 +219,7 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
                 "download", R.string.download, R.drawable.ic_download_for_offline
             ) {
                 val downloadViewModel by activityViewModel<DownloadViewModel>()
-                downloadViewModel.addToDownload(requireActivity(), extensionId, item, itemContext)
+                downloadViewModel.addToDownload(requireActivity(), origin, item, itemContext)
             } else null,
             if (shouldShowDelete) button(
                 "delete_download", R.string.delete_download, R.drawable.ic_scan_delete
@@ -261,7 +261,7 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
         if (state?.showRadio == true) button(
             "radio", R.string.radio, R.drawable.ic_sensors
         ) {
-            playerViewModel.radio(extensionId, state.item, true)
+            playerViewModel.radio(origin, state.item, true)
         } else null,
         if (state?.showShare == true) button(
             "share", R.string.share, R.drawable.ic_share
@@ -276,7 +276,7 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
         is Artist -> listOf()
     }.map {
         button(it.id, it.title, it.icon) {
-            openItemFragment(extensionId, it)
+            openItemFragment(origin, it)
         }
     }
 
@@ -286,11 +286,11 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     }
 
     private fun openItemFragment(
-        extensionId: String?, item: EchoMediaItem?, loaded: Boolean = false
+        origin: String?, item: EchoMediaItem?, loaded: Boolean = false
     ) {
-        extensionId ?: return
+        origin ?: return
         item ?: return
-        openFragment<MediaFragment>(MediaFragment.getBundle(extensionId, item, loaded))
+        openFragment<MediaFragment>(MediaFragment.getBundle(origin, item, loaded))
         dismiss()
     }
 }

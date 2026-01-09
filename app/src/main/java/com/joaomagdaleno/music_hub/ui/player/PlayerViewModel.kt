@@ -141,7 +141,7 @@ class PlayerViewModel(
         withBrowser { it.repeatMode = repeatMode }
     }
 
-    suspend fun isLikeClient(extensionId: String): Boolean = true
+    suspend fun isLikeClient(origin: String): Boolean = true
 
     private fun createException(throwable: Throwable) {
         viewModelScope.launch { app.throwFlow.emit(throwable) }

@@ -34,7 +34,7 @@
     <string name="tabs">علامات التبويب</string>
     <string name="show_tabs">إظهار علامات التبويب</string>
     <string name="show_tab_summary">سيتم عرض علامات تبويب الامتدادات كفئة</string>
-    <string name="unified_liked_playlist_summary">المسارات المفضلة لديك من ملحقات مختلفة</string>
+    <string name="internal_liked_playlist_summary">المسارات المفضلة لديك من ملحقات مختلفة</string>
     <string name="n_items">%1$d عناصر</string>
     <string name="item">عنصر</string>
     <plurals name="number_items">
@@ -69,7 +69,7 @@
     <string name="account_session_expired_in_x">انتهت جلسة الحساب في %1$s</string>
     <string name="error_x">خطأ: %1$s</string>
     <string name="str_copy">نسخ</string>
-    <string name="extensions">الإمتدادات</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">اختر لونًا</string>
     <string name="random">عشوائي</string>
     <string name="add">أضافة</string>

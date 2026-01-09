@@ -34,5 +34,5 @@
     <string name="tabs">Tab</string>
     <string name="show_tabs">Tunjukkan Tab</string>
     <string name="show_tab_summary">akan menunjukkan tab sambungan sebagai kategori</string>
-    <string name="unified_liked_playlist_summary">Your liked tracks from various extensions</string>
+    <string name="internal_liked_playlist_summary">Your liked tracks from various sources</string>
 </resources>

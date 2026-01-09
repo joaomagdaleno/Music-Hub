@@ -25,12 +25,12 @@ class InternalDownloadSource(
     val concurrentDownloads = 3
 
     suspend fun getDownloadTracks(
-        extensionId: String,
+        origin: String,
         item: EchoMediaItem,
         context: EchoMediaItem?
     ): List<DownloadContext> {
         return when (item) {
-            is Track -> listOf(DownloadContext(extensionId, item))
+            is Track -> listOf(DownloadContext(origin, item))
             else -> emptyList()
         }
     }

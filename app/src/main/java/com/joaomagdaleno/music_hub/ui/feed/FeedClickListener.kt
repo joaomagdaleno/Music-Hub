@@ -46,12 +46,12 @@ open class FeedClickListener(
     open fun onTabSelected(
         view: View?,
         feedId: String?,
-        extensionId: String?,
+        origin: String?,
         position: Int
     ): Boolean {
         val vm by fragment.viewModel<FeedViewModel>()
         val feedData = vm.feedDataMap[feedId] ?: return notFoundSnack(R.string.feed)
-        feedData.selectTab(extensionId, position)
+        feedData.selectTab(origin, position)
         return true
     }
 
@@ -65,29 +65,29 @@ open class FeedClickListener(
 
     open fun onPlayClicked(
         view: View?,
-        extensionId: String?,
+        origin: String?,
         context: EchoMediaItem?,
         tracks: List<Track>?,
         shuffle: Boolean
     ): Boolean {
-        if (extensionId == null) return notFoundSnack(R.string.sources)
+        if (origin == null) return notFoundSnack(R.string.sources)
         val vm by fragment.activityViewModels<PlayerViewModel>()
         if (tracks != null) {
             if (tracks.isEmpty()) return notFoundSnack(R.string.tracks)
-            vm.setQueue(extensionId, tracks, 0, context)
+            vm.setQueue(origin, tracks, 0, context)
             vm.setShuffle(shuffle, true)
             vm.setPlaying(true)
             return true
         }
         if (context == null) return notFoundSnack(R.string.item)
-        if (shuffle) vm.shuffle(extensionId, context, true)
-        else vm.play(extensionId, context, true)
+        if (shuffle) vm.shuffle(origin, context, true)
+        else vm.play(origin, context, true)
         return true
     }
 
     open fun openFeed(
         view: View?,
-        extensionId: String?,
+        origin: String?,
         feedId: String?,
         title: String?,
         subtitle: String?,
@@ -96,7 +96,7 @@ open class FeedClickListener(
         val fragment = fragmentManager.findFragmentById(containerId)
             ?: return notFoundSnack(R.string.view)
         val vm by fragment.activityViewModels<FeedFragment.VM>()
-        vm.extensionId = extensionId ?: return notFoundSnack(R.string.sources)
+        vm.origin = origin ?: return notFoundSnack(R.string.sources)
         vm.feedId = feedId ?: return notFoundSnack(R.string.item)
         vm.feed = feed ?: return notFoundSnack(R.string.feed)
         fragment.openFragment<FeedFragment>(view, FeedFragment.getBundle(title.orEmpty(), subtitle))
@@ -111,21 +111,21 @@ open class FeedClickListener(
     }
 
     open fun onMediaClicked(
-        view: View?, extensionId: String?, item: EchoMediaItem?, context: EchoMediaItem?
+        view: View?, origin: String?, item: EchoMediaItem?, context: EchoMediaItem?
     ): Boolean {
-        if (extensionId == null) return notFoundSnack(R.string.sources)
+        if (origin == null) return notFoundSnack(R.string.sources)
         if (item == null) return notFoundSnack(R.string.item)
         return when (item) {
             is Radio -> {
                 val vm by fragment.activityViewModels<PlayerViewModel>()
-                vm.play(extensionId, item, false)
+                vm.play(origin, item, false)
                 true
             }
 
             else -> {
                 val fragment = fragmentManager.findFragmentById(containerId)
                     ?: return notFoundSnack(R.string.view)
-                fragment.openFragment<MediaFragment>(view, getBundle(extensionId, item, false))
+                fragment.openFragment<MediaFragment>(view, getBundle(origin, item, false))
                 afterOpen()
                 true
             }
@@ -133,13 +133,13 @@ open class FeedClickListener(
     }
 
     open fun onMediaLongClicked(
-        view: View?, extensionId: String?, item: EchoMediaItem?, context: EchoMediaItem?,
+        view: View?, origin: String?, item: EchoMediaItem?, context: EchoMediaItem?,
         tabId: String?, index: Int
     ): Boolean {
-        if (extensionId == null) return notFoundSnack(R.string.sources)
+        if (origin == null) return notFoundSnack(R.string.sources)
         if (item == null) return notFoundSnack(R.string.item)
         MediaMoreBottomSheet.newInstance(
-            containerId, extensionId, item, false,
+            containerId, origin, item, false,
             context = context, tabId = tabId, pos = index
         ).show(fragmentManager, null)
         return true
@@ -147,26 +147,26 @@ open class FeedClickListener(
 
     open fun onTracksClicked(
         view: View?,
-        extensionId: String?,
+        origin: String?,
         context: EchoMediaItem?,
         tracks: List<Track>?,
         pos: Int
     ): Boolean {
-        if (extensionId == null) return notFoundSnack(R.string.sources)
+        if (origin == null) return notFoundSnack(R.string.sources)
         if (tracks.isNullOrEmpty()) return notFoundSnack(R.string.tracks)
         val vm by fragment.activityViewModels<PlayerViewModel>()
-        vm.setQueue(extensionId, tracks, pos, context)
+        vm.setQueue(origin, tracks, pos, context)
         vm.setPlaying(true)
         return true
     }
 
     open fun onTrackSwiped(
-        view: View?, extensionId: String?, track: Track?,
+        view: View?, origin: String?, track: Track?,
     ): Boolean {
-        if (extensionId == null) return notFoundSnack(R.string.sources)
+        if (origin == null) return notFoundSnack(R.string.sources)
         if (track == null) return notFoundSnack(R.string.track)
         val vm by fragment.activityViewModels<PlayerViewModel>()
-        vm.addToNext(extensionId, track, false)
+        vm.addToNext(origin, track, false)
         return true
     }
 }

@@ -9,14 +9,14 @@ sealed interface ShelfType {
         Category, Media, ThreeTracks
     }
 
-    val extensionId: String
+    val origin: String
     val tabId: String?
     val type: Enum
     val id: String
     val context: EchoMediaItem?
 
     class Category(
-        override val extensionId: String,
+        override val origin: String,
         override val context: EchoMediaItem?,
         override val tabId: String?,
         val category: Shelf.Category,
@@ -26,7 +26,7 @@ sealed interface ShelfType {
     }
 
     class Media(
-        override val extensionId: String,
+        override val origin: String,
         override val context: EchoMediaItem?,
         override val tabId: String?,
         val media: EchoMediaItem,
@@ -36,7 +36,7 @@ sealed interface ShelfType {
     }
 
     class ThreeTracks(
-        override val extensionId: String,
+        override val origin: String,
         override val context: EchoMediaItem?,
         override val tabId: String?,
         val number: Int?,

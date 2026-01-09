@@ -36,7 +36,7 @@
     <string name="tabs">ট্যাব</string>
     <string name="show_tabs">ট্যাব দেখান</string>
     <string name="show_tab_summary">এক্সটেনশনের ট্যাবগুলি বিভাগ হিসাবে দেখাবে</string>
-    <string name="unified_liked_playlist_summary">বিভিন্ন এক্সটেনশন থেকে আপনার পছন্দের ট্র্যাক</string>
+    <string name="internal_liked_playlist_summary">বিভিন্ন এক্সটেনশন থেকে আপনার পছন্দের ট্র্যাক</string>
     <string name="n_items">%1$d আইটেম</string>
     <string name="item">আইটেম</string>
     <plurals name="number_items">
@@ -67,7 +67,7 @@
     <string name="account_session_expired_in_x">%1$s এ অ্যাকাউন্ট সেশন মেয়াদ শেষ</string>
     <string name="error_x">ত্রুটি: %1$s</string>
     <string name="str_copy">কপি</string>
-    <string name="extensions">এক্সটেনশন</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">একটি রঙ চয়ন করুন</string>
     <string name="random">এলোমেলো</string>
     <string name="add">যোগ করুন</string>

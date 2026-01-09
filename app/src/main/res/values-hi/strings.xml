@@ -35,7 +35,7 @@
     <string name="view">देखें</string>
     <string name="no_internet">कोई इंटरनेट नहीं</string>
     <string name="str_copy">कॉपी करें</string>
-    <string name="extensions">एक्सटेंशन्स</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">रंग चुनें</string>
     <string name="random">यादृच्छिक</string>
     <string name="add">जोड़ें</string>
@@ -209,7 +209,7 @@
     <string name="video">वीडियो</string>
     <string name="read_storage">संग्रहण पढ़ें</string>
     <string name="write_storage">संग्रहण लिखें</string>
-    <string name="unified_liked_playlist_summary">विभिन्न एक्सटेंशन्स से आपके पसंदीदा ट्रैक्स</string>
+    <string name="internal_liked_playlist_summary">विभिन्न एक्सटेंशन्स से आपके पसंदीदा ट्रैक्स</string>
     <string name="n_items">%1$d आइटम</string>
     <string name="playlist_liked">पसंदीदा</string>
     <string name="playlist_liked_desc">आपके पसंदीदा ट्रैक्स</string>

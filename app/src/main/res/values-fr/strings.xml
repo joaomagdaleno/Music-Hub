@@ -3,7 +3,7 @@
     <string name="tabs">Onglets</string>
     <string name="repeat_one">Répéter Une Fois</string>
     <string name="duration_filter_summary">Filtrer les fichiers audio dont la durée (en secondes) est inférieure à la valeur</string>
-    <string name="unified_liked_playlist_summary">Vos morceaux préférés de différentes extensions</string>
+    <string name="internal_liked_playlist_summary">Vos morceaux préférés de différentes sources</string>
     <string name="downloads">Téléchargements</string>
     <string name="random">Aléatoire</string>
     <string name="audio_fx_summary">Effets appliqués à toutes les chansons</string>
@@ -14,7 +14,7 @@
     <string name="video">Vidéo</string>
     <string name="loading">Chargement…</string>
     <string name="blacklist_folder_keywords_summary">Mots-clés pour exclure les dossiers, utiliser la virgule comme séparateur</string>
-    <string name="show_tab_summary">Va afficher les onglets des extensions sous forme de catégories</string>
+    <string name="show_tab_summary">Va afficher les onglets des sources sous forme de catégories</string>
     <string name="playing_from">Lecture Depuis</string>
     <string name="_2hr">2 h</string>
     <string name="cancel">Annuler</string>
@@ -201,7 +201,7 @@
     <string name="repeat_off">Ne Pas Répéter</string>
     <string name="library">Bibliothèque</string>
     <string name="playlist_liked">Aimés</string>
-    <string name="extensions">Extensions</string>
+    <string name="extensions">Data Sources</string>
     <string name="home">Accueil</string>
     <string name="settings">Paramètres</string>
     <string name="bass_boost">Amplification des Basses</string>
@@ -281,7 +281,7 @@
     <string name="unmetered_stream_quality_summary">La qualité du flux sur une connection non limitée. Cette option remplace la qualité du flux par défaut.</string>
     <string name="select_language">Choisir une Langue</string>
     <string name="check_for_updates">Vérifier les mises à jour</string>
-    <string name="check_for_updates_summary">Chercher les mises à jour pour l\'application et les extensions quand vous ouvrez l\'application.</string>
+    <string name="check_for_updates_summary">Chercher les mises à jour pour l\'application et les sources quand vous ouvrez l\'application.</string>
     <string name="checking_for_updates">Recherche de mises a jour</string>
     <string name="back_animations">Animations de retour</string>
     <string name="back_animations_summary">Peut causer des bugs visuels dû à android, vous pouvez juste ouvrir les applications récentes pour régler ce bug.</string>

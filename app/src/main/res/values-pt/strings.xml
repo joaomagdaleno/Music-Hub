@@ -44,7 +44,7 @@
     <string name="blacklist_folder_keywords_summary">Palavras-chave para pastas da lista negra. Use vírgula para separador</string>
     <string name="saved">Guardado</string>
     <string name="show_tabs">Mostrar separadores</string>
-    <string name="unified_liked_playlist_summary">Suas faixas curtidas de várias extensões</string>
+    <string name="internal_liked_playlist_summary">Suas faixas curtidas de várias provedores</string>
     <string name="n_items">%1$d Itens</string>
     <string name="playlist_liked">Gostei</string>
     <string name="playlist_liked_desc">As suas faixas preferidas</string>
@@ -61,7 +61,7 @@
     <string name="no_internet">Sem Internet</string>
     <string name="error_x">Erro: %1$s</string>
     <string name="str_copy">Copiar</string>
-    <string name="extensions">Extensões</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">Escolha uma cor</string>
     <string name="random">Aleatório</string>
     <string name="add">Adicionar</string>
@@ -236,7 +236,7 @@
     <string name="more_by_x">Mais por %1$s</string>
     <string name="write_storage">Armazenamento de gravação</string>
     <string name="blacklist_folder_keywords">Palavras-chave da pasta da lista negra</string>
-    <string name="show_tab_summary">Mostrar separadores das extensões como categorias</string>
+    <string name="show_tab_summary">Mostrar separadores das provedores como categorias</string>
     <string name="remove">Remover</string>
     <string name="x_login_required">%1$s login necessário</string>
     <string name="blacklist_folders_summary">Pastas a excluir da biblioteca</string>
@@ -278,7 +278,7 @@
     <string name="unmetered_stream_quality">Qualidade de stream não medida</string>
     <string name="select_language">Selecionar Linguagem</string>
     <string name="check_for_updates">Verificar por atualizações</string>
-    <string name="check_for_updates_summary">Olhe por novas atualizações para o app e para as extensões, quando você abrir o app.</string>
+    <string name="check_for_updates_summary">Olhe por novas atualizações para o app e para as provedores, quando você abrir o app.</string>
     <string name="checking_for_updates">Checando por atualizações</string>
     <string name="back_animations">Animações de trás</string>
     <string name="back_animations_summary">Pode causar um bug visual por causa do Android, mas você pode abrir os recentes só para resolver.</string>

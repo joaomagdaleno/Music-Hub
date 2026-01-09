@@ -22,7 +22,7 @@ import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
 class MusicRepository(
     private val app: com.joaomagdaleno.music_hub.di.App,
     private val localProvider: LocalProvider,
-    private val database: com.joaomagdaleno.music_hub.data.db.UnifiedDatabase,
+    private val database: com.joaomagdaleno.music_hub.data.db.MusicDatabase,
 ) {
     private val piped = PipedApi()
     private val slavArt = SlavArtApi()

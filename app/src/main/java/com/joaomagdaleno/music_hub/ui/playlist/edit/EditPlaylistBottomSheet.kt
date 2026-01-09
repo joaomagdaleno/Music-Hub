@@ -17,10 +17,10 @@ import org.koin.core.parameter.parametersOf
 class EditPlaylistBottomSheet : BottomSheetDialogFragment(R.layout.item_loading) {
     companion object {
         fun newInstance(
-            extensionId: String, playlist: Playlist, tabId: String?, index: Int
+            origin: String, playlist: Playlist, tabId: String?, index: Int
         ) = EditPlaylistBottomSheet().apply {
             arguments = Bundle().apply {
-                putString("extensionId", extensionId)
+                putString("origin", origin)
                 putSerialized("playlist", playlist)
                 putString("tabId", tabId)
                 putInt("removeIndex", index)
@@ -50,13 +50,13 @@ class EditPlaylistBottomSheet : BottomSheetDialogFragment(R.layout.item_loading)
     }
 
     val args by lazy { requireArguments() }
-    val extensionId by lazy { args.getString("extensionId")!! }
+    val origin by lazy { args.getString("origin")!! }
     val playlist by lazy { args.getSerialized<Playlist>("playlist")!!.getOrThrow() }
     val tabId by lazy { args.getString("tabId") }
     val removeIndex by lazy { args.getInt("removeIndex", -1).takeIf { it != -1 }!! }
 
     val vm by viewModel<EditPlaylistViewModel> {
-        parametersOf(extensionId, playlist, true, tabId, removeIndex)
+        parametersOf(origin, playlist, true, tabId, removeIndex)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

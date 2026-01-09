@@ -30,13 +30,13 @@ class DownloadViewModel(
     private val throwableFlow = app.throwFlow
 
     // Deprecated extension properties
-    // val extensions = extensionLoader // Removed
+    // val extensions = sourceLoader // Removed
 
     val flow = downloader.flow
 
     fun addToDownload(
         activity: FragmentActivity,
-        extensionId: String,
+        origin: String,
         item: EchoMediaItem,
         context: EchoMediaItem?,
     ) = viewModelScope.launch(Dispatchers.IO) {
@@ -56,7 +56,7 @@ class DownloadViewModel(
             )
 
             val downloads = tracks.mapIndexed { index, track ->
-                 DownloadContext(extensionId = "native", track = track, sortOrder = index, context = context)
+                 DownloadContext(origin = "native", track = track, sortOrder = index, context = context)
             }
 
             downloader.add(downloads)

@@ -39,7 +39,7 @@ class HorizontalListViewHolder(
         val endPadding = if (feed.shelf is Shelf.Lists.Tracks) 8 else 20
         binding.root.updatePaddingRelative(end = endPadding.dpToPx(binding.root.context))
         adapter.tracks = feed.shelf.list.filterIsInstance<Track>()
-        adapter.submitList(feed.shelf.toShelfType(feed.extensionId, feed.context, feed.tabId)) {
+        adapter.submitList(feed.shelf.toShelfType(feed.origin, feed.context, feed.tabId)) {
             binding.root.adapter = adapter
         }
     }
@@ -49,16 +49,16 @@ class HorizontalListViewHolder(
     }
 
     fun Shelf.Lists<*>.toShelfType(
-        extensionId: String, context: EchoMediaItem?, tabId: String?
+        origin: String, context: EchoMediaItem?, tabId: String?
     ) = when (this) {
-        is Shelf.Lists.Items -> list.map { ShelfType.Media(extensionId, context, tabId, it) }
+        is Shelf.Lists.Items -> list.map { ShelfType.Media(origin, context, tabId, it) }
         is Shelf.Lists.Categories -> list.map {
-            ShelfType.Category(extensionId, context, tabId, it)
+            ShelfType.Category(origin, context, tabId, it)
         }
 
         is Shelf.Lists.Tracks -> list.chunked(3).mapIndexed { index, it ->
             ShelfType.ThreeTracks(
-                extensionId, context, tabId, index,
+                origin, context, tabId, index,
                 Triple(
                     it[0],
                     it.getOrNull(1),
@@ -70,7 +70,7 @@ class HorizontalListViewHolder(
 
     object DiffCallback : DiffUtil.ItemCallback<ShelfType>() {
         override fun areItemsTheSame(oldItem: ShelfType, newItem: ShelfType): Boolean {
-            if (oldItem.extensionId != newItem.extensionId) return false
+            if (oldItem.origin != newItem.origin) return false
             if (oldItem.type != newItem.type) return false
             if (oldItem.id != newItem.id) return false
             return true

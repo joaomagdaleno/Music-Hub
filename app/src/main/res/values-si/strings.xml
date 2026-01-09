@@ -34,7 +34,7 @@
     <string name="tabs">තීරුව</string>
     <string name="show_tabs">තීරු පෙන්වන්න</string>
     <string name="show_tab_summary">තීරු දිගුවන් ප්‍රවර්ග ලෙස දක්වනු ඇත</string>
-    <string name="unified_liked_playlist_summary">ඔබේ කැමති පථයන් විවිධ දිගුවලින්</string>
+    <string name="internal_liked_playlist_summary">ඔබේ කැමති පථයන් විවිධ දිගුවලින්</string>
     <string name="n_items">අයිතම %1$d</string>
     <string name="item">අයිතමය</string>
     <plurals name="number_items">
@@ -65,7 +65,7 @@
     <string name="account_session_expired_in_x">ගිණුම් සැසිය තව %1$sන් අවසන්වෙ</string>
     <string name="error_x">දෝෂය: %1$s</string>
     <string name="str_copy">පිටපත් කරන්න</string>
-    <string name="extensions">දිගු</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">වර්ණයක් තෝරන්න</string>
     <string name="random">අහඹු</string>
     <string name="add">එකතු කරන්න</string>

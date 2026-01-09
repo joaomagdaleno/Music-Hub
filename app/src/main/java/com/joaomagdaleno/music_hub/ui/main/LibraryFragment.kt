@@ -87,13 +87,13 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         }
 
         parent.parentFragmentManager.setFragmentResultListener("createPlaylist", this) { _, data ->
-            val extensionId = data.getString("extensionId")
+            val origin = data.getString("origin")
             val playlist = data.getSerialized<Playlist>("playlist")?.getOrNull()
-            if (extensionId != null && playlist != null) createSnack(
+            if (origin != null && playlist != null) createSnack(
                 Message(
                     getString(R.string.x_created, playlist.title),
                     Message.Action(getString(R.string.view)) {
-                        listener.onMediaClicked(null, extensionId, playlist, null)
+                        listener.onMediaClicked(null, origin, playlist, null)
                     }
                 )
             )

@@ -16,7 +16,7 @@ import java.io.File
 class EditPlaylistViewModel(
     private val app: App,
     private val repository: MusicRepository,
-    private val extensionId: String,
+    private val origin: String,
     private val initial: Playlist,
     private val loaded: Boolean,
     private val selectedTab: String?,

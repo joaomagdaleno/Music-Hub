@@ -90,7 +90,7 @@
     <string name="following_x">正在关注 %1$s</string>
     <string name="repeat_off">循环关闭</string>
     <string name="app">应用程序</string>
-    <string name="extensions">扩展</string>
+    <string name="extensions">Data Sources</string>
     <string name="cache_size">缓存大小</string>
     <string name="equalizer">均衡器</string>
     <string name="settings">设置</string>
@@ -107,7 +107,7 @@
     <string name="blacklist_folder_keywords">黑名单文件夹关键字</string>
     <string name="blacklist_folder_keywords_summary">要屏蔽文件夹的关键词，使用逗号分隔</string>
     <string name="show_tab_summary">将显示扩展的标签作为类别</string>
-    <string name="unified_liked_playlist_summary">您喜欢的来自各种扩展的曲目</string>
+    <string name="internal_liked_playlist_summary">您喜欢的来自各种扩展的曲目</string>
     <string name="n_items">%1$d 个项目</string>
     <string name="playlist_liked_desc">您喜欢的曲目</string>
     <string name="x_login_required">需要 %1$s 登录</string>

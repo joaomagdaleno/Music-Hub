@@ -34,7 +34,7 @@
     <string name="refresh_library_on_reload_summary">피드가 로드될 때마다 장치를 스캔합니다</string>
     <string name="saved">저장됨</string>
     <string name="tabs">탭</string>
-    <string name="unified_liked_playlist_summary">다양한 확장 프로그램에서 좋아하는 트랙</string>
+    <string name="internal_liked_playlist_summary">다양한 확장 프로그램에서 좋아하는 트랙</string>
     <string name="n_items">%1$d 항목</string>
     <string name="playlist_liked_desc">내가 좋아하는 트랙</string>
     <string name="no_internet">인터넷 없음</string>
@@ -58,7 +58,7 @@
     <string name="x_login_required">%1$s 로그인 필요</string>
     <string name="error_x">오류: %1$s</string>
     <string name="str_copy">복사</string>
-    <string name="extensions">확장 프로그램</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">색상 선택</string>
     <string name="random">무작위</string>
     <string name="add">추가하기</string>

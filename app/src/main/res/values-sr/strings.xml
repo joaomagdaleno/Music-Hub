@@ -33,7 +33,7 @@
     <string name="tabs">Kartice</string>
     <string name="show_tabs">Prikaži kartice</string>
     <string name="show_tab_summary">pokazaće kartice ekstenzija kao kategoriju</string>
-    <string name="unified_liked_playlist_summary">Numere koje ste voleli sa različitih ekstenzija</string>
+    <string name="internal_liked_playlist_summary">Numere koje ste voleli sa različitih ekstenzija</string>
     <string name="n_items">%1$d Stavke</string>
     <string name="item">Stavka</string>
     <string name="playlist_liked">Sviđa mi se</string>
@@ -60,7 +60,7 @@
     <string name="account_session_expired_in_x">Sesija naloga je istekla u %1$s</string>
     <string name="error_x">Greška: %1$s</string>
     <string name="str_copy">Kopiraj</string>
-    <string name="extensions">Ekstenzije</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">Izaberi boju</string>
     <string name="random">Nasumično</string>
     <string name="add">Dodaj</string>

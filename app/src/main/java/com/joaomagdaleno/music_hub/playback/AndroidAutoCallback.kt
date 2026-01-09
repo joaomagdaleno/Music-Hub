@@ -171,9 +171,9 @@ abstract class AndroidAutoCallback(
             .build()
 
         private fun Track.toItem(
-            context: Context, extensionId: String, con: EchoMediaItem? = null
+            context: Context, origin: String, con: EchoMediaItem? = null
         ): MediaItem {
-            context.saveToCache(id, Triple(this, extensionId, con), "auto")
+            context.saveToCache(id, Triple(this, origin, con), "auto")
             return MediaItem.Builder()
                 .setMediaId("auto/$id")
                 .setMediaMetadata(

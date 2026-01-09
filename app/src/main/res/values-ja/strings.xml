@@ -74,7 +74,7 @@
     <string name="saved">保存しました</string>
     <string name="tabs">タブ</string>
     <string name="show_tabs">表示タブ</string>
-    <string name="unified_liked_playlist_summary">各拡張機能でいいねした曲</string>
+    <string name="internal_liked_playlist_summary">各拡張機能でいいねした曲</string>
     <string name="blacklist_folders_summary">ライブラリから除外するフォルダ</string>
     <string name="blacklist_folder_keywords">ブラックリストにするフォルダのキーワード</string>
     <string name="blacklist_folder_keywords_summary">フォルダをブラックリストに追加するためのキーワードをコンマ区切りで入力してください</string>
@@ -101,7 +101,7 @@
     <string name="account_session_expired_in_x">%1$sのアカウントセッションの有効期限が切れました</string>
     <string name="error_x">エラー: %1$s</string>
     <string name="str_copy">コピー</string>
-    <string name="extensions">拡張機能</string>
+    <string name="extensions">Data Sources</string>
     <string name="random">ランダム</string>
     <string name="value">値</string>
     <string name="value_not_set">未設定</string>

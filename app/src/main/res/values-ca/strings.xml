@@ -33,8 +33,8 @@
     <string name="saved">Guardat</string>
     <string name="tabs">Pestanyes</string>
     <string name="show_tabs">Mostra les pestanyes</string>
-    <string name="show_tab_summary">Mostra les pestanyes de les extensions com a categories</string>
-    <string name="unified_liked_playlist_summary">Les teves pistes favorites de diverses extensions</string>
+    <string name="show_tab_summary">Mostra les pestanyes de les sources com a categories</string>
+    <string name="internal_liked_playlist_summary">Les teves pistes favorites de diverses sources</string>
     <string name="n_items">%1$d elements</string>
     <string name="item">Element</string>
     <plurals name="number_items">
@@ -66,7 +66,7 @@
     <string name="account_session_expired_in_x">La sessió del compte ha caducat en %1$s</string>
     <string name="error_x">Error: %1$s</string>
     <string name="str_copy">Còpia</string>
-    <string name="extensions">Extensions</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">Tria un color</string>
     <string name="random">Aleatori</string>
     <string name="add">Afegir</string>
@@ -105,7 +105,7 @@
     <string name="select_language">Tria l\'idioma</string>
     <string name="system">Sistema</string>
     <string name="check_for_updates">Busca actualitzacions</string>
-    <string name="check_for_updates_summary">Al obrir la app, busca actualitzacions tant per la pròpia app com per les extensions.</string>
+    <string name="check_for_updates_summary">Al obrir la app, busca actualitzacions tant per la pròpia app com per les sources.</string>
     <string name="install">Instal·la</string>
     <string name="app">App</string>
     <string name="file">Fitxer</string>

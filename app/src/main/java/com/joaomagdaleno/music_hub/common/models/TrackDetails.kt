@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 /**
  * A data class that holds the details of a track that is in the player.
  *
- * @param extensionId the extension id of the extension that the track is from.
+ * @param origin the extension id of the extension that the track is from.
  * @param context the context of the track.
  * @param track the track itself.
  * @param currentPosition the current position of the track in milliseconds.
@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class TrackDetails(
-    val extensionId: String,
+    val origin: String,
     val track: Track,
     val context: EchoMediaItem?,
     val currentPosition: Long,

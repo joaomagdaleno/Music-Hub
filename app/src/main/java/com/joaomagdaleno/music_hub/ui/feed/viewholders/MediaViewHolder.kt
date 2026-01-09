@@ -40,19 +40,19 @@ class MediaViewHolder(
             when (val item = feed?.item) {
                 is Track -> {
                     if (item.isPlayable != Track.Playable.Yes) {
-                        listener.onMediaClicked(it, feed?.extensionId, item, feed?.context)
+                        listener.onMediaClicked(it, feed?.origin, item, feed?.context)
                         return@setOnClickListener
                     }
                     val (tracks, pos) = getAllTracks(feed!!)
-                    listener.onTracksClicked(it, feed?.extensionId, feed?.context, tracks, pos)
+                    listener.onTracksClicked(it, feed?.origin, feed?.context, tracks, pos)
                 }
 
-                else -> listener.onMediaClicked(it, feed?.extensionId, item, feed?.context)
+                else -> listener.onMediaClicked(it, feed?.origin, item, feed?.context)
             }
         }
         binding.root.setOnLongClickListener {
             listener.onMediaLongClicked(
-                it, feed?.extensionId, feed?.item,
+                it, feed?.origin, feed?.item,
                 feed?.context, feed?.tabId, bindingAdapterPosition
             )
             true
@@ -60,13 +60,13 @@ class MediaViewHolder(
 
         binding.more.setOnClickListener {
             listener.onMediaLongClicked(
-                it, feed?.extensionId, feed?.item,
+                it, feed?.origin, feed?.item,
                 feed?.context, feed?.tabId, bindingAdapterPosition
             )
         }
         binding.play.setOnClickListener {
             listener.onPlayClicked(
-                it, feed?.extensionId, feed?.item, null, false
+                it, feed?.origin, feed?.item, null, false
             )
         }
     }

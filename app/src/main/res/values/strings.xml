@@ -35,7 +35,7 @@
     <string name="tabs">Tabs</string>
     <string name="show_tabs">Show Tabs</string>
     <string name="show_tab_summary">will show category tabs</string>
-    <string name="unified_liked_playlist_summary">Your liked tracks from various sources</string>
+    <string name="internal_liked_playlist_summary">Your liked tracks from various sources</string>
     <string name="n_items">%1$d Items</string>
     <string name="item">Item</string>
     <plurals name="number_items">

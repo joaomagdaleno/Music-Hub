@@ -48,7 +48,7 @@
     <string name="saved">Salvato</string>
     <string name="tabs">Schede</string>
     <string name="show_tabs">Mostra schede</string>
-    <string name="unified_liked_playlist_summary">I tuoi brani preferiti dalle varie estensioni</string>
+    <string name="internal_liked_playlist_summary">I tuoi brani preferiti dalle varie estensioni</string>
     <string name="n_items">%1$d Elementi</string>
     <string name="show_tab_summary">Mostrerà le schede delle estensioni come categorie</string>
     <string name="playlist_liked">Preferiti</string>
@@ -70,7 +70,7 @@
     <string name="account_session_expired_in_x">Sessione account scaduta in %1$s</string>
     <string name="error_x">Errore: %1$s</string>
     <string name="str_copy">Copia</string>
-    <string name="extensions">Estensioni</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">Scegli un colore</string>
     <string name="random">Casuale</string>
     <string name="add">Aggiungi</string>

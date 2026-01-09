@@ -24,10 +24,8 @@ import java.io.File
 import java.util.Calendar
 
 const val ORIGIN = "origin"
-const val UNIFIED_ID = "unified"
-// val Map<String, String>.origin get() = get(ORIGIN) ?: ""
+const val INTERNAL_ID = "internal"
 
-// Removed extension helpers or simplified them
 fun Playlist.toEntity(): PlaylistEntity = PlaylistEntity(
     id.toLong(),
     creationDate.toJson(),
@@ -45,8 +43,7 @@ fun Track.toTrackEntity(): PlaylistTrackEntity {
 }
 
 fun EchoMediaItem.toEntity(): SavedEntity {
-    // Legacy origin field, using 'native' as default
-    return SavedEntity(id, "native", this.toJson())
+    return SavedEntity(id, INTERNAL_ID, this.toJson())
 }
 
 
@@ -56,16 +53,16 @@ fun EchoMediaItem.toEntity(): SavedEntity {
         PlaylistTrackEntity::class,
         SavedEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
-abstract class UnifiedDatabase : RoomDatabase() {
+abstract class MusicDatabase : RoomDatabase() {
     abstract fun playlistDao(): PlaylistDao
     
     companion object {
-        private const val DATABASE_NAME = "unified-db"
+        private const val DATABASE_NAME = "music-db"
         fun create(app: android.app.Application) = androidx.room.Room.databaseBuilder(
-            app, UnifiedDatabase::class.java, DATABASE_NAME
+            app, MusicDatabase::class.java, DATABASE_NAME
         ).fallbackToDestructiveMigration(true).build()
     }
 
@@ -80,8 +77,7 @@ abstract class UnifiedDatabase : RoomDatabase() {
     }
 
     suspend fun isSaved(item: EchoMediaItem): Boolean {
-        // Ignoring extension ID check for now, or assume 'native'
-        return dao.isSaved(item.id, "native")
+        return dao.isSaved(item.id, INTERNAL_ID)
     }
 
     suspend fun save(item: EchoMediaItem) {
@@ -109,7 +105,7 @@ abstract class UnifiedDatabase : RoomDatabase() {
                 0,
                 getDateNow().toJson(),
                 "Liked",
-                context.getString(R.string.unified_liked_playlist_summary),
+                context.getString(R.string.internal_liked_playlist_summary),
                 null,
                 "[]"
             )
@@ -181,7 +177,7 @@ abstract class UnifiedDatabase : RoomDatabase() {
         val entity = dao.getPlaylist(playlist.toEntity().id)
         val newTracks = new.map {
             val trackEntity = PlaylistTrackEntity(
-                0, entity.id, it.id, "native", it.toJson()
+                0, entity.id, it.id, INTERNAL_ID, it.toJson()
             )
             dao.insertPlaylistTrack(trackEntity)
         }
@@ -327,7 +323,7 @@ data class PlaylistEntity(
             creationDate = modified.toData<Date>().getOrNull(),
             description = description.takeIf { it.isNotBlank() },
             extras = mapOf(
-                ORIGIN to UNIFIED_ID,
+                ORIGIN to INTERNAL_ID,
                 "listData" to listData,
                 "actualId" to actualId
             )

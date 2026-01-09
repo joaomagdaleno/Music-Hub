@@ -64,7 +64,7 @@ abstract class BaseTask(
         val download = getDownload()
         val contextEntity = download.contextId?.let { dao.getContextEntity(it) }
         DownloadContext(
-            download.extensionId,
+            download.origin,
             download.track.getOrThrow(),
             download.sortOrder,
             contextEntity?.mediaItem?.getOrThrow()

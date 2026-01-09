@@ -12,7 +12,7 @@
     <string name="quality_selection">Chất lượng</string>
     <string name="manage">Quản lý</string>
     <string name="add">Thêm</string>
-    <string name="extensions">Phần mở rộng</string>
+    <string name="extensions">Data Sources</string>
     <string name="link">Liên kết</string>
     <string name="link_or_code">Liên kết hoặc Mã</string>
     <string name="list_is_empty">Danh sách trống</string>
@@ -70,7 +70,7 @@
     <string name="file">Tệp</string>
     <string name="could_not_find_the_file">Không thể tìm thấy tệp.</string>
     <string name="show_tab_summary">sẽ hiển thị các tab của các tiện ích như là các danh mục</string>
-    <string name="unified_liked_playlist_summary">Các bản nhạc bạn thích từ các phần mở rộng khác nhau</string>
+    <string name="internal_liked_playlist_summary">Các bản nhạc bạn thích từ các phần mở rộng khác nhau</string>
     <string name="audio">Âm thanh</string>
     <string name="audio_permission_summary">Để truy cập thư viện nhạc trên máy của bạn</string>
     <string name="read_storage">Đọc Bộ nhớ</string>

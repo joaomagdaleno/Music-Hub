@@ -34,7 +34,7 @@
     <string name="tabs">Układki</string>
     <string name="show_tabs">Pakazać układki</string>
     <string name="show_tab_summary">Pakazać układki pašyrenniaŭ jak katehorii</string>
-    <string name="unified_liked_playlist_summary">Vašy ŭlubionyja treki z roznych pašyrenniaŭ</string>
+    <string name="internal_liked_playlist_summary">Vašy ŭlubionyja treki z roznych pašyrenniaŭ</string>
     <string name="n_items">%1$d elemientaŭ</string>
     <string name="item">Elemient</string>
     <plurals name="number_items">
@@ -67,7 +67,7 @@
     <string name="account_session_expired_in_x">Sesija akaŭnta zakančvajecca ŭ %1$s</string>
     <string name="error_x">Pamyłka: %1$s</string>
     <string name="str_copy">Skapijavać</string>
-    <string name="extensions">Pašyrenni</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">Vybrać koler</string>
     <string name="random">Vypadkova</string>
     <string name="add">Dadać</string>

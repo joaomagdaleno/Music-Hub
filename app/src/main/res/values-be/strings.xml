@@ -34,7 +34,7 @@
     <string name="tabs">Укладкі</string>
     <string name="show_tabs">Паказаць укладкі</string>
     <string name="show_tab_summary">Паказываць укладкі пашырэнняў як катэгоріі</string>
-    <string name="unified_liked_playlist_summary">Вашы ўлюбёныя трэкі з розных пашырэнняў</string>
+    <string name="internal_liked_playlist_summary">Вашы ўлюбёныя трэкі з розных пашырэнняў</string>
     <string name="n_items">%1$d элементаў</string>
     <string name="item">Элемент</string>
     <plurals name="number_items">
@@ -67,7 +67,7 @@
     <string name="account_session_expired_in_x">Сесія акаўнта заканчваецца ў %1$s</string>
     <string name="error_x">Памылка: %1$s</string>
     <string name="str_copy">Скапіяваць</string>
-    <string name="extensions">Пашырэнні</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">Выбраць колер</string>
     <string name="random">Выпадкова</string>
     <string name="add">Дадаць</string>

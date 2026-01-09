@@ -42,7 +42,7 @@
     <string name="account_session_expired_in_x">Die Sitzung ist in %1$s abgelaufen</string>
     <string name="error_x">Fehler: %1$s</string>
     <string name="str_copy">Kopieren</string>
-    <string name="extensions">Erweiterungen</string>
+    <string name="extensions">Data Sources</string>
     <string name="random">Zufällig</string>
     <string name="add">Hinzufügen</string>
     <string name="loading">Laden…</string>
@@ -138,7 +138,7 @@
     <string name="skip_silence_summary">Überspringe den stillen Teils des Songs, um eine lückenlose Wiedergabe zu ermöglichen.</string>
     <string name="cache_playlist_warning">Experimentelle Funktionen. Alles, außer dem Anhören, wird nicht unterstützt.</string>
     <string name="duration_filter_summary">Filter Audiodateien heraus, deren Dauer (in Sekunden) kleiner als der Wert ist</string>
-    <string name="unified_liked_playlist_summary">Deine Lieblingstitel aus verschiedenen Erweiterungen</string>
+    <string name="internal_liked_playlist_summary">Deine Lieblingstitel aus verschiedenen Erweiterungen</string>
     <string name="playlist_liked">Gefällt mir</string>
     <string name="unknown">Unbekannt</string>
     <string name="x_disabled">%1$s (Deaktiviert)</string>

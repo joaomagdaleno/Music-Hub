@@ -9,7 +9,7 @@ import androidx.media3.common.Timeline
 import androidx.media3.session.MediaSession
 import com.joaomagdaleno.music_hub.data.repository.MusicRepository
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.extensionId
+import com.joaomagdaleno.music_hub.playback.MediaItemUtils.origin
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.isLoaded
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.retries
 import com.joaomagdaleno.music_hub.playback.PlayerCommands.getLikeButton

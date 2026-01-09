@@ -75,7 +75,7 @@
     <string name="view">চাওক</string>
     <string name="no_internet">ইণ্টাৰনেট নাই</string>
     <string name="str_copy">কপি</string>
-    <string name="extensions">এক্সটেনশ্যনসমূহ</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">এটা ৰং বাছক</string>
     <string name="random">ৰেণ্ডম</string>
     <string name="add">যোগ কৰক</string>
@@ -114,7 +114,7 @@
     <string name="file">ফাইল</string>
     <string name="could_not_find_the_file">ফাইলটো বিচাৰি পোৱা নগ’ল।</string>
     <string name="allow_opening_links">লিংক খোলাৰ পাৰ্মিছন দিয়ক</string>
-    <string name="unified_liked_playlist_summary">বিভিন্ন এক্সটেনশ্যনৰ পৰা আপোনাৰ পছন্দৰ গান</string>
+    <string name="internal_liked_playlist_summary">বিভিন্ন এক্সটেনশ্যনৰ পৰা আপোনাৰ পছন্দৰ গান</string>
     <string name="n_items">%1$d আইটেম</string>
     <string name="playlist_liked">পছন্দ কৰা</string>
     <string name="repeat_off">ৰিপিট অফ</string>

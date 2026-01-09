@@ -18,7 +18,7 @@
     <string name="view">द्रष्टुम्</string>
     <string name="no_internet">कोऽपि जालम् नास्ति</string>
     <string name="str_copy">प्रतिकृतिः</string>
-    <string name="extensions">विस्तारः</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">वर्णं चयनं करोतु</string>
     <string name="random">यदृच्छया</string>
     <string name="add">योजयतु</string>
@@ -78,7 +78,7 @@
     <string name="remove">अपसारय</string>
     <string name="more_by_x">%1$s इत्यस्मात् अधिकम्</string>
     <string name="x_radio">%1$s रेडियो</string>
-    <string name="unified_liked_playlist_summary">तव विभिन्नविस्तारणेभ्यः प्रियाः गानानि</string>
+    <string name="internal_liked_playlist_summary">तव विभिन्नविस्तारणेभ्यः प्रियाः गानानि</string>
     <string name="n_items">%1$d वस्तूनि</string>
     <string name="playlist_liked">प्रियम्</string>
     <string name="playlist_liked_desc">तव प्रियगानानि</string>

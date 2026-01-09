@@ -13,7 +13,7 @@ import java.io.File
 data class DownloadEntity(
     @PrimaryKey(true)
     val id: Long,
-    val extensionId: String,
+    val origin: String,
     val trackId: String,
     val contextId: Long?,
     val sortOrder: Int? = null,

@@ -21,7 +21,7 @@
     <string name="x_login_required">Je potrebné %1$s prihlásenie</string>
     <string name="error_x">Chyba: %1$s</string>
     <string name="str_copy">Kopírovať</string>
-    <string name="extensions">Rozšírenia</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">Vybrať farbu</string>
     <string name="random">Náhodné</string>
     <string name="add">Pridať</string>

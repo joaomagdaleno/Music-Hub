@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class SaveToPlaylistViewModel(
-    private val extensionId: String,
+    private val origin: String,
     private val item: EchoMediaItem,
     private val app: App,
     private val repository: MusicRepository,

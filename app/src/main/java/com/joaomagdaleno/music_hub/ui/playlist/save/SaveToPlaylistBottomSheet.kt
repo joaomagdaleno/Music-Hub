@@ -26,17 +26,17 @@ import org.koin.core.parameter.parametersOf
 class SaveToPlaylistBottomSheet : BottomSheetDialogFragment() {
 
     companion object {
-        fun newInstance(extensionId: String, item: EchoMediaItem) =
+        fun newInstance(origin: String, item: EchoMediaItem) =
             SaveToPlaylistBottomSheet().apply {
                 arguments = Bundle().apply {
-                    putString("extensionId", extensionId)
+                    putString("origin", origin)
                     putSerialized("item", item)
                 }
             }
     }
 
     private val args by lazy { requireArguments() }
-    private val extensionId by lazy { args.getString("extensionId")!! }
+    private val origin by lazy { args.getString("origin")!! }
     private val item by lazy { args.getSerialized<EchoMediaItem>("item")!!.getOrThrow() }
 
     private val itemAdapter by lazy {
@@ -58,7 +58,7 @@ class SaveToPlaylistBottomSheet : BottomSheetDialogFragment() {
 
     private var binding by autoCleared<DialogPlaylistSaveBinding>()
     private val viewModel by viewModel<SaveToPlaylistViewModel> {
-        parametersOf(extensionId, item)
+        parametersOf(origin, item)
     }
 
     override fun onCreateView(
@@ -73,7 +73,7 @@ class SaveToPlaylistBottomSheet : BottomSheetDialogFragment() {
         binding.save.setOnClickListener {
             viewModel.saveTracks()
         }
-        itemAdapter.submitList(listOf(MediaItemAdapter.Item(extensionId, item)))
+        itemAdapter.submitList(listOf(MediaItemAdapter.Item(origin, item)))
         val combined = viewModel.playlistsFlow.combine(viewModel.saveFlow) { playlists, save ->
             playlists to save
         }

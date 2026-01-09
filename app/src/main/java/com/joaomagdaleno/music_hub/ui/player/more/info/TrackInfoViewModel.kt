@@ -40,7 +40,7 @@ class TrackInfoViewModel(
                 
                 // Use Repository to fetch track details if needed
                 val loadedTrack = repository.getTrack(track.id) ?: track
-                itemResultFlow.value = Result.success(MediaState.Loaded(extensionId = "native", item = loadedTrack))
+                itemResultFlow.value = Result.success(MediaState.Loaded(origin = "native", item = loadedTrack))
             }
         }
     }

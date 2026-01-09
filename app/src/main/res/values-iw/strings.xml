@@ -34,7 +34,7 @@
     <string name="tabs">טאבים</string>
     <string name="show_tabs">הצגת טאבים</string>
     <string name="show_tab_summary">יציג כרטיסיות של התוספים כקטגוריה</string>
-    <string name="unified_liked_playlist_summary">הרצועות שאהבת מתוספים שונים</string>
+    <string name="internal_liked_playlist_summary">הרצועות שאהבת מתוספים שונים</string>
     <string name="n_items">%1$d פריטים</string>
     <string name="item">פריט</string>
     <plurals name="number_items">
@@ -65,7 +65,7 @@
     <string name="account_session_expired_in_x">סשן החשבון פג בעוד %1$s</string>
     <string name="error_x">שגיאה: %1$s</string>
     <string name="str_copy">העתקה</string>
-    <string name="extensions">הרחבות</string>
+    <string name="extensions">Data Sources</string>
     <string name="choose_a_color">בחירת צבע</string>
     <string name="random">אקראי</string>
     <string name="add">הוספה</string>

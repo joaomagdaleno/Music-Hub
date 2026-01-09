@@ -51,7 +51,7 @@
     <string name="choose_a_color">Pilih warna</string>
     <string name="x_login_required">Perlu masuk %1$s</string>
     <string name="error_x">Eror: %1$s</string>
-    <string name="extensions">Ekstensi</string>
+    <string name="extensions">Data Sources</string>
     <string name="random">Acak</string>
     <string name="account_session_expired_in_x">Sesi akun kadaluarsa %1$s</string>
     <string name="add">Tambah</string>
@@ -202,7 +202,7 @@
     <string name="delete">Hapus</string>
     <string name="okay">Oke</string>
     <string name="edit_playlist">Sunting Daftar Putar</string>
-    <string name="unified_liked_playlist_summary">Lagu yang disukai dari berbagai ekstensi</string>
+    <string name="internal_liked_playlist_summary">Lagu yang disukai dari berbagai ekstensi</string>
     <string name="repeat_off">Tidak ada perulangan</string>
     <string name="repeat_all">Ulangi semua</string>
     <string name="audio_fx_desc">Ubah efek suara pada lagu ini.</string>

@@ -22,7 +22,7 @@
     <string name="duration_filter">Фильтр по длительности</string>
     <string name="duration_filter_summary">Фильтрация аудиофайлов с длительностью меньше указанной (в секундах)</string>
     <string name="tabs">Вкладки</string>
-    <string name="unified_liked_playlist_summary">Ваши понравившиеся треки из разных расширений</string>
+    <string name="internal_liked_playlist_summary">Ваши понравившиеся треки из разных расширений</string>
     <string name="show_tab_summary">показывать вкладки расширений как категории</string>
     <string name="saved">Сохранённое</string>
     <string name="unknown">Неизвестно</string>
@@ -47,7 +47,7 @@
     <string name="equalizer_summary">Открыть настройки эквалайзера устройства</string>
     <string name="behavior">Поведение</string>
     <string name="settings">Настройки</string>
-    <string name="extensions">Расширения</string>
+    <string name="extensions">Data Sources</string>
     <string name="downloaded_x">Скачано %1$s</string>
     <string name="playback">Воспроизведение</string>
     <string name="choose_a_color">Выберите цвет</string>

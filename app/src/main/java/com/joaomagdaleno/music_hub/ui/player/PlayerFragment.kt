@@ -50,7 +50,7 @@ import com.joaomagdaleno.music_hub.common.models.Streamable
 import com.joaomagdaleno.music_hub.databinding.FragmentPlayerBinding
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.background
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.context
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.extensionId
+import com.joaomagdaleno.music_hub.playback.MediaItemUtils.origin
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.isLiked
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.isLoaded
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.showBackground
@@ -554,7 +554,7 @@ class PlayerFragment : Fragment() {
 
     private fun FragmentPlayerBinding.applyCurrent(item: MediaItem) {
         val track = item.track
-        val extId = item.extensionId
+        val extId = item.origin
         expandedToolbar.run {
             val itemContext = item.context
             title = if (itemContext != null) context.getString(R.string.playing_from) else null
@@ -591,7 +591,7 @@ class PlayerFragment : Fragment() {
             trackHeart.isChecked = item.isLiked
             likeListener.enabled = true
             lifecycleScope.launch {
-                val isTrackClient = viewModel.isLikeClient(item.extensionId)
+                val isTrackClient = viewModel.isLikeClient(item.origin)
                 trackHeart.isVisible = isTrackClient
             }
         }
@@ -605,7 +605,7 @@ class PlayerFragment : Fragment() {
 
     private fun onMoreClicked(item: MediaItem) {
         MediaMoreBottomSheet.newInstance(
-            R.id.navHostFragment, item.extensionId, item.track, item.isLoaded, true
+            R.id.navHostFragment, item.origin, item.track, item.isLoaded, true
         ).show(requireActivity().supportFragmentManager, null)
     }
 

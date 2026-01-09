@@ -38,7 +38,7 @@ object DI {
         single { com.joaomagdaleno.music_hub.data.providers.LocalProvider(androidApplication()) }
         single { InternalDownloadProvider(androidApplication()) }
         singleOf(::MusicRepository)
-        single { com.joaomagdaleno.music_hub.data.db.UnifiedDatabase.create(androidApplication()) }
+        single { com.joaomagdaleno.music_hub.data.db.MusicDatabase.create(androidApplication()) }
     }
 
     private val coreModule = module {

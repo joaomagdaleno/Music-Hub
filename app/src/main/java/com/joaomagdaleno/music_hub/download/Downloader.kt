@@ -36,7 +36,7 @@ class Downloader(
     val repository: com.joaomagdaleno.music_hub.data.repository.MusicRepository,
     database: DownloadDatabase,
 ) {
-    // val unified = extensionLoader.unified.value // REMOVED
+    // val unified = sourceLoader.unified.value // REMOVED
     val downloadFeed = kotlinx.coroutines.flow.MutableStateFlow<List<com.joaomagdaleno.music_hub.common.models.EchoMediaItem>>(emptyList())
 
     val scope = CoroutineScope(Dispatchers.IO) + CoroutineName("Downloader")
@@ -65,7 +65,7 @@ class Downloader(
             dao.insertDownloadEntity(
                 DownloadEntity(
                     0,
-                    it.track.sourceName.takeIf { s -> s != "UNKNOWN" } ?: it.extensionId,
+                    it.track.sourceName.takeIf { s -> s != "UNKNOWN" } ?: it.origin,
                     it.track.id,
                     contexts[it.context?.id],
                     it.sortOrder,
@@ -96,9 +96,9 @@ class Downloader(
     ): Streamable.Media.Server = mutexes.getOrPut(trackId) { Mutex() }.withLock {
         servers.getOrPut(trackId) {
             val track = download.track.getOrThrow()
-            // Using download.extensionId as sourceName if unknown
-            val effectiveTrack = if (track.sourceName == "UNKNOWN" && download.extensionId.isNotBlank()) {
-                 track.copy(sourceName = download.extensionId)
+            // Using download.origin as sourceName if unknown
+            val effectiveTrack = if (track.sourceName == "UNKNOWN" && download.origin.isNotBlank()) {
+                 track.copy(sourceName = download.origin)
             } else track
             
             val url = repository.getStreamUrl(effectiveTrack)

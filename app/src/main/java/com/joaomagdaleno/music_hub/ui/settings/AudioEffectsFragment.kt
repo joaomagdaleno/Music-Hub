@@ -34,7 +34,6 @@ class AudioEffectsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         binding.toolBar.setNavigationOnClickListener { requireActivity().onBackPressed() }
-        binding.extensionIcon.isVisible = false
         binding.toolBar.title = getString(R.string.audio_fx)
         childFragmentManager.beginTransaction().replace(R.id.genericFragmentContainer, fragment)
             .commit()
