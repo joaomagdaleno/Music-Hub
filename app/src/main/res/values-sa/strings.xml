@@ -18,7 +18,7 @@
     <string name="view">द्रष्टुम्</string>
     <string name="no_internet">कोऽपि जालम् नास्ति</string>
     <string name="str_copy">प्रतिकृतिः</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="choose_a_color">वर्णं चयनं करोतु</string>
     <string name="random">यदृच्छया</string>
     <string name="add">योजयतु</string>

@@ -45,7 +45,7 @@ import java.util.WeakHashMap
 abstract class AndroidAutoCallback(
     open val app: App,
     open val scope: CoroutineScope,
-    open val extensionList: StateFlow<List<Any>>,
+    open val sourceList: StateFlow<List<Any>>,
     open val downloadFlow: StateFlow<List<Downloader.Info>>
 ) : MediaLibrarySession.Callback {
 
@@ -101,13 +101,13 @@ abstract class AndroidAutoCallback(
         val new = mediaItems.mapNotNull {
             if (it.mediaId.startsWith("auto/")) {
                 val id = it.mediaId.substringAfter("auto/")
-                val (track, extId, con) =
+                val (track, origin, con) =
                     context.getFromCache<Triple<Track, String, EchoMediaItem?>>(id, "auto")
                         ?: return@mapNotNull null
                 MediaItemUtils.build(
                     app,
                     downloadFlow.value,
-                    MediaState.Unloaded(extId, track),
+                    MediaState.Unloaded(origin, track),
                     con
                 )
             } else it
@@ -204,9 +204,9 @@ abstract class AndroidAutoCallback(
 
         private val itemMap = WeakHashMap<String, EchoMediaItem>()
         private fun EchoMediaItem.toMediaItem(
-            context: Context, extId: String
+            context: Context, origin: String
         ): MediaItem = when (this) {
-            is Track -> toItem(context, extId)
+            is Track -> toItem(context, origin)
             else -> {
                 val id = hashCode().toString()
                 itemMap[id] = this
@@ -217,7 +217,7 @@ abstract class AndroidAutoCallback(
                     else -> throw IllegalStateException("Invalid type")
                 }
                 browsableItem(
-                    "$ROOT/$extId/$page/$id",
+                    "$ROOT/$origin/$page/$id",
                     title,
                     subtitleWithE,
                     true,
@@ -229,19 +229,19 @@ abstract class AndroidAutoCallback(
 
         private val listsMap = WeakHashMap<String, Shelf.Lists<*>>()
         private fun getListsItems(
-            context: Context, id: String, extId: String
+            context: Context, id: String, origin: String
         ) = run {
             val shelf = listsMap[id]!!
             when (shelf) {
-                is Shelf.Lists.Categories -> shelf.list.map { it.toMediaItem(context, extId) }
-                is Shelf.Lists.Items -> shelf.list.map { it.toMediaItem(context, extId) }
-                is Shelf.Lists.Tracks -> shelf.list.map { it.toItem(context, extId) }
+                is Shelf.Lists.Categories -> shelf.list.map { it.toMediaItem(context, origin) }
+                is Shelf.Lists.Items -> shelf.list.map { it.toMediaItem(context, origin) }
+                is Shelf.Lists.Tracks -> shelf.list.map { it.toItem(context, origin) }
             } + listOfNotNull(
                 if (shelf.more != null) {
                     val moreId = shelf.id
                     feedMap[moreId] = shelf.more
                     browsableItem(
-                        "$ROOT/$extId/$FEED/$moreId",
+                        "$ROOT/$origin/$FEED/$moreId",
                         context.getString(R.string.more)
                     )
                 } else null
@@ -249,19 +249,19 @@ abstract class AndroidAutoCallback(
         }
 
         private fun Shelf.toMediaItem(
-            context: Context, extId: String
+            context: Context, origin: String
         ): MediaItem = when (this) {
             is Shelf.Category -> {
                 val items = feed
                 if (items != null) feedMap[id] = items
-                browsableItem("$ROOT/$extId/$FEED/$id", title, subtitle, items != null)
+                browsableItem("$ROOT/$origin/$FEED/$id", title, subtitle, items != null)
             }
 
-            is Shelf.Item -> media.toMediaItem(context, extId)
+            is Shelf.Item -> media.toMediaItem(context, origin)
             is Shelf.Lists<*> -> {
                 val id = "${id.hashCode()}"
                 listsMap[id] = this
-                browsableItem("$ROOT/$extId/$LIST/$id", title, subtitle)
+                browsableItem("$ROOT/$origin/$LIST/$id", title, subtitle)
             }
         }
 
@@ -270,19 +270,19 @@ abstract class AndroidAutoCallback(
         private val shelvesMap = WeakHashMap<String, PagedData<Shelf>>()
         private val continuations = WeakHashMap<Pair<String, Int>, String?>()
         private suspend fun getShelfItems(
-            context: Context, id: String, extId: String, page: Int
+            context: Context, id: String, origin: String, page: Int
         ): List<MediaItem> {
             val shelf = shelvesMap[id]!!
             val (list, next) = shelf.loadPage(continuations[id to page])
             continuations[id to page + 1] = next
             return listOfNotNull(
-                *list.map { it.toMediaItem(context, extId) }.toTypedArray()
+                *list.map { it.toMediaItem(context, origin) }.toTypedArray()
             )
         }
 
         private val feedMap = WeakHashMap<String, Feed<Shelf>>()
         private suspend fun Feed<Shelf>.toMediaItems(
-            id: String, context: Context, extId: String, page: Int
+            id: String, context: Context, origin: String, page: Int
         ): List<MediaItem> {
             val id = "${id.hashCode()}"
             feedMap[id] = this

@@ -222,7 +222,7 @@ class PlayerViewModel(
         )
         withBrowser {
             it.sendCustomCommand(radioCommand, Bundle().apply {
-                putString("extId", id)
+                putString("origin", id)
                 putSerialized("item", item)
                 putBoolean("loaded", loaded)
             })
@@ -235,7 +235,7 @@ class PlayerViewModel(
         )
         withBrowser {
             it.sendCustomCommand(playCommand, Bundle().apply {
-                putString("extId", id)
+                putString("origin", id)
                 putSerialized("item", item)
                 putBoolean("loaded", loaded)
                 putBoolean("shuffle", false)
@@ -249,7 +249,7 @@ class PlayerViewModel(
         )
         withBrowser {
             it.sendCustomCommand(playCommand, Bundle().apply {
-                putString("extId", id)
+                putString("origin", id)
                 putSerialized("item", item)
                 putBoolean("loaded", loaded)
                 putBoolean("shuffle", true)
@@ -264,7 +264,7 @@ class PlayerViewModel(
         )
         withBrowser {
             it.sendCustomCommand(addToQueueCommand, Bundle().apply {
-                putString("extId", id)
+                putString("origin", id)
                 putSerialized("item", item)
                 putBoolean("loaded", loaded)
             })
@@ -277,7 +277,7 @@ class PlayerViewModel(
         )
         withBrowser {
             it.sendCustomCommand(addToNextCommand, Bundle().apply {
-                putString("extId", id)
+                putString("origin", id)
                 putSerialized("item", item)
                 putBoolean("loaded", loaded)
             })

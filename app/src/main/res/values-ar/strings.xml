@@ -69,7 +69,7 @@
     <string name="account_session_expired_in_x">انتهت جلسة الحساب في %1$s</string>
     <string name="error_x">خطأ: %1$s</string>
     <string name="str_copy">نسخ</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="choose_a_color">اختر لونًا</string>
     <string name="random">عشوائي</string>
     <string name="add">أضافة</string>

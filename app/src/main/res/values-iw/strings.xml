@@ -65,7 +65,7 @@
     <string name="account_session_expired_in_x">סשן החשבון פג בעוד %1$s</string>
     <string name="error_x">שגיאה: %1$s</string>
     <string name="str_copy">העתקה</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="choose_a_color">בחירת צבע</string>
     <string name="random">אקראי</string>
     <string name="add">הוספה</string>

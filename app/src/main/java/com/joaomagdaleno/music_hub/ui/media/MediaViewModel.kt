@@ -40,7 +40,7 @@ class MediaViewModel(
              }
              
              if (loadedItem != null) {
-                 val state = MediaState.Loaded(origin = "native", item = loadedItem)
+                 val state = MediaState.Loaded(origin = "internal", item = loadedItem)
                  itemResultFlow.value = Result.success(state)
              }
         }

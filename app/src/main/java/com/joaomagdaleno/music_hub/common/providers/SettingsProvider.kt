@@ -4,7 +4,7 @@ import com.joaomagdaleno.music_hub.common.settings.Setting
 import com.joaomagdaleno.music_hub.common.settings.Settings
 
 /**
- * Interface to provide [Settings] to the extension
+ * Interface to provide [Settings] to the source
  */
 interface SettingsProvider {
     /**
@@ -13,7 +13,7 @@ interface SettingsProvider {
     suspend fun getSettingItems() : List<Setting>
 
     /**
-     * Called when the extension is initialized, to provide the [Settings] to the extension
+     * Called when the source is initialized, to provide the [Settings] to the source
      */
     fun setSettings(settings: Settings)
 }

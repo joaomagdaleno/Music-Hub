@@ -65,7 +65,7 @@
     <string name="account_session_expired_in_x">ගිණුම් සැසිය තව %1$sන් අවසන්වෙ</string>
     <string name="error_x">දෝෂය: %1$s</string>
     <string name="str_copy">පිටපත් කරන්න</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="choose_a_color">වර්ණයක් තෝරන්න</string>
     <string name="random">අහඹු</string>
     <string name="add">එකතු කරන්න</string>

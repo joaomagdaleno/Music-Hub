@@ -1,4 +1,4 @@
-package com.joaomagdaleno.music_hub.data.sources
+package com.joaomagdaleno.music_hub.data.providers
 
 import com.joaomagdaleno.music_hub.common.helpers.ContinuationCallback.Companion.await
 import com.joaomagdaleno.music_hub.common.models.Lyrics

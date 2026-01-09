@@ -55,7 +55,7 @@ class DownloadFragment : Fragment(R.layout.fragment_download) {
             val feed = Feed<Shelf>(tabs = emptyList()) {
                 Feed.Data(PagedData.Single { listOf(shelf) })
             }
-            FeedData.State("native", null, feed)
+            FeedData.State("internal", null, feed)
         }
     }
 

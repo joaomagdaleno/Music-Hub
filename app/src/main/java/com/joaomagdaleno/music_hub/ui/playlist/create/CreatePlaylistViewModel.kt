@@ -15,9 +15,9 @@ class CreatePlaylistViewModel(
     fun createPlaylist(title: String, desc: String?) {
         createPlaylistStateFlow.value = CreateState.Creating
         viewModelScope.launch(Dispatchers.IO) {
-            // TODO: Implement native playlist creation
+            // TODO: Implement internal playlist creation
             // For now, this is a stub as per "The Great Purge" instructions
-            createPlaylistStateFlow.value = CreateState.PlaylistCreated("native", null)
+            createPlaylistStateFlow.value = CreateState.PlaylistCreated("internal", null)
         }
     }
 }

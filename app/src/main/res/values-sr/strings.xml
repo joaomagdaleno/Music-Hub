@@ -60,7 +60,7 @@
     <string name="account_session_expired_in_x">Sesija naloga je istekla u %1$s</string>
     <string name="error_x">Greška: %1$s</string>
     <string name="str_copy">Kopiraj</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="choose_a_color">Izaberi boju</string>
     <string name="random">Nasumično</string>
     <string name="add">Dodaj</string>

@@ -1,4 +1,4 @@
-package com.joaomagdaleno.music_hub.data.sources
+package com.joaomagdaleno.music_hub.data.providers
 
 import android.content.Context
 import android.os.Environment
@@ -16,7 +16,7 @@ import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
 
-class InternalDownloadSource(
+class InternalDownloadProvider(
     private val context: Context
 ) {
     private val client = OkHttpClient()
@@ -125,8 +125,8 @@ class InternalDownloadSource(
         )
         if (!publicDir.exists()) publicDir.mkdirs()
         
-        val extension = if (file.extension.isNotEmpty()) file.extension else "mp3"
-        val fileName = "${track.title} - ${track.artists.firstOrNull()?.name}.$extension"
+        val source = if (file.source.isNotEmpty()) file.source else "mp3"
+        val fileName = "${track.title} - ${track.artists.firstOrNull()?.name}.$source"
             .replace(Regex("[\\\\/:*?\"<>|]"), "_")
             
         val finalFile = File(publicDir, fileName)

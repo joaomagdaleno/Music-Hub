@@ -24,11 +24,11 @@ sealed interface FeedType {
     val feedId: String
     val id: String
     val type: Enum
-    val extId: String
+    val source: String
     val extras: Map<String, String>?
 
     val origin: String
-        get() = extras?.get("origin_id") ?: extId
+        get() = extras?.get("origin_id") ?: source
 
     val context: EchoMediaItem?
     val tabId: String?
@@ -36,7 +36,7 @@ sealed interface FeedType {
     @Serializable
     data class Header(
         override val feedId: String,
-        override val extId: String,
+        override val source: String,
         override val context: EchoMediaItem?,
         override val tabId: String?,
         override val id: String,
@@ -52,7 +52,7 @@ sealed interface FeedType {
     @Serializable
     data class Category(
         override val feedId: String,
-        override val extId: String,
+        override val source: String,
         override val context: EchoMediaItem?,
         override val tabId: String?,
         val shelf: Shelf.Category,
@@ -65,7 +65,7 @@ sealed interface FeedType {
     @Serializable
     data class Media(
         override val feedId: String,
-        override val extId: String,
+        override val source: String,
         override val context: EchoMediaItem?,
         override val tabId: String?,
         val item: EchoMediaItem,
@@ -79,7 +79,7 @@ sealed interface FeedType {
     @Serializable
     data class Video(
         override val feedId: String,
-        override val extId: String,
+        override val source: String,
         override val context: EchoMediaItem?,
         override val tabId: String?,
         val item: Track,
@@ -92,7 +92,7 @@ sealed interface FeedType {
     @Serializable
     data class MediaGrid(
         override val feedId: String,
-        override val extId: String,
+        override val source: String,
         override val context: EchoMediaItem?,
         override val tabId: String?,
         val item: EchoMediaItem,
@@ -106,7 +106,7 @@ sealed interface FeedType {
     @Serializable
     data class HorizontalList(
         override val feedId: String,
-        override val extId: String,
+        override val source: String,
         override val context: EchoMediaItem?,
         override val tabId: String?,
         val shelf: Shelf.Lists<*>,
@@ -119,7 +119,7 @@ sealed interface FeedType {
     companion object {
         fun List<Shelf>.toFeedType(
             feedId: String,
-            extId: String,
+            source: String,
             context: EchoMediaItem?,
             tabId: String?,
             noVideos: Boolean = false,
@@ -129,49 +129,50 @@ sealed interface FeedType {
             when (shelf) {
                 is Shelf.Category -> if (shelf.feed == null) listOf(
                     Header(
-                        feedId, extId, context, tabId, shelf.id, shelf.title, shelf.subtitle,
+                        feedId, source, context, tabId, shelf.id, shelf.title, shelf.subtitle,
                     )
-                ) else listOf(Category(feedId, extId, context, tabId, shelf))
+                ) else listOf(Category(feedId, source, context, tabId, shelf))
 
                 is Shelf.Item -> when (val item = shelf.media) {
                     is Track -> if (!noVideos) when (item.type) {
-                        Track.Type.Video -> listOf(Video(feedId, extId, context, tabId, item))
+                        Track.Type.Video -> listOf(Video(feedId, source, context, tabId, item))
                         Track.Type.HorizontalVideo -> listOf(
-                            Video(feedId, extId, context, tabId, item, Enum.VideoHorizontal)
+                            Video(feedId, source, context, tabId, item, Enum.VideoHorizontal)
                         )
 
-                        else -> listOf(Media(feedId, extId, context, tabId, item, null))
+                        else -> listOf(Media(feedId, source, context, tabId, item, null))
                     } else {
                         val index = start + index
-                        listOf(Media(feedId, extId, context, tabId, item, index))
+                        listOf(Media(feedId, source, context, tabId, item, index))
                     }
 
-                    else -> listOf(Media(feedId, extId, context, tabId, item, null))
+                    else -> listOf(Media(feedId, source, context, tabId, item, null))
                 }
 
                 is Shelf.Lists<*> -> listOf(
                     Header(
-                        feedId, extId, context, tabId,
+                        feedId, source, context, tabId,
                         shelf.id, shelf.title, shelf.subtitle, shelf.more,
                         if (shelf is Shelf.Lists.Tracks) shelf.list else null
                     )
                 ) + if (shelf.type == Shelf.Lists.Type.Linear) listOf(
-                    HorizontalList(feedId, extId, context, tabId, shelf)
+                    HorizontalList(feedId, source, context, tabId, shelf)
                 )
                 else when (shelf) {
                     is Shelf.Lists.Categories -> shelf.list.map {
-                        Category(feedId, extId, context, tabId, it, Enum.CategoryGrid)
+                        Category(feedId, source, context, tabId, it, Enum.CategoryGrid)
                     }
 
                     is Shelf.Lists.Items -> shelf.list.map {
-                        MediaGrid(feedId, extId, context, tabId, it)
+                        MediaGrid(feedId, source, context, tabId, it)
                     }
 
                     is Shelf.Lists.Tracks -> shelf.list.mapIndexed { index, item ->
-                        MediaGrid(feedId, extId, context, tabId, item, index + 1)
+                        MediaGrid(feedId, source, context, tabId, item, index + 1)
                     }
                 }
             }
         }.flatten()
     }
+
 }

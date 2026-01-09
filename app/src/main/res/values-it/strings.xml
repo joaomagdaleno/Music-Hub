@@ -70,7 +70,7 @@
     <string name="account_session_expired_in_x">Sessione account scaduta in %1$s</string>
     <string name="error_x">Errore: %1$s</string>
     <string name="str_copy">Copia</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="choose_a_color">Scegli un colore</string>
     <string name="random">Casuale</string>
     <string name="add">Aggiungi</string>

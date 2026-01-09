@@ -27,7 +27,7 @@ class TrackInfoViewModel(
 
     override fun getItem(): Triple<String, EchoMediaItem, Boolean>? {
         return currentFlow.value?.let { (_, item) ->
-            Triple("native", item.track, item.isLoaded)
+            Triple("internal", item.track, item.isLoaded)
         }
     }
 
@@ -40,7 +40,7 @@ class TrackInfoViewModel(
                 
                 // Use Repository to fetch track details if needed
                 val loadedTrack = repository.getTrack(track.id) ?: track
-                itemResultFlow.value = Result.success(MediaState.Loaded(origin = "native", item = loadedTrack))
+                itemResultFlow.value = Result.success(MediaState.Loaded(origin = "internal", item = loadedTrack))
             }
         }
     }

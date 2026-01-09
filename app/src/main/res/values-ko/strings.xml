@@ -58,7 +58,7 @@
     <string name="x_login_required">%1$s 로그인 필요</string>
     <string name="error_x">오류: %1$s</string>
     <string name="str_copy">복사</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="choose_a_color">색상 선택</string>
     <string name="random">무작위</string>
     <string name="add">추가하기</string>

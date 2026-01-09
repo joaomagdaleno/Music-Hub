@@ -20,7 +20,7 @@ class SaveToPlaylistViewModel(
     private val repository: MusicRepository,
 ) : ViewModel() {
 
-    // Removed ExtensionLoader dependency - now using MusicRepository
+    // Removed SourceLoader dependency - now using MusicRepository
     // For now, playlist management is stubbed in monolithic mode
 
     sealed class SaveState {
@@ -35,7 +35,7 @@ class SaveToPlaylistViewModel(
     fun saveTracks() = viewModelScope.launch(Dispatchers.IO) {
         saveFlow.value = SaveState.LoadingTracks
         val result = runCatching {
-            // TODO: Implement native playlist saving logic
+            // TODO: Implement internal playlist saving logic
             // For now, this is a stub as per "The Great Purge" instructions
             app.messageFlow.emit(Message(app.context.getString(R.string.saved_to_playlists)))
             true
@@ -54,7 +54,7 @@ class SaveToPlaylistViewModel(
 
     val playlistsFlow = MutableStateFlow<PlaylistState>(PlaylistState.Initial)
     private suspend fun loadPlaylists(): List<Pair<Playlist, Boolean>> {
-        // TODO: Load native/local playlists
+        // TODO: Load internal/local playlists
         return emptyList()
     }
 

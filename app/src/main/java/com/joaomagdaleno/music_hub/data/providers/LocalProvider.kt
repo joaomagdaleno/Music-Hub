@@ -1,4 +1,4 @@
-package com.joaomagdaleno.music_hub.data.sources
+package com.joaomagdaleno.music_hub.data.providers
 
 import android.content.ContentUris
 import android.content.Context

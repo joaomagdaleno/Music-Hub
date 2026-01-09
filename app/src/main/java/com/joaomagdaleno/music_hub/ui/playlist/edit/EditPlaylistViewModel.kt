@@ -31,7 +31,7 @@ class EditPlaylistViewModel(
     val currentTracks = MutableStateFlow<List<Track>?>(emptyList())
 
     fun edit(action: Action<Track>) {
-        // TODO: Implement native edit
+        // TODO: Implement internal edit
     }
 
     val newActions = MutableStateFlow<List<Action<Track>>?>(emptyList())
@@ -69,12 +69,12 @@ class EditPlaylistViewModel(
 
     fun save() = viewModelScope.launch {
         saveState.value = SaveState.Saving
-        // TODO: Implement native save
+        // TODO: Implement internal save
         saveState.value = SaveState.Saved(Result.success(Unit))
     }
 
     fun changeCover(activity: FragmentActivity) = viewModelScope.launch {
-        // TODO: Implement native cover change
+        // TODO: Implement internal cover change
     }
 
     init {

@@ -65,7 +65,7 @@
     <string name="account_session_expired_in_x">%1$s Mein Account Session Expired</string>
     <string name="error_x">Error: %1$s</string>
     <string name="str_copy">Copy</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="choose_a_color">Ek Color Chuno</string>
     <string name="random">Random</string>
     <string name="add">Jodo</string>

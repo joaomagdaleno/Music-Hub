@@ -48,8 +48,8 @@ class MediaDetailsFragment : Fragment(R.layout.fragment_media_details) {
             "${parent.feedId}_tracks",
             Feed.Buttons(showPlayAndShuffle = true),
             true,
-            viewModel.tracksLoadedFlow, viewModel.trackCachedFlow,
-            cached = { viewModel.trackCachedFlow.value },
+            viewModel.tracksLoadedFlow, viewModel.trackSourceCachedFlow,
+            cached = { viewModel.trackSourceCachedFlow.value },
             loader = { viewModel.tracksLoadedFlow.value as? FeedData.State<Feed<Shelf>> }
         )
     }
@@ -59,9 +59,9 @@ class MediaDetailsFragment : Fragment(R.layout.fragment_media_details) {
             "${parent.feedId}_feed",
             Feed.Buttons(),
             false,
-            viewModel.feedCachedFlow, viewModel.feedLoadedFlow,
-            cached = { viewModel.feedCachedFlow.value },
-            loader = { viewModel.feedLoadedFlow.value }
+            viewModel.feedSourceCachedFlow, viewModel.feedSourceLoadedFlow,
+            cached = { viewModel.feedSourceCachedFlow.value },
+            loader = { viewModel.feedSourceLoadedFlow.value }
         )
     }
 

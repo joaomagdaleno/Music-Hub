@@ -90,7 +90,7 @@
     <string name="following_x">正在关注 %1$s</string>
     <string name="repeat_off">循环关闭</string>
     <string name="app">应用程序</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="cache_size">缓存大小</string>
     <string name="equalizer">均衡器</string>
     <string name="settings">设置</string>

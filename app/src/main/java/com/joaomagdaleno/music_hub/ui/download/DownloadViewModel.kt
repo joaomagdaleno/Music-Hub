@@ -29,8 +29,8 @@ class DownloadViewModel(
     private val messageFlow = app.messageFlow
     private val throwableFlow = app.throwFlow
 
-    // Deprecated extension properties
-    // val extensions = sourceLoader // Removed
+    // Deprecated source properties
+    // val sources = sourceLoader // Removed
 
     val flow = downloader.flow
 
@@ -43,7 +43,7 @@ class DownloadViewModel(
         with(activity) {
             messageFlow.emit(Message(getString(R.string.downloading_x, item.title)))
             
-            // Native download logic:
+            // Internal download logic:
             val tracks = when(item) {
                 is com.joaomagdaleno.music_hub.common.models.Track -> listOf(item)
                 is com.joaomagdaleno.music_hub.common.models.Album -> repository.getAlbumTracks(item.id)
@@ -56,7 +56,7 @@ class DownloadViewModel(
             )
 
             val downloads = tracks.mapIndexed { index, track ->
-                 DownloadContext(origin = "native", track = track, sortOrder = index, context = context)
+                 DownloadContext(origin = "internal", track = track, sortOrder = index, context = context)
             }
 
             downloader.add(downloads)

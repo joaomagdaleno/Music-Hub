@@ -88,8 +88,8 @@ class UiViewModel(
 
     val currentNavBackground = MutableStateFlow<Drawable?>(null)
     
-    // extensionColor removed in monolithic mode
-    private val extensionColor = MutableStateFlow<Drawable?>(null)
+    // sourceColor renamed for consistency
+    private val sourceColor = MutableStateFlow<Drawable?>(null)
 
     private val navViewInsets = MutableStateFlow(Insets())
     private val playerNavViewInsets = MutableStateFlow(Insets())
@@ -205,7 +205,7 @@ class UiViewModel(
     val playerDrawable = MutableStateFlow<Drawable?>(null)
     val playerColors = MutableStateFlow<PlayerColors?>(null)
 
-    val mainBgDrawable = playerDrawable.combine(extensionColor) { a, b -> a ?: b }
+    val mainBgDrawable = playerDrawable.combine(sourceColor) { a, b -> a ?: b }
 
     fun changeBgVisible(show: Boolean) {
         playerBgVisible.value = show

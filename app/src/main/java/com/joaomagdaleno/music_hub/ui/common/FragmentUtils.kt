@@ -107,9 +107,9 @@ object FragmentUtils {
     }
 
     private fun FragmentActivity.openItemFragmentFromUri(uri: Uri) {
-        when (val extensionType = uri.host) {
+        when (val sourceType = uri.host) {
             "music" -> {
-                val origin = uri.pathSegments.firstOrNull() ?: "native"
+                val origin = uri.pathSegments.firstOrNull() ?: "internal"
                 val type = uri.pathSegments.getOrNull(1)
                 val id = uri.pathSegments.getOrNull(2) ?: return
                 
@@ -129,7 +129,7 @@ object FragmentUtils {
             }
 
             else -> {
-                createSnack("Opening $extensionType extension is not possible")
+                createSnack("Opening $sourceType source is not possible")
             }
         }
     }

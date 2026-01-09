@@ -54,7 +54,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             // SearchViewModel has searchResults but here we are in a loader lambda.
             // We can call repository.search(query) directly.
             if (query.isBlank()) {
-                FeedData.State("native", null, emptyList<Shelf>().toFeed())
+                FeedData.State("internal", null, emptyList<Shelf>().toFeed())
             } else {
                 searchViewModel.saveQuery(query) // Save history
                 val results = search(query)
@@ -69,7 +69,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                 // We wrap it in a Shelf.
                 val shelf = Shelf.Lists.Tracks("search_results", getString(R.string.search), tracks)
                 val feed = listOf<Shelf>(shelf).toFeed()
-                FeedData.State("native", null, feed)
+                FeedData.State("internal", null, feed)
             }
         }
     }

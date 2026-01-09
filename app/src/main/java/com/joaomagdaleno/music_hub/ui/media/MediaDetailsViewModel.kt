@@ -49,12 +49,12 @@ abstract class MediaDetailsViewModel(
 
         if (tracks.isEmpty()) return@transformLatest
 
-        val shelf = Shelf.Lists.Tracks("native", "", tracks)
+        val shelf = Shelf.Lists.Tracks("internal", "", tracks)
         val feed = listOf(shelf).toFeed<Shelf>()
-        emit(FeedData.State("native", item, feed))
+        emit(FeedData.State("internal", item, feed))
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    val feedLoadedFlow = itemResultFlow.transformLatest { result ->
+    val feedSourceLoadedFlow = itemResultFlow.transformLatest { result ->
         emit(null)
         if (!loadFeeds) return@transformLatest
         val item = result?.getOrNull()?.item ?: return@transformLatest
@@ -69,14 +69,14 @@ abstract class MediaDetailsViewModel(
         }
         
         if (feed != null) {
-             emit(FeedData.State("native", item, feed))
+             emit(FeedData.State("internal", item, feed))
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     // Stubs for caching flows
-    val cacheExtensionItemFlow = MutableStateFlow(null)
-    val trackCachedFlow = MutableStateFlow<FeedData.State<Feed<Shelf>>?>(null)
-    val feedCachedFlow = MutableStateFlow<FeedData.State<Feed<Shelf>>?>(null)
+    val cacheSourceItemFlow = MutableStateFlow(null)
+    val trackSourceCachedFlow = MutableStateFlow<FeedData.State<Feed<Shelf>>?>(null)
+    val feedSourceCachedFlow = MutableStateFlow<FeedData.State<Feed<Shelf>>?>(null)
 
     fun refresh() = viewModelScope.launch {
         refreshFlow.emit(Unit)
@@ -111,7 +111,7 @@ abstract class MediaDetailsViewModel(
             createMessage(app) {
                 getString(if (like) R.string.liking_x else R.string.unliking_x, item.title)
             }
-            // TODO: Implement native like
+            // TODO: Implement internal like
         }
 
         suspend fun hide(app: App, item: EchoMediaItem, hide: Boolean) {
@@ -137,7 +137,7 @@ abstract class MediaDetailsViewModel(
             val url = item.title // Placeholder
             val intent = ShareCompat.IntentBuilder(app.context)
                 .setType("text/plain")
-                .setChooserTitle("Native - ${item.title}")
+                .setChooserTitle("Internal - ${item.title}")
                 .setText(url)
                 .createChooserIntent()
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

@@ -19,7 +19,7 @@ import com.joaomagdaleno.music_hub.download.DownloadWorker.Companion.getMainInte
 import com.joaomagdaleno.music_hub.download.Downloader
 import com.joaomagdaleno.music_hub.download.db.models.TaskType
 import com.joaomagdaleno.music_hub.download.exceptions.DownloadException
-import com.joaomagdaleno.music_hub.data.sources.InternalDownloadSource
+import com.joaomagdaleno.music_hub.data.providers.InternalDownloadProvider
 import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.toData
 import com.joaomagdaleno.music_hub.utils.CoroutineUtils.throttleLatest
 import com.joaomagdaleno.music_hub.utils.Serializer.toJson
@@ -41,7 +41,7 @@ abstract class BaseTask(
     val running = MutableStateFlow(false)
     val dao = downloader.dao
     
-    val downloadSource: InternalDownloadSource by inject()
+    val downloadProvider: InternalDownloadProvider by inject()
 
     suspend fun doWork() = withContext(Dispatchers.IO) {
         running.value = true

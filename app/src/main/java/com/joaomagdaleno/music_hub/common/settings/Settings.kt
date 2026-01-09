@@ -1,7 +1,7 @@
 package com.joaomagdaleno.music_hub.common.settings
 
 /**
- * Interface to provide settings to the extension.
+ * Interface to provide settings to the source.
  * This can be used to store data that needs to be persisted. (Recommended to not store sensitive data)
  *
  * Following [Setting] Can be used for following types of data:

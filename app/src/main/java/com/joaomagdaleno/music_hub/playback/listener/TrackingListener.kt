@@ -54,7 +54,7 @@ class TrackingListener(
         scope.launch {
             val details = getDetails()
             // In monolithic mode, just call the block with details
-            // Tracker extensions are no longer used
+            // Tracker sources are no longer used
             block(details)
         }
     }

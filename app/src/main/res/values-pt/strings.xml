@@ -61,7 +61,7 @@
     <string name="no_internet">Sem Internet</string>
     <string name="error_x">Erro: %1$s</string>
     <string name="str_copy">Copiar</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="choose_a_color">Escolha uma cor</string>
     <string name="random">Aleatório</string>
     <string name="add">Adicionar</string>

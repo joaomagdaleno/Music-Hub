@@ -67,7 +67,7 @@
     <string name="account_session_expired_in_x">%1$s এ অ্যাকাউন্ট সেশন মেয়াদ শেষ</string>
     <string name="error_x">ত্রুটি: %1$s</string>
     <string name="str_copy">কপি</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="choose_a_color">একটি রঙ চয়ন করুন</string>
     <string name="random">এলোমেলো</string>
     <string name="add">যোগ করুন</string>

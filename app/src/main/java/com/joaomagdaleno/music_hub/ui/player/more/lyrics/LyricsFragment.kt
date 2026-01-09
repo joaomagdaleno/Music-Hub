@@ -88,7 +88,7 @@ class LyricsFragment : Fragment() {
             binding.root.keepScreenOn = it == BottomSheetBehavior.STATE_EXPANDED
         }
 
-        // Search and extension selection removed in monolithic mode
+        // Search and source selection removed in monolithic mode
         binding.searchBarText.isVisible = false
 
         var job: Job? = null

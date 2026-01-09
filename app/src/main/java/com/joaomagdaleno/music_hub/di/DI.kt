@@ -43,7 +43,7 @@ object DI {
 
     private val coreModule = module {
         includes(baseModule)
-        // ExtensionLoader removed - now using MusicRepository directly
+        // SourceLoader removed - now using MusicRepository directly
     }
 
     private val downloadModule = module {

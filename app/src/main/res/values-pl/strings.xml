@@ -76,7 +76,7 @@
     <string name="account_session_expired_in_x">Sesja logowania %1$s wygasła</string>
     <string name="error_x">Błąd: %1$s</string>
     <string name="str_copy">Kopiuj</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="choose_a_color">Wybierz kolor</string>
     <string name="random">Losowy</string>
     <string name="add">Dodaj</string>

@@ -24,7 +24,7 @@ class DeletePlaylistViewModel(
 
     val deleteStateFlow = deleteFlow.transformLatest {
         emit(DeleteState.Deleting)
-        // TODO: Implement native playlist deletion
+        // TODO: Implement internal playlist deletion
         emit(DeleteState.Deleted(Result.success(Unit)))
     }.stateIn(viewModelScope, SharingStarted.Eagerly, DeleteState.Initial)
 

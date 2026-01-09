@@ -47,7 +47,7 @@
     <string name="equalizer_summary">Открыть настройки эквалайзера устройства</string>
     <string name="behavior">Поведение</string>
     <string name="settings">Настройки</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="downloaded_x">Скачано %1$s</string>
     <string name="playback">Воспроизведение</string>
     <string name="choose_a_color">Выберите цвет</string>

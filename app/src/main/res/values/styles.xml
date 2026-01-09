@@ -217,7 +217,7 @@
         <item name="navigationIcon">@drawable/ic_expand_more</item>
         <item name="navigationIconTint">@color/amoled_fg</item>
         <item name="navigationContentDescription">@string/close</item>
-        <item name="subtitle">@string/extensions</item>
+        <item name="subtitle">@string/data_sources</item>
         <item name="subtitleCentered">true</item>
         <item name="subtitleTextAppearance">@style/TextAppearance.Material3.TitleMedium</item>
         <item name="subtitleTextColor">@color/button_player</item>

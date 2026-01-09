@@ -65,7 +65,7 @@
     <string name="account_session_expired_in_x">A %1$s felhasználói munkamenete lejárt</string>
     <string name="error_x">Hiba: %1$s</string>
     <string name="str_copy">Másolás</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="choose_a_color">Válassz egy színt</string>
     <string name="random">Véletlenszerű</string>
     <string name="add">Hozzá ad</string>

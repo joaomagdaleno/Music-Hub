@@ -42,7 +42,7 @@
     <string name="account_session_expired_in_x">Die Sitzung ist in %1$s abgelaufen</string>
     <string name="error_x">Fehler: %1$s</string>
     <string name="str_copy">Kopieren</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="random">Zufällig</string>
     <string name="add">Hinzufügen</string>
     <string name="loading">Laden…</string>

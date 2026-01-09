@@ -31,7 +31,7 @@ class StreamableLoader(
     private val downloadFlow: StateFlow<List<Downloader.Info>>
 ) {
     suspend fun load(mediaItem: MediaItem) = withContext(Dispatchers.IO) {
-        // No need to wait for extensions flow
+        // No need to wait for sources flow
         val new = if (mediaItem.isLoaded) mediaItem
         else MediaItemUtils.buildLoaded(
             app, downloadFlow.value, mediaItem, loadTrack(mediaItem)

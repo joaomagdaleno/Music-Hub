@@ -43,7 +43,7 @@ class LyricsViewModel(
     fun onLyricsSelected(lyricsItem: Lyrics?) = viewModelScope.launch(Dispatchers.IO) {
         lyricsState.value = State.Loading
         if (lyricsItem == null) lyricsState.value = State.Empty else {
-            // Stubbed: Loading lyrics natively
+            // Stubbed: Loading lyrics internally
             // For now, return empty or try to fetch from repository if implemented
             lyricsState.value = State.Empty
         }

@@ -35,7 +35,7 @@
     <string name="view">देखें</string>
     <string name="no_internet">कोई इंटरनेट नहीं</string>
     <string name="str_copy">कॉपी करें</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="choose_a_color">रंग चुनें</string>
     <string name="random">यादृच्छिक</string>
     <string name="add">जोड़ें</string>

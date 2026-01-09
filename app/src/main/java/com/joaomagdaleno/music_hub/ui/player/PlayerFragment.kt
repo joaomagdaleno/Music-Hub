@@ -554,7 +554,7 @@ class PlayerFragment : Fragment() {
 
     private fun FragmentPlayerBinding.applyCurrent(item: MediaItem) {
         val track = item.track
-        val extId = item.origin
+        val origin = item.origin
         expandedToolbar.run {
             val itemContext = item.context
             title = if (itemContext != null) context.getString(R.string.playing_from) else null
@@ -576,7 +576,7 @@ class PlayerFragment : Fragment() {
                 val start = artistNames.indexOf(artist.name)
                 val end = start + artist.name.length
                 val clickableSpan = SimpleItemSpan(trackArtist.context) {
-                    openItem(extId, artist)
+                    openItem(origin, artist)
                 }
                 runCatching {
                     span.setSpan(
@@ -597,9 +597,9 @@ class PlayerFragment : Fragment() {
         }
     }
 
-    private fun openItem(extension: String, item: EchoMediaItem) {
+    private fun openItem(source: String, item: EchoMediaItem) {
         requireActivity().openFragment<MediaFragment>(
-            null, MediaFragment.getBundle(extension, item, false)
+            null, MediaFragment.getBundle(source, item, false)
         )
     }
 

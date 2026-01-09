@@ -39,7 +39,7 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         val id = "library"
         vm.getFeedData(id, cached = { null }) {
             val feed = this.getLibraryFeed().toFeed()
-            FeedData.State("native", null, feed)
+            FeedData.State("internal", null, feed)
         }
     }
 
@@ -79,7 +79,7 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         }
 
         observe(feedData.current) {
-            binding.createPlaylist.isVisible = true // Always allow playlist creation in native
+            binding.createPlaylist.isVisible = true // Always allow playlist creation in internal
         }
         val parent = requireParentFragment()
         binding.createPlaylist.setOnClickListener {

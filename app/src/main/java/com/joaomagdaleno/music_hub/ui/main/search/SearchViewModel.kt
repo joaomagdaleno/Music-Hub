@@ -28,7 +28,7 @@ class SearchViewModel(
 
     fun quickSearch(query: String) {
         // Implement history or suggestion logic here
-        // For now, falling back to local history logic adapted without extensions
+        // For now, falling back to local history logic adapted without sources
         val history = getHistory(app.context.getSharedPreferences("search", Context.MODE_PRIVATE))
             .filter { it.contains(query, ignoreCase = true) }
             .map { QuickSearchItem.Query(it, true) }

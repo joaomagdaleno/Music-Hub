@@ -34,7 +34,7 @@ class SettingsOtherFragment : BaseSettingsFragment() {
             val screen = preferenceManager.createPreferenceScreen(context)
             preferenceScreen = screen
 
-            // Extension updates removed in monolithic mode
+
 
             TransitionPreference(context).apply {
                 key = "export"

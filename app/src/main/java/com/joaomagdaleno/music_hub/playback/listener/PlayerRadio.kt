@@ -43,12 +43,12 @@ class PlayerRadio(
             val radio = repository.getRadio(item.id)
             if (radio.isEmpty()) return null
             // For PagedData, we wrap the list. 
-            // In native, we probably just want a list. 
+            // In internal, we probably just want a list. 
             // But PlayerRadio expects PagedData to handle infinite loading?
             // "cont" suggests continuation. Piped radio is often just a list.
             // We'll wrap it in a simple 1-page PagedData for now to minimize refactor of internal logic.
-            return PlayerState.Radio.Loaded("native", item, null) {
-                // Continuation loading not implemented yet for native radio
+            return PlayerState.Radio.Loaded("internal", item, null) {
+                // Continuation loading not implemented yet for internal radio
                 com.joaomagdaleno.music_hub.common.helpers.Page(emptyList(), null)
             }
         }
@@ -70,7 +70,7 @@ class PlayerRadio(
                 MediaItemUtils.build(
                     app,
                     downloadFlow.value,
-                    MediaState.Unloaded(loaded.clientId, it), // ClientId is "native" or similar
+                    MediaState.Unloaded(loaded.clientId, it), // ClientId is "internal" or similar
                     loaded.context
                 )
             }

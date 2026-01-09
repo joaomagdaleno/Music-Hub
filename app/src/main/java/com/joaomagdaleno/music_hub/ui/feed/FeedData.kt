@@ -49,10 +49,10 @@ data class FeedData(
     private val noVideos: Boolean,
     private val extraLoadFlow: Flow<*>
 ) {
-    // Monolithic: No current extension flow, assume always present
-    val current = MutableStateFlow<String?>("native")
+    // Monolithic: No current source flow, assume always present
+    val current = MutableStateFlow<String?>("internal")
     val usersFlow = emptyFlow<Unit>()
-    fun getExtension(id: String) = Unit // Placeholder if needed
+    fun getSource(id: String) = Unit // Placeholder if needed
 
     val layoutManagerStates = hashMapOf<Int, Parcelable?>()
     val visibleScrollableViews = hashMapOf<Int, WeakReference<HorizontalListViewHolder>>()
@@ -217,13 +217,13 @@ data class FeedData(
             }
         } else result.mapCatching { state ->
             state ?: return@mapCatching PagedData.empty()
-            val extId = state.origin
+            val origin = state.origin
             val data = state.feed.pagedData
             data.loadPage(null)
             var start = 0L
             data.map { result ->
                 result.map {
-                    val list = it.toFeedType(feedId, extId, state.item, tabId, noVideos, start)
+                    val list = it.toFeedType(feedId, origin, state.item, tabId, noVideos, start)
                     start += list.size
                     list
                 }.getOrThrow()

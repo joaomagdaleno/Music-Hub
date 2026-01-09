@@ -33,8 +33,8 @@ import org.koin.core.parameter.parametersOf
 class EditPlaylistFragment : Fragment() {
 
     companion object {
-        fun getBundle(extension: String, playlist: Playlist, loaded: Boolean) = Bundle().apply {
-            putString("origin", extension)
+        fun getBundle(source: String, playlist: Playlist, loaded: Boolean) = Bundle().apply {
+            putString("origin", source)
             putSerialized("playlist", playlist)
             putBoolean("loaded", loaded)
         }

@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
  */
 interface MessageFlowProvider {
     /**
-     * Injecting the message flow, called once when the extension is initialized.
+     * Injecting the message flow, called once when the source is initialized.
      *
      * use the following to use the message flow:
      * ```kotlin

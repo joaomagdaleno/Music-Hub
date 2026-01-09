@@ -158,9 +158,9 @@ class PlayerCallback(
     @OptIn(UnstableApi::class)
     private fun radio(player: Player, args: Bundle) = scope.future {
         val error = SessionResult(SessionError.ERROR_UNKNOWN)
-        val extId = args.getString("extId") ?: return@future error
+        val origin = args.getString("origin") ?: return@future error
         val item = args.getSerialized<EchoMediaItem>("item")?.getOrNull() ?: return@future error
-        // Use repository for radio instead of extensions
+        // Use repository for radio instead of sources
         val tracks = when (item) {
             is Track -> repository.getRadio(item.id)
             else -> emptyList()
@@ -169,7 +169,7 @@ class PlayerCallback(
         radioFlow.value = PlayerState.Radio.Loading
         val mediaItems = tracks.map { track ->
             MediaItemUtils.build(
-                app, downloadFlow.value, MediaState.Unloaded("native", track), item
+                app, downloadFlow.value, MediaState.Unloaded("internal", track), item
             )
         }
         player.with {
@@ -183,7 +183,7 @@ class PlayerCallback(
         SessionResult(RESULT_SUCCESS)
     }
 
-    // Removed extension-based loadItem - use repository instead
+    // Removed source-based loadItem - use repository instead
     private suspend fun loadItem(item: EchoMediaItem): EchoMediaItem = when (item) {
         is Track -> repository.getTrack(item.id) ?: item
         is Album -> repository.getAlbum(item.id)
@@ -192,7 +192,7 @@ class PlayerCallback(
         is Radio -> item
     }
 
-    // Removed extension-based listTracks - use repository instead
+    // Removed source-based listTracks - use repository instead
     private suspend fun listTracks(item: EchoMediaItem): List<Track> = when (item) {
         is Album -> repository.getAlbumTracks(item.id)
         is Playlist -> repository.getPlaylistTracks(item.id)
@@ -203,7 +203,7 @@ class PlayerCallback(
 
     private fun playItem(player: Player, args: Bundle) = scope.future {
         val error = SessionResult(SessionError.ERROR_UNKNOWN)
-        val extId = args.getString("extId") ?: "native"
+        val origin = args.getString("origin") ?: "internal"
         val item = args.getSerialized<EchoMediaItem>("item")?.getOrNull() ?: return@future error
         val loaded = args.getBoolean("loaded", false)
         val shuffle = args.getBoolean("shuffle", false)
@@ -211,7 +211,7 @@ class PlayerCallback(
         when (item) {
             is Track -> {
                 val mediaItem = MediaItemUtils.build(
-                    app, downloadFlow.value, MediaState.Unloaded(extId, item), null
+                    app, downloadFlow.value, MediaState.Unloaded(origin, item), null
                 )
                 player.with {
                     setMediaItem(mediaItem)
@@ -229,7 +229,7 @@ class PlayerCallback(
                 player.with {
                     setMediaItems(list.map {
                         MediaItemUtils.build(
-                            app, downloadFlow.value, MediaState.Unloaded(extId, it), item
+                            app, downloadFlow.value, MediaState.Unloaded(origin, it), item
                         )
                     })
                     shuffleModeEnabled = shuffle
@@ -261,7 +261,7 @@ class PlayerCallback(
 
     private fun addToQueue(player: Player, args: Bundle) = scope.future {
         val error = SessionResult(SessionError.ERROR_UNKNOWN)
-        val extId = args.getString("extId") ?: "native"
+        val origin = args.getString("origin") ?: "internal"
         val item = args.getSerialized<EchoMediaItem>("item")?.getOrNull() ?: return@future error
         
         val tracks = listTracks(item)
@@ -270,7 +270,7 @@ class PlayerCallback(
             MediaItemUtils.build(
                 app,
                 downloadFlow.value,
-                MediaState.Unloaded(extId, track),
+                MediaState.Unloaded(origin, track),
                 null
             )
         }
@@ -285,7 +285,7 @@ class PlayerCallback(
     private var nextJob: Job? = null
     private fun addToNext(player: Player, args: Bundle) = scope.future {
         val error = SessionResult(SessionError.ERROR_UNKNOWN)
-        val extId = args.getString("extId") ?: "native"
+        val origin = args.getString("origin") ?: "internal"
         val item = args.getSerialized<EchoMediaItem>("item")?.getOrNull() ?: return@future error
         nextJob?.cancel()
         
@@ -295,7 +295,7 @@ class PlayerCallback(
             MediaItemUtils.build(
                 app,
                 downloadFlow.value,
-                MediaState.Unloaded(extId, track),
+                MediaState.Unloaded(origin, track),
                 null
             )
         }

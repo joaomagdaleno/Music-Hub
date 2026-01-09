@@ -1,4 +1,4 @@
-package com.joaomagdaleno.music_hub.data.sources
+package com.joaomagdaleno.music_hub.data.providers
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json

@@ -101,7 +101,7 @@
     <string name="account_session_expired_in_x">%1$sのアカウントセッションの有効期限が切れました</string>
     <string name="error_x">エラー: %1$s</string>
     <string name="str_copy">コピー</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="random">ランダム</string>
     <string name="value">値</string>
     <string name="value_not_set">未設定</string>

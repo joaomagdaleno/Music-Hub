@@ -3,12 +3,12 @@ package com.joaomagdaleno.music_hub.common.helpers
 import com.joaomagdaleno.music_hub.common.models.NetworkRequest
 
 /**
- * Use this to access the webview from the extension. There are 3 types of requests:
+ * Use this to access the webview from the source. There are 3 types of requests:
  * - [Headers] - Used to intercept requests made by the webview and get the headers
  * - [Cookie] - Used to get the cookies stored in the webview
  * - [Evaluate] - Used to evaluate javascript in the webview
  *
- * The extension can implement all of the sub-interfaces, and the onStop methods
+ * The source can implement all of the sub-interfaces, and the onStop methods
  * will be called in this order of [Headers], [Cookie], [Evaluate].
  *
  * The [initialUrl] is the URL to be loaded in the webview.

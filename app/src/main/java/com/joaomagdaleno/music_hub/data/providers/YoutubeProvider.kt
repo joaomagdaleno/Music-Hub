@@ -1,4 +1,4 @@
-package com.joaomagdaleno.music_hub.data.sources
+package com.joaomagdaleno.music_hub.data.providers
 
 import com.joaomagdaleno.music_hub.common.models.Album
 import com.joaomagdaleno.music_hub.common.models.Artist
@@ -6,8 +6,8 @@ import com.joaomagdaleno.music_hub.common.models.ImageHolder
 import com.joaomagdaleno.music_hub.common.models.NetworkRequest
 import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.common.models.Track
-import com.joaomagdaleno.music_hub.data.sources.PipedApi
-import com.joaomagdaleno.music_hub.data.sources.PipedSearchResult
+import com.joaomagdaleno.music_hub.data.providers.PipedApi
+import com.joaomagdaleno.music_hub.data.providers.PipedSearchResult
 
 class YoutubeSource : MusicSource {
     override val name = "YOUTUBE"

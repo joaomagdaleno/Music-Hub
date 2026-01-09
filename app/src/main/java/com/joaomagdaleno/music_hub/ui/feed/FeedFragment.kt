@@ -60,7 +60,7 @@ class FeedFragment : Fragment(R.layout.fragment_generic_collapsable) {
         ) {
             val feedId = vm.feedId!!
             val shelves = getFeed(feedId)
-            FeedData.State("native", null, shelves.toFeed())
+            FeedData.State("internal", null, shelves.toFeed())
         }
     }
 

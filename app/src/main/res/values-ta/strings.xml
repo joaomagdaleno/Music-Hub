@@ -62,7 +62,7 @@
     <string name="account_session_expired_in_x">கணக்கு அமர்வு %1$s இல் காலாவதியானது</string>
     <string name="error_x">பிழை: %1$s</string>
     <string name="str_copy">நகலெடு</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="audio_permission_summary">உங்கள் உள்ளக இசை நூலகத்தைத் திறக்க</string>
     <string name="read_storage">சேமிப்பகத்தைப் படி</string>
     <string name="more_by_x">மேலும் %1$s</string>

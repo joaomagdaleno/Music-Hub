@@ -144,7 +144,7 @@
     <string name="x_login_required">%1$s giriş gereklidir</string>
     <string name="account_session_expired_in_x">Hesap oturumu %1$s içinde süresi doldu</string>
     <string name="str_copy">Kopyala</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="choose_a_color">Bir renk seç</string>
     <string name="random">Rastgele</string>
     <string name="add">Ekle</string>

@@ -92,7 +92,7 @@ class MusicRepository(
     }
 
     private suspend fun resolveStreamUrl(track: Track): String {
-        // 1. Native Local Check
+        // 1. Internal Local Check
         if (track.origin == "LOCAL" || track.id.startsWith("content://") || track.originalUrl.startsWith("/")) {
              return localProvider.getStreamUrl(track)
         }
@@ -113,7 +113,7 @@ class MusicRepository(
     }
 
     suspend fun getHomeFeed(): List<Shelf> {
-        // Combined Native Home Feed
+        // Combined Internal Home Feed
         val shelves = mutableListOf<Shelf>()
         
         // Trending from YouTube

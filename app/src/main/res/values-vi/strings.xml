@@ -12,7 +12,7 @@
     <string name="quality_selection">Chất lượng</string>
     <string name="manage">Quản lý</string>
     <string name="add">Thêm</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="link">Liên kết</string>
     <string name="link_or_code">Liên kết hoặc Mã</string>
     <string name="list_is_empty">Danh sách trống</string>

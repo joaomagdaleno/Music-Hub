@@ -36,7 +36,6 @@ class Downloader(
     val repository: com.joaomagdaleno.music_hub.data.repository.MusicRepository,
     database: DownloadDatabase,
 ) {
-    // val unified = sourceLoader.unified.value // REMOVED
     val downloadFeed = kotlinx.coroutines.flow.MutableStateFlow<List<com.joaomagdaleno.music_hub.common.models.EchoMediaItem>>(emptyList())
 
     val scope = CoroutineScope(Dispatchers.IO) + CoroutineName("Downloader")
@@ -192,10 +191,8 @@ class Downloader(
                 info.filter { it.download.fullyDownloaded }.groupBy {
                     it.context?.id
                 }.flatMap { (id, infos) ->
-                    // Logic to retrieve items. Unified used to convert contexts to Playlists or lists of Tracks.
+                    // Logic to retrieve items.
                     // For now, mapping downloads to Tracks directly.
-                    // Contexts were used for grouping by Album/Playlist.
-                    // If context exists, we should try to reconstruct grouping.
                     // Simplified: Return list of tracks.
                     infos.mapNotNull { it.download.track.getOrNull() }
                 }

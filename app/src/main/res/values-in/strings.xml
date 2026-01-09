@@ -51,7 +51,7 @@
     <string name="choose_a_color">Pilih warna</string>
     <string name="x_login_required">Perlu masuk %1$s</string>
     <string name="error_x">Eror: %1$s</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="random">Acak</string>
     <string name="account_session_expired_in_x">Sesi akun kadaluarsa %1$s</string>
     <string name="add">Tambah</string>

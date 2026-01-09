@@ -36,7 +36,7 @@
     <string name="view">檢視</string>
     <string name="no_internet">無網際網路連線</string>
     <string name="str_copy">複製</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="choose_a_color">選擇顏色</string>
     <string name="random">隨機</string>
     <string name="add">新增</string>

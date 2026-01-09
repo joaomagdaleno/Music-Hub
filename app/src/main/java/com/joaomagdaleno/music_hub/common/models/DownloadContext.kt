@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 /**
  * Download context for a track
  *
- * @param origin The extension that the track belongs to.
+ * @param origin The source that the track belongs to.
  * @param track The track to download.
  * @param sortOrder The order of the [track] in the [context].
  * @param context The context of the media item, Album/Playlist/Artist.

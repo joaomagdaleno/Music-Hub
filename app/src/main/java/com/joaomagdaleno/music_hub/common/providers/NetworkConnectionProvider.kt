@@ -9,7 +9,7 @@ interface NetworkConnectionProvider {
 
     /**
      * Called when the network connection changes,
-     * to provide the current [NetworkConnection] to the extension
+     * to provide the current [NetworkConnection] to the source
      */
     fun setNetworkConnection(networkConnection: NetworkConnection)
 }

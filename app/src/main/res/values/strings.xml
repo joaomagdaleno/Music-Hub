@@ -70,7 +70,7 @@
     <string name="account_session_expired_in_x">Account session expired in %1$s</string>
     <string name="error_x">Error: %1$s</string>
     <string name="str_copy">Copy</string>
-    <string name="extensions">Data Sources</string>
+    <string name="data_sources">Data Sources</string>
     <string name="choose_a_color">Choose a color</string>
     <string name="random">Random</string>
     <string name="add">Add</string>
@@ -191,8 +191,8 @@
     <string name="tracker">Tracker</string>
     <string name="lyrics">Lyrics</string>
     <string name="misc">Misc</string>
-    <string name="x_sources">%1$s Sources</string>
-    <string name="x_source">%1$s Source</string>
+    <string name="x_providers">%1$s Sources</string>
+    <string name="x_provider">%1$s Source</string>
     <string name="enabled">Enabled</string>
     <string name="disabled">Disabled</string>
     <string name="error_updating">Error while updating</string>

@@ -37,7 +37,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             null
         }) {
             val feed = getHomeFeed().toFeed()
-            FeedData.State("native", null, feed)
+            FeedData.State("internal", null, feed)
         }
     }
 
@@ -53,7 +53,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val uiViewModel by activityViewModel<UiViewModel>()
         observe(uiViewModel.navigationReselected) {
             if (it != 0) return@observe
-            // Removed extension selection logic to keep a native feel
+            // Removed source selection logic to keep a internal feel
             binding.recyclerView.smoothScrollToPosition(0)
         }
         observe(
