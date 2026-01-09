@@ -43,33 +43,29 @@ jobs:
           -Pandroid.injected.signing.key.password=${{ secrets.PASSWORD }}
           cp app/build/outputs/apk/nightly/app-nightly.apk app/build/${{ env.VERSION }}.apk
 
-      - name: Upload APK
+      - name: Record Build Metrics ⏱️
+        run: |
+          mkdir -p metrics
+          APK_SIZE=$(stat -c%s "app/build/outputs/apk/nightly/app-nightly.apk")
+          echo "{
+            \"platform\": \"android\",
+            \"version\": \"${{ env.VERSION }}\",
+            \"apk_size_bytes\": $APK_SIZE,
+            \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+            \"commit\": \"${{ github.sha }}\"
+          }" > metrics/android_telemetry.json
+
+      - name: Update Chronology 📜
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # Simple script to append to a local history for the sake of the demo
+          # In a real setup, we'd use a separate branch or external storage
+          mkdir -p metrics_history
+          cp metrics/android_telemetry.json metrics_history/android_${{ env.VERSION }}.json
+          python scripts/generate_dashboard.py >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Telemetry
         uses: actions/upload-artifact@v4
         with:
-          path: app/build/outputs/apk/nightly/app-nightly.apk
-
-      - name: Upload APK to Discord
-        shell: bash
-        env:
-          WEBHOOK: ${{ secrets.DISCORD_NIGHTLY_WEBHOOK }}
-        run: |
-          message=$(echo "@everyone **${{ env.VERSION }}**\n${{ env.COMMIT }}")
-          curl -F "payload_json={\"content\":\"${message}\"}" \
-          -F "echo_beta=@app/build/${{ env.VERSION }}.apk" \
-          ${{ env.WEBHOOK }}
-
-      - name: Upload APK to Telegram
-        shell: bash
-        env:
-          BOT_ID: ${{ secrets.TELEGRAM_BOT_ID }}
-          CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
-          THREAD_ID: ${{ secrets.TELEGRAM_THREAD_ID }}
-        run: |
-          regex='s/[\_\*\[\]\(\)\~\`\>\#\+\-\=\|\{\}\.\!]/\\&/g'
-          message=$(printf "*Nightly Release*\n${{ env.COMMIT }}" | sed -E "$regex")
-          curl -F "chat_id=${{ env.CHANNEL_ID }}" \
-          -F "message_thread_id=${{ env.THREAD_ID }}" \
-          -F "document=@app/build/${{ env.VERSION }}.apk" \
-          -F "caption=${message}" \
-          -F "parse_mode=MarkdownV2" \
-          https://api.telegram.org/bot${{ env.BOT_ID }}/sendDocument
+          name: android-telemetry
+          path: metrics/android_telemetry.json

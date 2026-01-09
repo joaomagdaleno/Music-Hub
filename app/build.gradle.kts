@@ -6,6 +6,7 @@ plugins {
 
     alias(libs.plugins.gms) apply false
     alias(libs.plugins.crashlytics) apply false
+    alias(libs.plugins.compose.compiler)
 }
 
 val hasGoogleServices = file("google-services.json").exists()
@@ -65,6 +66,7 @@ android {
     buildFeatures {
         buildConfig = true
         viewBinding = true
+        compose = true
     }
 
     androidResources {
@@ -101,6 +103,16 @@ dependencies {
     implementation(libs.nestedscrollwebview)
     implementation(libs.acsbendi.webview)
     implementation(libs.jaudiotagger)
+
+    // Jetpack Compose
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.activity.compose)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
 
     if (!hasGoogleServices) return@dependencies
     implementation(libs.bundles.firebase)
