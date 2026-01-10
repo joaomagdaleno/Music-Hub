@@ -1,0 +1,50 @@
+name: Cache Cleanup
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Run daily at midnight UTC
+  workflow_dispatch: { }
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cleanup Old Caches 🧹
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const caches = await github.rest.actions.getActionsCacheList({
+              owner,
+              repo,
+              per_page: 100
+            });
+
+            const now = new Date();
+            const maxAgeMs = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+            let deletedCount = 0;
+
+            for (const cache of caches.data.actions_caches) {
+              const createdAt = new Date(cache.created_at);
+              const ageMs = now - createdAt;
+              
+              if (ageMs > maxAgeMs) {
+                console.log(`Deleting cache: ${cache.key} (Age: ${Math.round(ageMs / 3600000)}h)`);
+                await github.rest.actions.deleteActionsCacheById({
+                  owner,
+                  repo,
+                  cache_id: cache.id
+                });
+                deletedCount++;
+              }
+            }
+
+            console.log(`✅ Deleted ${deletedCount} caches older than 24 hours.`);
+            core.summary.addRaw(`## 🧹 Cache Cleanup\n\nDeleted **${deletedCount}** caches older than 24 hours.`);
+            await core.summary.write();
