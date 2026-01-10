@@ -20,6 +20,7 @@ import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler.Companion.setupSnac
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.setupNavBarAndInsets
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.setupPlayerBehavior
+import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.configureAppUpdater
 import com.joaomagdaleno.music_hub.ui.main.MainFragment
 import com.joaomagdaleno.music_hub.ui.player.PlayerFragment
 import com.joaomagdaleno.music_hub.ui.player.PlayerFragment.Companion.PLAYER_COLOR
