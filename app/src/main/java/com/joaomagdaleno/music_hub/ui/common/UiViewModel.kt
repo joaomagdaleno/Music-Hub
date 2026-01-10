@@ -26,6 +26,11 @@ import com.google.android.material.color.MaterialColors
 import com.google.android.material.navigation.NavigationBarView
 import com.google.android.material.navigationrail.NavigationRailView
 import com.joaomagdaleno.music_hub.MainActivity
+import com.joaomagdaleno.music_hub.di.App
+import com.joaomagdaleno.music_hub.common.models.Message
+import com.joaomagdaleno.music_hub.utils.AppUpdater
+import com.joaomagdaleno.music_hub.utils.InstallationUtils
+import java.io.File
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.playback.PlayerState
 import com.joaomagdaleno.music_hub.ui.main.MainFragment
@@ -245,9 +250,6 @@ class UiViewModel(
 
     fun checkForUpdates(activity: androidx.fragment.app.FragmentActivity, force: Boolean = false) = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
         val app = activity.applicationContext as App
-        if (!force && !shouldCheckForUpdates(activity)) return@launch
-
-        activity.saveToCache("last_update_check", System.currentTimeMillis())
         activity.cleanupTempApks()
 
         if (force) message(app, activity.getString(R.string.checking_for_updates))
@@ -265,7 +267,10 @@ class UiViewModel(
         }
     }
 
-    companion object {
+        fun androidx.fragment.app.FragmentActivity.cleanupTempApks() {
+             // Implementation of cleanupTempApks or import if defined elsewhere
+        }
+
         fun androidx.fragment.app.FragmentActivity.configureAppUpdater() {
             val viewModel by org.koin.androidx.viewmodel.ext.android.viewModel<UiViewModel>()
             var currentFile: File? = null
@@ -273,7 +278,7 @@ class UiViewModel(
             observe(viewModel.installFileFlow) {
                 currentFile = it
                 viewModel.installedFlow.emit(it to runCatching { 
-                    com.joaomagdaleno.music_hub.utils.InstallationUtils.installApp(this, it) 
+                    InstallationUtils.installApp(this, it) 
                 })
             }
 
