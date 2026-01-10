@@ -1,0 +1,4450 @@
+================================================================================
+PROCESS AUDIT: hub_processo_common.txt
+DATE: 2026-01-08 15:23:52
+FILE COUNT: 83
+================================================================================
+
+---------- FILE: common\README.md ----------
+# Module common
+
+This package contains common classes and interfaces that are used by all the extensions of Echo.
+
+## Getting Started
+
+### Template
+
+To create a new extension, you can use the following template repo:
+
+[https://github.com/brahmkshatriya/echo-extension-template](https://github.com/brahmkshatriya/echo-extension-template)
+
+### Manual
+
+- Add the dependency in your project.
+  build.gradle.kts
+    ```kotlin
+    implementation("com.joaomagdaleno.music_hub:common:1.0.0")
+    ```
+
+## How does it work?
+
+Currently, the common package is JVM only. The app recognizes an App or an `apk` file as an extension by its `AndroidManifest.xml` file.
+To determine what type of extension it is, the app looks for the following feature in the manifest file:
+- For Music Extension:
+  ```xml
+  <uses-feature android:name="com.joaomagdaleno.music_hub.music"/>
+  ```
+- For Lyrics Extension:
+  ```xml
+  <uses-feature android:name="com.joaomagdaleno.music_hub.lyrics"/>
+  ```
+- For Tracker Extension:
+  ```xml
+  <uses-feature android:name="com.joaomagdaleno.music_hub.trackers"/>
+  ```
+- For Misc Extension:
+  ```xml
+  <uses-feature android:name="com.joaomagdaleno.music_hub.misc"/>
+  ```
+
+There are 2 ways the app can import an extension:
+- File: The app stores the apk file in the internal storage and loads the class from the dex file.
+- Installed Package: The app loads the class from the installed apps on the device.
+
+Installed packages have priority over file based, if both extensions have same the id.
+
+The `AndroidManifest.xml` file of the extension should contain the following metadata:
+- class: The class path of the `ExtensionClient`.
+```xml
+<meta-data
+    android:name="class"
+    android:value="com.example.MyExtension" />
+```
+
+- id: The unique id of the extension.(Avoid using special characters or spaces)
+```xml
+<meta-data
+    android:name="id"
+    android:value="my_example" />
+```
+and [others...](https://github.com/brahmkshatriya/echo-extension-template/blob/main/app/src/main/AndroidManifest.xml)
+
+### Flow of the app:
+1. Load the extensions from the installed packages and internal storage.
+2. Dynamically load the [`ExtensionClient`](./src/commonMain/kotlin/dev/brahmkshatriya/echo/common/clients/ExtensionClient.kt) instance using the class path from the metadata.
+3. Inject the extension with [`Settings`](./src/commonMain/kotlin/dev/brahmkshatriya/echo/common/settings/Setting.kt) 
+4. Inject the extension with other [provider interfaces](./src/commonMain/kotlin/dev/brahmkshatriya/echo/common/providers)
+5. The extension is available to use in the app.
+
+---------- FILE: common\build.gradle.kts ----------
+import com.android.build.api.dsl.androidLibrary
+
+plugins {
+    alias(libs.plugins.android.kmp.library)
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlinx.serialization)
+    id("com.vanniktech.maven.publish") version "0.34.0"
+    id("org.jetbrains.dokka") version "2.0.0"
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+kotlin {
+    jvmToolchain(17)
+
+    @Suppress("UnstableApiUsage")
+    androidLibrary {
+        namespace = "com.joaomagdaleno.music_hub.common"
+        compileSdk = 36
+        minSdk = 24
+    }
+    jvm()
+
+    sourceSets {
+        commonMain {
+            dependencies {
+                api(libs.bundles.kotlinx)
+                api(libs.okhttp)
+                api(libs.protobuf.java)
+            }
+        }
+    }
+}
+
+// build.gradle.kts
+
+mavenPublishing {
+    publishToMavenCentral(true)
+    signAllPublications()
+
+    coordinates("com.joaomagdaleno.music_hub", "common", "1.0.0")
+
+    pom {
+        name = "Music Hub common library"
+        description = "A common library for Music Hub extensions."
+        inceptionYear = "2025"
+        url = "https://github.com/brahmkshatriya/echo"
+        licenses {
+            license {
+                name = "Unabandon Public License"
+                url = "https://github.com/brahmkshatriya/echo/blob/main/LICENSE.md"
+                distribution = "https://github.com/brahmkshatriya/echo/blob/main/LICENSE.md"
+            }
+        }
+        developers {
+            developer {
+                id = "brahmkshatriya"
+                name = "Shivam"
+                url = "https://github.com/brahmkshatriya/"
+            }
+        }
+        scm {
+            url = "https://github.com/brahmkshatriya/echo/"
+            connection = "scm:git:git://github.com/brahmkshatriya/echo.git"
+            developerConnection = "scm:git:ssh://git@github.com/brahmkshatriya/echo.git"
+        }
+    }
+}
+
+dokka {
+    moduleName.set("common")
+    moduleVersion.set("1.0")
+    dokkaSourceSets.commonMain {
+        includes.from("README.md")
+        sourceLink {
+            localDirectory.set(file("src/main/java"))
+            remoteUrl("https://github.com/brahmkshatriya/echo/tree/main/common/src/main/java")
+            remoteLineSuffix.set("#L")
+        }
+    }
+    pluginsConfiguration.html {
+        customStyleSheets.from("styles.css")
+        footerMessage.set("made by <a style=\"color: inherit; text-decoration: underline;\" href=\"https://github.com/joaomagdaleno\">@joaomagdaleno</a>")
+    }
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\Extension.kt ----------
+package com.joaomagdaleno.music_hub.common
+
+import com.joaomagdaleno.music_hub.common.clients.AlbumClient
+import com.joaomagdaleno.music_hub.common.clients.ArtistClient
+import com.joaomagdaleno.music_hub.common.clients.DownloadClient
+import com.joaomagdaleno.music_hub.common.clients.ExtensionClient
+import com.joaomagdaleno.music_hub.common.clients.FollowClient
+import com.joaomagdaleno.music_hub.common.clients.HideClient
+import com.joaomagdaleno.music_hub.common.clients.HomeFeedClient
+import com.joaomagdaleno.music_hub.common.clients.LibraryFeedClient
+import com.joaomagdaleno.music_hub.common.clients.LikeClient
+import com.joaomagdaleno.music_hub.common.clients.LoginClient
+import com.joaomagdaleno.music_hub.common.clients.LyricsClient
+import com.joaomagdaleno.music_hub.common.clients.LyricsSearchClient
+import com.joaomagdaleno.music_hub.common.clients.PlaylistClient
+import com.joaomagdaleno.music_hub.common.clients.PlaylistEditClient
+import com.joaomagdaleno.music_hub.common.clients.PlaylistEditCoverClient
+import com.joaomagdaleno.music_hub.common.clients.PlaylistEditPrivacyClient
+import com.joaomagdaleno.music_hub.common.clients.PlaylistEditorListenerClient
+import com.joaomagdaleno.music_hub.common.clients.QuickSearchClient
+import com.joaomagdaleno.music_hub.common.clients.RadioClient
+import com.joaomagdaleno.music_hub.common.clients.SaveClient
+import com.joaomagdaleno.music_hub.common.clients.SearchFeedClient
+import com.joaomagdaleno.music_hub.common.clients.ShareClient
+import com.joaomagdaleno.music_hub.common.clients.TrackChapterClient
+import com.joaomagdaleno.music_hub.common.clients.TrackClient
+import com.joaomagdaleno.music_hub.common.clients.TrackerClient
+import com.joaomagdaleno.music_hub.common.clients.TrackerMarkClient
+import com.joaomagdaleno.music_hub.common.helpers.ClientException
+import com.joaomagdaleno.music_hub.common.helpers.Injectable
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.common.models.ExtensionType
+import com.joaomagdaleno.music_hub.common.models.Metadata
+import com.joaomagdaleno.music_hub.common.providers.GlobalSettingsProvider
+import com.joaomagdaleno.music_hub.common.providers.LyricsExtensionsProvider
+import com.joaomagdaleno.music_hub.common.providers.MessageFlowProvider
+import com.joaomagdaleno.music_hub.common.providers.MetadataProvider
+import com.joaomagdaleno.music_hub.common.providers.MiscExtensionsProvider
+import com.joaomagdaleno.music_hub.common.providers.MusicExtensionsProvider
+import com.joaomagdaleno.music_hub.common.providers.NetworkConnectionProvider
+import com.joaomagdaleno.music_hub.common.providers.TrackerExtensionsProvider
+
+/**
+ * A base class for any of the following Extension types
+ * - [MusicExtension] - To play music and load music data (Supports tracking and lyrics too)
+ * - [TrackerExtension] - To track what the user is listening to
+ * - [LyricsExtension] - To show lyrics for the currently playing track
+ *
+ * @param T The type of the extension client
+ * @property metadata The metadata of the extension
+ * @property instance An injectable instance of the [T] client
+ */
+sealed class Extension<T : ExtensionClient>(
+    open val metadata: Metadata,
+    open val instance: Injectable<T>
+) {
+    /**
+     * The id of the extension
+     */
+    val id: String get() = metadata.id
+
+    /**
+     * The type of the extension
+     */
+    val type: ExtensionType get() = metadata.type
+
+    /**
+     * Whether the extension is enabled
+     */
+    val isEnabled: Boolean get() = metadata.isEnabled
+
+    /**
+     * The name of the extension
+     */
+    val name: String get() = metadata.name
+
+    /**
+     * The version of the extension
+     */
+    val version: String get() = metadata.version
+}
+
+/**
+ * A data class representing a Music Extension.
+ * If some function is not supported by the extension, it should throw a [ClientException].
+ *
+ * Music Extension supports the following types of clients:
+ * - [ExtensionClient] - Mandatory Base Client
+ * - [LoginClient] - For login support
+ *
+ * ### Feed
+ * To show feed of media items on main screen, the extension should implement the following clients:
+ * - [HomeFeedClient] - To load the feed on the Home Tab
+ * - [SearchFeedClient]/[QuickSearchClient] - To load the feed on the Search Tab
+ * - [LibraryFeedClient] - To load the feed on the Library Tab
+ *
+ * ### Track Streaming
+ * When streaming a track, the extension can implement the following clients:
+ * - [TrackClient] - Mandatory to stream tracks
+ * - [TrackChapterClient] - To mark tracks as played
+ *
+ * ### Media Items
+ * To load media items, the extension should implement the following clients:
+ * - [AlbumClient] - To load albums
+ * - [PlaylistClient] - To load playlists
+ * - [ArtistClient] - To load artists
+ * - [RadioClient] - To load next tracks for the current track & show to radio button on media items with [EchoMediaItem.isRadioSupported] set to true
+ *
+ * ### Library
+ * To allow library functionality, The extension can implement the following clients:
+ * - [FollowClient] - To follow/unfollow items with [EchoMediaItem.isFollowable] set to true
+ * - [SaveClient] - To save media items with [EchoMediaItem.isSaveable] set to true
+ * - [LikeClient] - To like/unlike items with [EchoMediaItem.isLikeable] set to true
+ * - [HideClient] - To hide items with [EchoMediaItem.isHideable] set to true
+ * - [ShareClient] - To share items with [EchoMediaItem.isShareable] set to true
+ *
+ * ### Tracking and Lyrics
+ * - [TrackerClient] - For tracking what the user is listening to
+ * - [TrackerMarkClient] - For marking tracks as played
+ * - [LyricsClient] - For lyrics support
+ * - [LyricsSearchClient] - For searching lyrics using user query
+ *
+ * ### Playlist Editing
+ * To allow playlist editing, The extension can implement the following clients:
+ * - [PlaylistEditClient] - To edit playlists and show create playlist button on Library Tab
+ * - [PlaylistEditCoverClient] - To edit playlist cover
+ * - [PlaylistEditorListenerClient] - To listen to playlist editing events
+ * - [PlaylistEditPrivacyClient] - To edit playlist privacy
+ *
+ * ## Providers
+ * The extension can also implement the following providers:
+ * - [MetadataProvider] - To get metadata of the extension
+ * - [MessageFlowProvider] - To send popup messages in the app
+ * - [MusicExtensionsProvider] - To get installed music extensions
+ * - [LyricsExtensionsProvider] - To get installed lyrics extensions
+ * - [TrackerExtensionsProvider] - To get installed tracker extensions
+ * - [MiscExtensionsProvider] - To get installed misc extensions
+ * - [GlobalSettingsProvider] - To get global settings of the app
+ * - [NetworkConnectionProvider] - To get network connection status
+ *
+ * @param metadata The metadata of the extension
+ * @param instance An injectable instance of the [ExtensionClient] client
+ */
+data class MusicExtension(
+    override val metadata: Metadata,
+    override val instance: Injectable<ExtensionClient>
+) : Extension<ExtensionClient>(metadata, instance)
+
+/**
+ * A data class representing a Tracker Extension.
+ *
+ * Tracker Extension supports the following types of clients:
+ * - [TrackerClient] - Mandatory, For tracking what the user is listening to
+ * - [TrackerMarkClient] - For marking tracks as played
+ * - [LoginClient] - For login support
+ *
+ * The extension can also implement the following providers:
+ * - [MetadataProvider] - To get metadata of the extension
+ * - [MessageFlowProvider] - To send messages in the app
+ * - [MusicExtensionsProvider] - To get installed music extensions
+ * - [LyricsExtensionsProvider] - To get installed lyrics extensions
+ * - [TrackerExtensionsProvider] - To get installed tracker extensions
+ * - [MiscExtensionsProvider] - To get installed misc extensions
+ * - [GlobalSettingsProvider] - To get global settings of the app
+ * - [NetworkConnectionProvider] - To get network connection status
+ *
+ * @param metadata The metadata of the extension
+ * @param instance An injectable instance of the [TrackerClient] client
+ */
+data class TrackerExtension(
+    override val metadata: Metadata,
+    override val instance: Injectable<TrackerClient>
+) : Extension<TrackerClient>(metadata, instance)
+
+/**
+ * A data class representing a Lyrics Extension.
+ * Lyrics Extension supports the following types of clients:
+ * - [LyricsClient] - Mandatory, For lyrics support
+ * - [LyricsSearchClient] - For searching lyrics using user query
+ * - [LoginClient] - For login support
+ *
+ * The extension can also implement the following providers:
+ * - [MetadataProvider] - To get metadata of the extension
+ * - [MessageFlowProvider] - To send messages in the app
+ * - [MusicExtensionsProvider] - To get installed music extensions
+ * - [LyricsExtensionsProvider] - To get installed lyrics extensions
+ * - [TrackerExtensionsProvider] - To get installed tracker extensions
+ * - [MiscExtensionsProvider] - To get installed misc extensions
+ * - [GlobalSettingsProvider] - To get global settings of the app
+ * - [NetworkConnectionProvider] - To get network connection status
+ *
+ * @param metadata The metadata of the extension
+ * @param instance An injectable instance of the [LyricsClient] client
+ */
+data class LyricsExtension(
+    override val metadata: Metadata,
+    override val instance: Injectable<LyricsClient>
+) : Extension<LyricsClient>(metadata, instance)
+
+
+/**
+ * A data class representing a Misc Extension.
+ * Misc Extension supports the following types of clients:
+ * - [ExtensionClient] - Mandatory Base Client
+ * - [DownloadClient] - For downloading tracks
+ * - [LoginClient] - For login support
+ *
+ * The extension can also implement the following providers:
+ * - [MetadataProvider] - To get metadata of the extension
+ * - [MessageFlowProvider] - To send messages in the app
+ * - [MusicExtensionsProvider] - To get installed music extensions
+ * - [LyricsExtensionsProvider] - To get installed lyrics extensions
+ * - [TrackerExtensionsProvider] - To get installed tracker extensions
+ * - [MiscExtensionsProvider] - To get installed misc extensions
+ * - [GlobalSettingsProvider] - To get global settings of the app
+ * - [NetworkConnectionProvider] - To get network connection status
+ *
+ * @param metadata The metadata of the extension
+ * @param instance An injectable instance of the [ExtensionClient] client
+ */
+data class MiscExtension(
+    override val metadata: Metadata,
+    override val instance: Injectable<ExtensionClient>
+) : Extension<ExtensionClient>(metadata, instance)
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\AlbumClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.MusicExtension
+import com.joaomagdaleno.music_hub.common.models.Album
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.common.models.Track
+
+/**
+ * Used to load an [Album], load its tracks and get its shelves.
+ *
+ * @see MusicExtension
+ */
+interface AlbumClient {
+
+    /**
+     * Loads an album, the unloaded album may only have the id and title.
+     *
+     * @param album the album to load.
+     * @return the loaded album.
+     */
+    suspend fun loadAlbum(album: Album): Album
+
+    /**
+     * Loads the tracks of an album.
+     *
+     * @param album the loaded album to load the tracks of.
+     * @return the paged tracks or null if the tracks cannot be loaded for this [album].
+     *
+     * @see Feed
+     * @see Track
+     */
+    suspend fun loadTracks(album: Album): Feed<Track>?
+
+    /**
+     * Gets the feed of an album.
+     *
+     * @param album the album to get the feed of.
+     * @return the feed of the album, or null if not available.
+     *
+     * @see Feed
+     * @see Album
+     */
+    suspend fun loadFeed(album: Album): Feed<Shelf>?
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\ArtistClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.MusicExtension
+import com.joaomagdaleno.music_hub.common.models.Artist
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Shelf
+
+/**
+ * Used to load an [Artist] and get its shelves.
+ *
+ * @see FollowClient
+ * @see MusicExtension
+ */
+interface ArtistClient {
+
+    /**
+     * Loads an artist, the unloaded artist may only have the id and title.
+     *
+     * @param artist the artist to load.
+     * @return the loaded artist.
+     */
+    suspend fun loadArtist(artist: Artist): Artist
+    
+    /**
+     * Gets the shelves of an artist.
+     *
+     * @param artist the artist to get the shelves of.
+     * @return the feed containing the shelves.
+     *
+     * @see Feed
+     */
+    suspend fun loadFeed(artist: Artist) : Feed<Shelf>
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\DownloadClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.models.DownloadContext
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.common.models.Progress
+import com.joaomagdaleno.music_hub.common.models.Streamable
+import kotlinx.coroutines.flow.MutableStateFlow
+import java.io.File
+
+/**
+ * The client for downloading tracks. Needs to support the following:
+ * - Get the download tracks for the given media item.
+ * - Get the download folder for the given context of downloading track.
+ * - Which server to use for downloading.
+ * - Which sources to use for downloading.
+ * - Download the given sources.
+ * - Merge the given media files into a single file.
+ * - Tag a file with the given track metadata.
+ * - The maximum number of concurrent downloads allowed.
+ */
+interface DownloadClient : ExtensionClient {
+
+    /**
+     * Get the download tracks for the given [item].
+     *
+     * @param extensionId The client ID.
+     * @param item The media item to get the download tracks for.
+     * @param context The context of the downloading track, can be null if not applicable.
+     *
+     * @return The download tracks.
+     *
+     * @see DownloadContext
+     * @see EchoMediaItem
+     */
+    suspend fun getDownloadTracks(
+        extensionId: String, item: EchoMediaItem, context: EchoMediaItem?
+    ): List<DownloadContext>
+
+    /**
+     * The maximum number of concurrent downloads allowed.
+     */
+    val concurrentDownloads: Int
+
+    /**
+     * Which server to use for downloading.
+     * use this to get the available servers.
+     * ```
+     * val servers = context.track.servers
+     * ```
+     * @param context The context of the downloading track.
+     *
+     * @see Streamable
+     */
+    suspend fun selectServer(context: DownloadContext): Streamable
+
+    /**
+     * Which source to use for downloading.
+     *
+     * @param context The context of the downloading track.
+     * @param server The server to choose sources from.
+     *
+     * @return The selected sources.
+     *
+     * @see Streamable.Media.Server
+     * @see Streamable.Source
+     */
+    suspend fun selectSources(
+        context: DownloadContext, server: Streamable.Media.Server
+    ): List<Streamable.Source>
+
+    /**
+     * Download the given [source].
+     *
+     * @param progressFlow The flow to emit the download progress.
+     * @param context The context of the downloading track.
+     * @param source The source to download.
+     */
+    suspend fun download(
+        progressFlow: MutableStateFlow<Progress>,
+        context: DownloadContext,
+        source: Streamable.Source
+    ): File
+
+    /**
+     * Merge the given media [files] into a single file.
+     * The old files should be deleted after merging.
+     *
+     * @param progressFlow The flow to emit the merge progress.
+     * @param context The context of the downloading track.
+     * @param files The files to merge.
+     */
+    suspend fun merge(
+        progressFlow: MutableStateFlow<Progress>,
+        context: DownloadContext,
+        files: List<File>
+    ): File
+
+    /**
+     * Tag a file with the given track metadata
+     * use this to tag the file with the track metadata
+     * ```
+     * val track = context.track
+     * ```
+     *
+     * @param context The extension that the track belongs to.
+     * @param file The file to tag
+     */
+    suspend fun tag(
+        progressFlow: MutableStateFlow<Progress>,
+        context: DownloadContext,
+        file: File
+    ): File
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\ExtensionClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.Extension
+import com.joaomagdaleno.music_hub.common.helpers.ContinuationCallback.Companion.await
+import com.joaomagdaleno.music_hub.common.providers.SettingsProvider
+import okhttp3.OkHttpClient
+
+/**
+ * Interface to be implemented by every [Extension], create your network client, database client, etc. here.
+ *
+ * If using [OkHttpClient], use the custom [await] function for suspending the network call.
+ * ```kotlin
+ * val request = Request.Builder().url("https://example.com").build()
+ * val response = client.newCall(request).await()
+ * ```
+ *
+ * This interface extends the [SettingsProvider] interface
+ */
+interface ExtensionClient : SettingsProvider {
+    /**
+     * Only called when an extension is selected by the user, not when the extension is loaded
+     * Use the `onInitialize` for doing stuff to initialize the extension
+     *
+     * can be called multiple times, if the user re-selects the extension
+     */
+    suspend fun onExtensionSelected() {}
+
+    /**
+     * Called when the extension is loaded, called after all the injections are done.
+     * Only called once
+     */
+    suspend fun onInitialize() {}
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\FollowClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.MusicExtension
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+
+/**
+ * Used to allow following and unfollowing an [EchoMediaItem]
+ * with the [EchoMediaItem.isFollowable] set to true.
+ *
+ * @see MusicExtension
+ */
+interface FollowClient {
+
+    /**
+     * Checks if an item is followed.
+     * This will only be called if the [EchoMediaItem.isFollowable] is true.
+     *
+     * @param item the item to check.
+     * @return true if the item is followed, false otherwise.
+     */
+    suspend fun isFollowing(item: EchoMediaItem): Boolean
+
+    /**
+     * Gets the followers count of an item.
+     * This will only be called if the [EchoMediaItem.isFollowable] is true.
+     *
+     * @param item the item to get the followers count of.
+     * @return the number of followers or null if it cannot be determined.
+     */
+    suspend fun getFollowersCount(item: EchoMediaItem): Long?
+
+    /**
+     * Follows/Unfollow an Item.
+     * This will only be called if the [EchoMediaItem.isFollowable] is true.
+     *
+     * @param item the item to follow.
+     * @param shouldFollow whether to follow or unfollow the artist.
+     */
+    suspend fun followItem(item: EchoMediaItem, shouldFollow: Boolean)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\HideClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+
+/**
+ * Used to hide an item from the user's feed.
+ * with the [EchoMediaItem.isHideable] set to true.
+ */
+interface HideClient {
+
+    /**
+     * Hides or unhides a item from the user's feed.
+     *
+     * @param item the item to hide or unhide.
+     * @param shouldHide whether the item should be hidden or unhidden.
+     */
+    suspend fun hideItem(item: EchoMediaItem, shouldHide: Boolean)
+
+    /**
+     * Checks if a item is hidden.
+     *
+     * @param item the item to check.
+     * @return true if the track is hidden, false otherwise.
+     */
+    suspend fun isItemHidden(item: EchoMediaItem): Boolean
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\HomeFeedClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.MusicExtension
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Shelf
+
+/**
+ * Used to show the home feed and get its tabs.
+ *
+ * @see Feed
+ * @see MusicExtension
+ */
+interface HomeFeedClient {
+
+    /**
+     * Gets the home feed.
+     * Checkout [Feed] for more information.
+     */
+    suspend fun loadHomeFeed(): Feed<Shelf>
+}
+
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\LibraryFeedClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.MusicExtension
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Shelf
+
+/**
+ * Used to show the library feed and get its tabs.
+ *
+ * @see Feed
+ * @see MusicExtension
+ */
+interface LibraryFeedClient {
+
+    /**
+     * Gets the library feed.
+     * Checkout [Feed] for more information.
+     */
+    suspend fun loadLibraryFeed(): Feed<Shelf>
+
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\LikeClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+
+/**
+ * Used to like or unlike a item. with the [EchoMediaItem.isLikeable] set to true.
+ */
+interface LikeClient {
+    /**
+     * Likes or unlikes a item.
+     *
+     * @param item the item to like or unlike.
+     * @param shouldLike whether the item should be liked or unliked.
+     */
+    suspend fun likeItem(item: EchoMediaItem, shouldLike: Boolean)
+
+    /**
+     * Checks if a item is liked.
+     *
+     * @param item the item to check.
+     * @return true if the item is liked, false otherwise.
+     */
+    suspend fun isItemLiked(item: EchoMediaItem): Boolean
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\LoginClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.helpers.WebViewRequest
+import com.joaomagdaleno.music_hub.common.models.User
+
+/**
+ * To be implemented by the extension to provide login functionality.
+ *
+ * Do not implement this interface directly, use the sub-interfaces.
+ * The extension can implement all of the sub-interfaces.
+ *
+ * @see [WebView]
+ * @see [CustomInput]
+ */
+sealed interface LoginClient {
+
+
+    /**
+     * Interface when the login requires a webview.
+     *
+     * The extension should provide the [webViewRequest]
+     *
+     * @see [WebViewRequest]
+     */
+    interface WebView : LoginClient {
+
+        /**
+         * The request to be made to the webview, should return a list of users.
+         *
+         * The [WebViewRequest.maxTimeout] is ignored for login.
+         *
+         * @see WebViewRequest
+         * @see LoginClient.WebView
+         */
+        val webViewRequest: WebViewRequest<List<User>>
+    }
+
+    /**
+     * To be implemented when the login screen has custom text input fields.
+     *
+     * The extension needs to provide the [forms].
+     */
+    interface CustomInput : LoginClient {
+
+        /**
+         * List of forms to be displayed on the login screen.
+         *
+         * @see Form
+         * @see LoginClient.CustomInput
+         */
+        val forms: List<Form>
+
+        /**
+         * Called when the user submits the login form.
+         *
+         * @param data A map of the input fields with the key as the `key` from the `InputField` and the value as the user input
+         *
+         * @return A list of users that are logged in
+         *
+         * @see LoginClient.CustomInput
+         */
+        suspend fun onLogin(key: String, data: Map<String, String?>): List<User>
+    }
+
+    /**
+     * Represents a form for the login screen.
+     *
+     * @param key The key to be used to identify the `data` in the `onLogin` method
+     * @param label The label to be displayed for the form
+     * @param icon The icon to be displayed for the form
+     * @param inputFields The list of input fields to be displayed in the form
+     *
+     * @see InputField
+     * @see LoginClient.CustomInput
+     */
+    data class Form(
+        val key: String,
+        val label: String,
+        val icon: InputField.Type,
+        val inputFields: List<InputField>,
+    )
+
+    /**
+     * Represents an input field for the login screen.
+     *
+     * @param type The type of the input field
+     * @param key The key to be used in the `data` map in the `onLogin` method
+     * @param label The label to be displayed for the input field
+     * @param isRequired If the field is required
+     * @param regex The regex to be used for validation of the input field
+     */
+    data class InputField(
+        val type: Type,
+        val key: String,
+        val label: String,
+        val isRequired: Boolean,
+        val regex: Regex? = null
+    ) {
+        enum class Type {
+            Email, Username, Password, Number, Url, Misc
+        }
+    }
+
+    /**
+     * Called when the extension starts or when the user changes.
+     * `null` if no user is logged in (can also be Incognito mode)
+     */
+    fun setLoginUser(user: User?)
+
+    /**
+     * To be called when any other extension needs the current user.
+     * Be sure to remove any sensitive data.
+     */
+    suspend fun getCurrentUser(): User?
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\LyricsClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.LyricsExtension
+import com.joaomagdaleno.music_hub.common.MusicExtension
+import com.joaomagdaleno.music_hub.common.helpers.PagedData
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Lyrics
+import com.joaomagdaleno.music_hub.common.models.Track
+
+/**
+ * Used to get the lyrics for track.
+ *
+ * Can be implemented by both:
+ * - [MusicExtension]
+ * - [LyricsExtension]
+ *
+ * To support lyrics search from user query. Use [LyricsSearchClient] instead.
+ *
+ * @see Lyrics
+ * @see Track
+ * @see PagedData
+ */
+interface LyricsClient : ExtensionClient {
+
+    /**
+     * Searches for the unloaded lyrics of a track.
+     *
+     * @param clientId the client id to use for the search.
+     * @param track the track to search the lyrics for.
+     * @return the paged lyrics.
+     *
+     * @see Lyrics
+     * @see Track
+     * @see PagedData
+     */
+    suspend fun searchTrackLyrics(clientId: String, track: Track): Feed<Lyrics>
+
+    /**
+     * Loads the unloaded lyrics.
+     *
+     * @param lyrics the lyrics to load.
+     * @return the loaded lyrics.
+     *
+     * @see Lyrics
+     */
+    suspend fun loadLyrics(lyrics: Lyrics): Lyrics
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\LyricsSearchClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.helpers.PagedData
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Lyrics
+
+/**
+ * Used to search for lyrics.
+ *
+ * @see Lyrics
+ * @see PagedData
+ */
+interface LyricsSearchClient : LyricsClient {
+    /**
+     * Searches for lyrics.
+     *
+     * @param query the query to search for.
+     * @return the paged lyrics.
+     *
+     * @see Lyrics
+     * @see PagedData
+     */
+    suspend fun searchLyrics(query: String): Feed<Lyrics>
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\PlaylistClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.helpers.PagedData
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Playlist
+import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.common.models.Track
+
+/**
+ * Used to show the playlist and get its tracks.
+ *
+ * @see Playlist
+ * @see Track
+ * @see Feed
+ */
+interface PlaylistClient {
+
+    /**
+     * Loads a playlist.
+     *
+     * @param playlist the playlist to load.
+     * @return the loaded playlist.
+     *
+     * @see Playlist
+     */
+    suspend fun loadPlaylist(playlist: Playlist): Playlist
+
+    /**
+     * Loads the tracks of a playlist.
+     *
+     * @param playlist the playlist to load the tracks of.
+     * @return the paged tracks.
+     *
+     * @see PagedData
+     * @see Track
+     */
+    suspend fun loadTracks(playlist: Playlist): Feed<Track>
+
+    /**
+     * Gets the feed of a playlist.
+     *
+     * @param playlist the playlist to get the feed of.
+     * @return the feed of the playlist, or null if not available.
+     *
+     * @see Feed
+     */
+    suspend fun loadFeed(playlist: Playlist): Feed<Shelf>?
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\PlaylistEditClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.models.Playlist
+import com.joaomagdaleno.music_hub.common.models.Track
+
+/**
+ * Used to allow editing of an editable playlist.
+ *
+ * - To allow editing of cover art, use [PlaylistEditCoverClient].
+ * - To allow editing the privacy of a playlist, use [PlaylistEditPrivacyClient].
+ * - To listen to changes in the playlist editor, use [PlaylistEditorListenerClient].
+ *
+ * @see Playlist.isEditable
+ */
+interface PlaylistEditClient : PlaylistClient {
+
+    /**
+     * Lists all the editable playlists.
+     *
+     * @param track the track to show the editable playlists for.
+     * @return a list playlists that are editable with a boolean indicating if the track is in the playlist.
+     *
+     * @see Playlist
+     */
+    suspend fun listEditablePlaylists(track: Track?): List<Pair<Playlist, Boolean>>
+
+    /**
+     * Creates a new playlist.
+     *
+     * @param title the title of the playlist.
+     * @param description the description of the playlist.
+     * @return the created playlist.
+     *
+     * @see Playlist
+     */
+    suspend fun createPlaylist(title: String, description: String?): Playlist
+
+    /**
+     * Deletes a playlist.
+     *
+     * @param playlist the playlist to delete.
+     *
+     * @see Playlist
+     */
+    suspend fun deletePlaylist(playlist: Playlist)
+
+    /**
+     * Edits the metadata of a playlist.
+     *
+     * @param playlist the playlist to edit.
+     * @param title the new title of the playlist.
+     * @param description the new description of the playlist.
+     */
+    suspend fun editPlaylistMetadata(playlist: Playlist, title: String, description: String?)
+
+    /**
+     * Adds tracks to a playlist.
+     *
+     * @param playlist the playlist to add the tracks to.
+     * @param tracks the tracks in the playlist.
+     * @param index the index to add the tracks at.
+     * @param new the new tracks to add.
+     */
+    suspend fun addTracksToPlaylist(
+        playlist: Playlist, tracks: List<Track>, index: Int, new: List<Track>
+    )
+
+    /**
+     * Removes tracks from a playlist.
+     *
+     * @param playlist the playlist to remove the tracks from.
+     * @param tracks the tracks in the playlist.
+     * @param indexes the indexes of the tracks to remove.
+     */
+    suspend fun removeTracksFromPlaylist(
+        playlist: Playlist, tracks: List<Track>, indexes: List<Int>
+    )
+
+    /**
+     * Moves a track in a playlist.
+     *
+     * @param playlist the playlist to move the track in.
+     * @param tracks the tracks in the playlist.
+     * @param fromIndex the index to move the tracks from.
+     * @param toIndex the index to move the tracks to.
+     */
+    suspend fun moveTrackInPlaylist(
+        playlist: Playlist, tracks: List<Track>, fromIndex: Int, toIndex: Int
+    )
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\PlaylistEditCoverClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.models.Playlist
+import java.io.File
+
+/**
+ * Used to allow editing the cover of a playlist.
+ *
+ * @see PlaylistEditClient
+ */
+interface PlaylistEditCoverClient : PlaylistEditClient {
+
+    /**
+     * Edit the cover of a playlist.
+     *
+     * @param playlist the playlist to edit the cover of.
+     * @param cover the new cover of the playlist, or null if user removed the cover.
+     */
+    suspend fun editPlaylistCover(playlist: Playlist, cover: File?)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\PlaylistEditPrivacyClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.models.Playlist
+
+/**
+ * Used to edit the privacy of a playlist.
+ *
+ * @see Playlist.isPrivate
+ * @see PlaylistEditClient
+ */
+interface PlaylistEditPrivacyClient : PlaylistEditClient {
+    /**
+     * Sets the privacy of a playlist.
+     *
+     * @param playlist the playlist to set the privacy of.
+     * @param isPrivate whether the playlist should be private.
+     */
+    suspend fun setPrivacy(playlist: Playlist, isPrivate: Boolean)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\PlaylistEditorListenerClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.models.Playlist
+import com.joaomagdaleno.music_hub.common.models.Track
+
+/**
+ * Used to listen to playlist editor events.
+ *
+ * @see PlaylistEditClient
+ */
+interface PlaylistEditorListenerClient : PlaylistEditClient {
+
+    /**
+     * Called when entering the playlist editor.
+     *
+     * @param playlist the playlist being edited.
+     * @param tracks the tracks in the playlist.
+     */
+    suspend fun onEnterPlaylistEditor(playlist: Playlist, tracks: List<Track>)
+
+    /**
+     * Called when exiting the playlist editor.
+     *
+     * @param playlist the playlist being edited.
+     * @param tracks the tracks in the playlist.
+     */
+    suspend fun onExitPlaylistEditor(playlist: Playlist, tracks: List<Track>)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\QuickSearchClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.MusicExtension
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.QuickSearchItem
+
+/**
+ * Used to show search feed with a custom quick search implementation.
+ *
+ * @see QuickSearchItem
+ * @see Feed
+ * @see MusicExtension
+ */
+interface QuickSearchClient : SearchFeedClient {
+    /**
+     * Used for quick searching (suggestions below the search bar).
+     * This is a lightweight search that returns a list of items
+     *
+     * @param query the query to search for, will be empty if the user hasn't typed anything.
+     * @return the quick search items.
+     *
+     * @see QuickSearchItem
+     */
+    suspend fun quickSearch(query: String): List<QuickSearchItem>
+
+    /**
+     * Deletes a quick search item.
+     *
+     * @param item the item to delete.
+     */
+    suspend fun deleteQuickSearch(item: QuickSearchItem)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\RadioClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Radio
+import com.joaomagdaleno.music_hub.common.models.Track
+
+/**
+ * Used to load the radio for track that is currently playing
+ * and to show radio buttons for albums, artists, users and playlists.
+ *
+ * @see Radio
+ */
+interface RadioClient {
+
+    /**
+     * Loads a radio.
+     *
+     * @param radio the radio to load.
+     * @return the loaded radio.
+     *
+     * @see Radio
+     */
+    suspend fun loadRadio(radio: Radio): Radio
+
+    /**
+     * Loads the tracks for a radio.
+     *
+     * @param radio the radio to load the tracks of.
+     * @return the paged tracks.
+     *
+     * @see Feed
+     */
+    suspend fun loadTracks(radio: Radio): Feed<Track>
+
+    /**
+     * Creates a radio for a media item with [EchoMediaItem.isRadioSupported] set to true.
+     *
+     * If [item] is a [Track]. Make sure the radio tracks does not include this track.
+     *
+     * @param item the media item to create the radio for.
+     * @param context the context of the item. Only available for [Track].
+     * @return the created radio.
+     *
+     * @see EchoMediaItem
+     * @see Radio
+     * @see Track
+     */
+    suspend fun radio(item: EchoMediaItem, context: EchoMediaItem?): Radio
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\SaveClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.MusicExtension
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+
+/**
+ * Used to save media items with [EchoMediaItem.isSaveable] set to true to the library
+ * @see EchoMediaItem.isSaveable
+ * @see LibraryFeedClient
+ * @see MusicExtension
+ */
+interface SaveClient {
+
+    /**
+     * Saves or removes a media item from the library.
+     *
+     * @param item the media item to save or remove.
+     * @param shouldSave whether the media item should be saved or removed.
+     */
+   suspend fun saveToLibrary(item: EchoMediaItem, shouldSave:Boolean)
+
+    /**
+     * Checks if a media item is saved to the library.
+     *
+     * @param item the media item to check.
+     * @return whether the media item is saved to the library.
+     */
+   suspend fun isItemSaved(item: EchoMediaItem) : Boolean
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\SearchFeedClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.MusicExtension
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Shelf
+
+/**
+ * Used to show the search the feed.
+ *
+ * @see Feed
+ * @see MusicExtension
+ */
+interface SearchFeedClient {
+
+    /**
+     * Gets the search feed.
+     *
+     * @param query the query to search for, will be empty if the user hasn't typed anything.
+     * @return the feed.
+     *
+     * @see Feed
+     */
+    suspend fun loadSearchFeed(query: String): Feed<Shelf>
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\SettingsChangeListenerClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.providers.SettingsProvider
+import com.joaomagdaleno.music_hub.common.settings.Setting
+import com.joaomagdaleno.music_hub.common.settings.Settings
+
+/**
+ * A client that listens to changes in the extension's [Settings].
+ */
+interface SettingsChangeListenerClient : SettingsProvider {
+    /**
+     * Called when the extension's [Settings] have changed or when a [Setting] has been clicked.
+     *
+     * @param settings The new [Settings].
+     * @param key The key of the setting that has changed or clicked. Null if all settings have changed.
+     */
+    suspend fun onSettingsChanged(settings: Settings, key: String?)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\ShareClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+
+/**
+ * Used for getting a link to share media items with [EchoMediaItem.isShareable] set to true.
+ */
+interface ShareClient {
+    /**
+     * When the user wants to share the given media item
+     *
+     * @param item The media item to share
+     * @return url of the shared item
+     */
+    suspend fun onShare(item: EchoMediaItem): String
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\TrackChapterClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.models.Chapter
+import com.joaomagdaleno.music_hub.common.models.Track
+
+/**
+ * Used to load [Chapter]s for a track.
+ *
+ * @see Track
+ */
+interface TrackChapterClient {
+
+    /**
+     * Gets the chapters for a track.
+     *
+     * @param track the track to get the chapters of.
+     * @return the list of chapters for the track.
+     *
+     * @see Chapter
+     */
+    suspend fun getChapters(track: Track) : List<Chapter>
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\TrackClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.MusicExtension
+import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.common.models.Streamable
+import com.joaomagdaleno.music_hub.common.models.Track
+
+/**
+ * Used to load track and their media to allow streaming.
+ *
+ * @see MusicExtension
+ */
+interface TrackClient {
+
+    /**
+     * Loads an unloaded track.
+     * Make sure the [track] contains at least one [Track.servers] in [Track.streamables]
+     *
+     * @param track the track to load.
+     * @param isDownload whether the track is being downloaded.
+     * @return the loaded track.
+     *
+     * @see Track
+     */
+    suspend fun loadTrack(track: Track, isDownload: Boolean): Track
+
+    /**
+     * Loads the media of a streamable.
+     *
+     * @param streamable the streamable to load the media of.
+     * @param isDownload whether the media is being downloaded.
+     * @return the media of the streamable.
+     *
+     * @see Streamable
+     * @see Streamable.Media
+     */
+    suspend fun loadStreamableMedia(streamable: Streamable, isDownload: Boolean): Streamable.Media
+
+    /**
+     * Gets the shelves of a track.
+     *
+     * @param track the track to get the shelves of.
+     * @return the feed containing the shelves, or null if not available.
+     *
+     * @see Feed
+     */
+    suspend fun loadFeed(track: Track): Feed<Shelf>?
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\TrackerClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.MusicExtension
+import com.joaomagdaleno.music_hub.common.TrackerExtension
+import com.joaomagdaleno.music_hub.common.models.TrackDetails
+
+/**
+ * Used to track the playback of a track.
+ *
+ * You can override the following methods to get the track details:
+ * - [onTrackChanged]
+ * - [onPlayingStateChanged]
+ *
+ * Can be implemented by both:
+ * - [MusicExtension]
+ * - [TrackerExtension]
+ *
+ * @see TrackerMarkClient
+ */
+interface TrackerClient : ExtensionClient {
+
+    /**
+     * Called when the player changes its current track.
+     *
+     *  Note: This method will be called again if the track was played again from the beginning.
+     *
+     * @param details the details of the track that is playing, or null if player is empty.
+     */
+    suspend fun onTrackChanged(details: TrackDetails?)
+
+    /**
+     * Called when the player changes its playing state or when the position changes.
+     *
+     * @param details the details of the track that is playing, or null if the player is empty.
+     */
+    suspend fun onPlayingStateChanged(details: TrackDetails?, isPlaying: Boolean)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\clients\TrackerMarkClient.kt ----------
+package com.joaomagdaleno.music_hub.common.clients
+
+import com.joaomagdaleno.music_hub.common.models.TrackDetails
+
+/**
+ * An interface for a tracker client that marks tracks as played after a certain duration.
+ *
+ * This interface extends [TrackerClient] and provides methods to determine when a track should be
+ * marked as played based on its duration.
+ */
+interface TrackerMarkClient : TrackerClient {
+
+    /**
+     * The duration in milliseconds after which the track should be marked as played (defaults to null).
+     * If null, the [onMarkAsPlayed] method will not be called.
+     *
+     * If you want a percentage of the song, you can calculate it based on the track's duration in
+     * [onTrackChanged]
+     */
+    suspend fun getMarkAsPlayedDuration(details: TrackDetails): Long?
+
+    /**
+     * Called after the track has been streamed for [getMarkAsPlayedDuration] milliseconds.
+     * This method will not be called if [getMarkAsPlayedDuration] is null.
+     *
+     * @param details the details of the track that was marked as played.
+     */
+    suspend fun onMarkAsPlayed(details: TrackDetails)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\helpers\ClientException.kt ----------
+package com.joaomagdaleno.music_hub.common.helpers
+
+import com.joaomagdaleno.music_hub.common.clients.LoginClient
+
+/**
+ * A base exception class for handled client exceptions,
+ * the extension can throw other exceptions too, but they will be handled by the App.
+ *
+ * The app handles the following exceptions:
+ * - [LoginRequired] - When the user is not logged in
+ * - [Unauthorized] - When the user is not authorized, will log out the user.
+ * - [NotSupported] - When the extension does not support an operation.
+ *
+ * @see [LoginClient]
+ */
+sealed class ClientException : Exception() {
+    /**
+     * To be thrown when the some operation requires user to be logged in.
+     */
+    open class LoginRequired : ClientException()
+
+    /**
+     * To be thrown when the user is not authorized to perform an operation.
+     * The user will be logged out from the app.
+     *
+     * @param userId The id of the user
+     */
+    class Unauthorized(val userId: String) : LoginRequired()
+
+    /**
+     * To be thrown when the extension does not support an operation.
+     *
+     * @param operation The name of the operation that is not supported
+     */
+    class NotSupported(val operation: String) : ClientException()
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\helpers\ContinuationCallback.kt ----------
+package com.joaomagdaleno.music_hub.common.helpers
+
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CompletionHandler
+import kotlinx.coroutines.suspendCancellableCoroutine
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.Response
+import java.io.IOException
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+
+class ContinuationCallback(
+    private val call: Call,
+    private val continuation: CancellableContinuation<Response>
+) : Callback, CompletionHandler {
+
+    override fun onResponse(call: Call, response: Response) {
+        continuation.resume(response)
+    }
+
+    override fun onFailure(call: Call, e: IOException) {
+        if (!call.isCanceled()) {
+            continuation.resumeWithException(e)
+        }
+    }
+
+    override fun invoke(cause: Throwable?) {
+        try {
+            call.cancel()
+        } catch (_: Throwable) {}
+    }
+
+    companion object {
+        /**
+         * Suspends the current coroutine,
+         * performs the network call and resumes the coroutine with the response
+         */
+        suspend inline fun Call.await(): Response {
+            return suspendCancellableCoroutine { continuation ->
+                val callback = ContinuationCallback(this, continuation)
+                enqueue(callback)
+                continuation.invokeOnCancellation(callback)
+            }
+        }
+    }
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\helpers\Injectable.kt ----------
+package com.joaomagdaleno.music_hub.common.helpers
+
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
+class Injectable<T>(
+    private val getter: () -> T,
+    private var injections: List<suspend T.() -> Unit>
+) {
+
+    val data = lazy { runCatching { getter() } }
+    private val mutex = Mutex()
+    val value: T?
+        get() = data.value.getOrNull()
+
+
+    suspend fun value() = runCatching {
+        mutex.withLock {
+            val t = data.value.getOrThrow()
+            injections.forEach { it(t) }
+            injections = emptyList()
+            injectionsMap.values.forEach { it(t) }
+            injectionsMap.clear()
+            t
+        }
+    }
+
+    private val injectionsMap = mutableMapOf<String, suspend T.() -> Unit>()
+    suspend fun injectOrRun(id: String, block: suspend T.() -> Unit) {
+        if (data.isInitialized()) data.value.getOrThrow().block()
+        else mutex.withLock {
+            injectionsMap[id] = block
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun <R> casted() = run {
+        injections = injections + listOf { this as R }
+        this as Injectable<R>
+    }
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\helpers\Page.kt ----------
+package com.joaomagdaleno.music_hub.common.helpers
+
+import kotlinx.serialization.Serializable
+
+/**
+ * Represents a page of data, with a continuation token for pagination
+ *
+ * @param T The type of data items
+ * @property data The list of data items
+ * @property continuation The next continuation token for pagination. If null, there are no more pages
+ */
+@Serializable
+data class Page<T : Any>(
+    val data: List<T>,
+    val continuation: String?
+)
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\helpers\PagedData.kt ----------
+package com.joaomagdaleno.music_hub.common.helpers
+
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
+/**
+ * A class that represents a paginated data. Used to load data in chunks.
+ *
+ * If the data is continuous, use [Continuous].
+ * ```kotlin
+ * val data = PagedData.Continuous { continuation ->
+ *     val (tracks, nextContinuation) = api.loadTracks(continuation)
+ *     Page(tracks, nextContinuation)
+ * }
+ * ```
+ *
+ * If the data is not continuous, you can just use [Single].
+ * ```kotlin
+ * val data = PagedData.Single { api.loadTracks() }
+ * ```
+ *
+ * If you want to concatenate multiple paged data, use [Concat].
+ * ```kotlin
+ * val data = PagedData.Concat(
+ *     PagedData.Single { api.loadTracks() },
+ *     PagedData.Continuous { api.loadTracksPage(it) }
+ *     // Add more sources here
+ * )
+ * ```
+ * @param T The type of data
+ */
+sealed class PagedData<T : Any> {
+
+    /**
+     * To clear all the cache of paged data
+     */
+    abstract fun clear()
+
+    /**
+     * To load all the data
+     *
+     * @return A list of all the data
+     */
+    suspend fun loadAll(): List<T> {
+        return mutex.withLock { loadAllInternal() }
+    }
+
+    abstract suspend fun loadAllInternal(): List<T>
+    abstract suspend fun loadListInternal(continuation: String?): Page<T>
+
+    private val mutex = Mutex()
+    suspend fun loadPage(continuation: String?): Page<T> {
+        return mutex.withLock { loadListInternal(continuation) }
+    }
+
+    abstract fun invalidate(continuation: String?)
+
+    abstract fun <R : Any> map(block: suspend (Result<List<T>>) -> List<R>): PagedData<R>
+
+    /**
+     * A class representing a single page of data.
+     *
+     * @param load The function to load the list of data
+     */
+    class Single<T : Any>(
+        val load: suspend () -> List<T>
+    ) : PagedData<T>() {
+        private var loaded = false
+        val items = mutableListOf<T>()
+        private suspend fun loadList(): List<T> {
+            if (loaded) return items
+            items.addAll(load())
+            loaded = true
+            return items
+        }
+
+        override fun clear() {
+            items.clear()
+            loaded = false
+        }
+
+        /**
+         * To load all the data
+         *
+         * @return A list of all the data
+         */
+        override suspend fun loadAllInternal() = loadList()
+        override suspend fun loadListInternal(continuation: String?): Page<T> {
+            return Page(loadList(), null)
+        }
+
+        override fun invalidate(continuation: String?) {
+            clear()
+        }
+
+        override fun <R : Any> map(block: suspend (Result<List<T>>) -> List<R>): PagedData<R> {
+            return Single { block(runCatching { load() }) }
+        }
+    }
+
+    /**
+     * A class representing a continuous page of data.
+     *
+     * This class is used to load data in chunks.
+     * It takes a function that loads a page of data, with the given continuation token
+     * and returns a [Page] with the next continuation token.
+     *
+     * If next continuation token is `null`, it means there is no more data to load.
+     * The initial call to load will have a `null` continuation token.
+     *
+     * Example for using with an API that uses Strings as continuation tokens:
+     * ```kotlin
+     * val data = PagedData.Continuous { continuation ->
+     *   val (tracks, nextCont) = api.loadTracks(continuation)
+     *   Page(tracks, nextCont)
+     * }
+     * ```
+     *
+     * Example for using with an API that uses Integers as continuation tokens:
+     * ```kotlin
+     * val totalTracks = api.getTotalTracks()
+     * val data = PagedData.Continuous { continuation ->
+     *    val contInt = continuation?.toIntOrNull() ?: 0
+     *    val tracks = api.loadTracks(contInt)
+     *    val nextContinuation = contInt + 10
+     *    if (nextContinuation >= totalTracks) Page(tracks, null)
+     *    else Page(tracks, nextContinuation)
+     * }
+     * ```
+     * @param load The function to load a [Page] for a given continuation token
+     */
+    class Continuous<T : Any>(
+        val load: suspend (continuation: String?) -> Page<T>,
+    ) : PagedData<T>() {
+
+        private val itemMap = mutableMapOf<String?, Page<T>>()
+        override suspend fun loadListInternal(continuation: String?): Page<T> {
+            val page = itemMap.getOrPut(continuation) {
+                val (data, cont) = load(continuation)
+                Page(data, cont)
+            }
+            return page
+        }
+
+        override fun invalidate(continuation: String?) {
+            itemMap.remove(continuation)
+        }
+
+        override fun clear() = itemMap.clear()
+
+        override suspend fun loadAllInternal(): List<T> {
+            val list = mutableListOf<T>()
+            val (data, continuation) = loadListInternal(null)
+            list.addAll(data)
+            var cont = continuation
+            while (cont != null) {
+                val page = loadListInternal(cont)
+                list.addAll(page.data)
+                cont = page.continuation
+            }
+            return list
+        }
+
+        override fun <R : Any> map(block: suspend (Result<List<T>>) -> List<R>): PagedData<R> {
+            return Continuous { continuation ->
+                val result = runCatching { load(continuation) }
+                Page(block(result.map { it.data }), result.getOrNull()?.continuation)
+            }
+        }
+    }
+
+    /**
+     * A class representing a concatenation of multiple data sources.
+     *
+     * This class is used to concatenate multiple data sources into a single source.
+     * It takes multiple [PagedData] sources and loads them one after the other.
+     *
+     * Example:
+     * ```kotlin
+     * val data = PagedData.Concat(
+     *     PagedData.Single { api.loadShelves() },
+     *     PagedData.Continuous { api.loadShelvesPage(it) },
+     *     // Add more sources here
+     * )
+     * ```
+     * @param sources The list of [PagedData] sources to concatenate
+     */
+    class Concat<T : Any>(
+        private vararg val sources: PagedData<T>
+    ) : PagedData<T>() {
+        init {
+            require(sources.isNotEmpty()) { "Concat must have at least one source" }
+        }
+
+        override fun clear() = sources.forEach { it.clear() }
+        override suspend fun loadAllInternal(): List<T> = sources.flatMap { it.loadAll() }
+
+        override fun <R : Any> map(block:suspend (Result<List<T>>) -> List<R>): PagedData<R> {
+            return Concat(*sources.map { it.map(block) }.toTypedArray())
+        }
+
+        private fun splitContinuation(continuation: String?): Pair<Int, String?> {
+            if (continuation == null) return 0 to null
+            val index = continuation.substringBefore("_").toIntOrNull() ?: -1
+            val token = continuation.substringAfter("_")
+            return index to token
+        }
+
+        private fun combine(index: Int, token: String?): String {
+            return "${index}_${token ?: ""}"
+        }
+
+        override suspend fun loadListInternal(continuation: String?): Page<T> {
+            val (index, token) = splitContinuation(continuation)
+            val source = sources.getOrNull(index) ?: return Page(emptyList(), null)
+            val page = source.loadPage(token)
+            return if (page.continuation != null) Page(page.data, combine(index, page.continuation))
+            else Page(page.data, combine(index + 1, null))
+        }
+
+        override fun invalidate(continuation: String?) {
+            val (index, token) = splitContinuation(continuation)
+            val source = sources.getOrNull(index)
+            source?.invalidate(token)
+        }
+    }
+
+    class Suspend<T : Any>(
+        private val getter: suspend () -> PagedData<T>
+    ) : PagedData<T>() {
+        private val mutex = Mutex()
+        private var _data: PagedData<T>? = null
+        private suspend fun data(): PagedData<T> {
+            return _data ?: mutex.withLock { getter() }.also { _data = it }
+        }
+
+        override fun clear() {
+            _data?.clear()
+        }
+
+        override suspend fun loadAllInternal(): List<T> {
+            return data().loadAll()
+        }
+
+        override fun <R : Any> map(block: suspend (Result<List<T>>) -> List<R>): PagedData<R> {
+            return Suspend { data().map(block) }
+        }
+
+        override suspend fun loadListInternal(continuation: String?): Page<T> {
+            return data().loadPage(continuation)
+        }
+
+        override fun invalidate(continuation: String?) {
+            _data?.invalidate(continuation)
+        }
+    }
+
+    companion object {
+        fun <T : Any> empty() = Single<T> { emptyList() }
+    }
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\helpers\WebViewClient.kt ----------
+package com.joaomagdaleno.music_hub.common.helpers
+
+interface WebViewClient {
+    suspend fun await(
+        showWebView: Boolean, reason: String, request: WebViewRequest<String>
+    ): Result<String?>
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\helpers\WebViewRequest.kt ----------
+package com.joaomagdaleno.music_hub.common.helpers
+
+import com.joaomagdaleno.music_hub.common.models.NetworkRequest
+
+/**
+ * Use this to access the webview from the extension. There are 3 types of requests:
+ * - [Headers] - Used to intercept requests made by the webview and get the headers
+ * - [Cookie] - Used to get the cookies stored in the webview
+ * - [Evaluate] - Used to evaluate javascript in the webview
+ *
+ * The extension can implement all of the sub-interfaces, and the onStop methods
+ * will be called in this order of [Headers], [Cookie], [Evaluate].
+ *
+ * The [initialUrl] is the URL to be loaded in the webview.
+ * The [stopUrlRegex] is the regex to match the URL when the request is assumed to be complete.
+ */
+sealed interface WebViewRequest<T> {
+    /**
+     * The initial URL to be loaded in the webview.
+     */
+    val initialUrl: NetworkRequest
+
+    /**
+     * The regex to match the URL when the request is assumed to be complete.
+     * Checks on all requests made by the webview.
+     */
+    val stopUrlRegex: Regex
+
+    /**
+     * The maximum time to wait for data to be returned from the webview.
+     * This is in milliseconds.
+     */
+    val maxTimeout: Long
+        get() = 15_000L // Default to 15 seconds
+
+    /**
+     * If you want to disable caching of the webview data, set this to true.
+     */
+    val dontCache: Boolean
+        get() = false // Default to false, meaning the webview will cache the data
+
+    /**
+     * If you want to get the headers from all requests made by the webview, use this.
+     *
+     * @see WebViewRequest
+     */
+    interface Headers<T> : WebViewRequest<T> {
+        /**
+         * The regex to match the URL to intercept requests made by the webview for the headers.
+         */
+        val interceptUrlRegex: Regex
+
+        /**
+         * Called when the webview stops loading a URL with the [stopUrlRegex]
+         *
+         * You can convert the data returned from the javascript to [T].
+         *
+         * @param requests The requests that were intercepted with [interceptUrlRegex]
+         *
+         * @return The data to be passed to the next step
+         */
+        suspend fun onStop(requests: List<NetworkRequest>): T?
+    }
+
+    /**
+     * If you want to get the cookies stored in the webview, use this.
+     *
+     * Cookies are cleared when the request is completed.
+     *
+     * @see WebViewRequest
+     */
+    interface Cookie<T> : WebViewRequest<T> {
+        /**
+         * Receive the cookies stored from the webview.
+         *
+         * You can convert the cookies to [T].
+         *
+         * @param url The URL that the webview stopped at
+         * @param cookie The cookies stored in the webview
+         *
+         * @return The data to be passed to the next step
+         */
+        suspend fun onStop(url: NetworkRequest, cookie: String): T?
+    }
+
+    /**
+     * If you want to evaluate javascript in the webview, use this.
+     *
+     * The [javascriptToEvaluate] is evaluated when the webview stops loading a URL with the [stopUrlRegex]
+     * and the result is passed to the [onStop] method.
+     *
+     * You can also use [javascriptToEvaluateOnPageStart] to evaluate javascript when
+     * the webview starts loading a URL. Its result is not passed to the [onStop] method.
+     *
+     * The javascript code should be wrapped in a function that returns some data.
+     *
+     * @see WebViewRequest
+     */
+    interface Evaluate<T> : WebViewRequest<T> {
+
+        /**
+         * The javascript to be evaluated in the webview.
+         * Make sure this js code is wrapped in a function that can return some data.
+         */
+        val javascriptToEvaluate: String
+
+        /**
+         * The javascript to be evaluated when the webview starts loading a URL.
+         * This is useful for setting up the webview before it loads the URL.
+         *
+         * Make sure this js code is wrapped in a function
+         */
+        val javascriptToEvaluateOnPageStart: String?
+
+        /**
+         * Called when the webview stops loading a URL with the [stopUrlRegex] and the javascript
+         * is evaluated.
+         *
+         * You need to convert the data returned from the javascript to [T].
+         *
+         * @param url The URL that the webview stopped at
+         * @param data The data returned from the [javascriptToEvaluate]
+         *
+         * @return The data to be passed to the next step
+         */
+        suspend fun onStop(url: NetworkRequest, data: String?): T?
+    }
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\Album.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import com.joaomagdaleno.music_hub.common.clients.AlbumClient
+import com.joaomagdaleno.music_hub.common.clients.FollowClient
+import com.joaomagdaleno.music_hub.common.clients.HideClient
+import com.joaomagdaleno.music_hub.common.clients.LikeClient
+import com.joaomagdaleno.music_hub.common.clients.RadioClient
+import com.joaomagdaleno.music_hub.common.clients.SaveClient
+import com.joaomagdaleno.music_hub.common.clients.ShareClient
+import com.joaomagdaleno.music_hub.common.models.Album.Type.Book
+import com.joaomagdaleno.music_hub.common.models.Album.Type.Compilation
+import com.joaomagdaleno.music_hub.common.models.Album.Type.EP
+import com.joaomagdaleno.music_hub.common.models.Album.Type.LP
+import com.joaomagdaleno.music_hub.common.models.Album.Type.PreRelease
+import com.joaomagdaleno.music_hub.common.models.Album.Type.Show
+import com.joaomagdaleno.music_hub.common.models.Album.Type.Single
+import kotlinx.serialization.Serializable
+
+/**
+ * A data class representing an album
+ *
+ * @property id The id of the album
+ * @property title The title of the album
+ * @property type The [Type] of the album.
+ * @property cover The cover image of the album
+ * @property artists The artists of the album
+ * @property duration The duration of the album in milliseconds
+ * @property trackCount The total number of tracks in the album
+ * @property releaseDate The release date of the album
+ * @property label The publisher of the album
+ * @property description The description of the album
+ * @property background The background image of the album
+ * @property isExplicit Whether the album is explicit
+ * @property subtitle The subtitle of the album, used to display information under the title
+ * @property extras Any extra data you want to associate with the album
+ * @property isRadioSupported Whether the album can be used to create a radio. Checkout [RadioClient]
+ * @property isFollowable Whether the album can be followed. Checkout [FollowClient]
+ * @property isSaveable Whether the album can be saved to library. Checkout [SaveClient]
+ * @property isLikeable Whether the album can be liked. Checkout [LikeClient]
+ * @property isHideable Whether the album can be hidden. Checkout [HideClient]
+ * @property isShareable Whether the album can be shared. Checkout [ShareClient]
+ *
+ * @see AlbumClient
+ */
+@Serializable
+data class Album(
+    override val id: String,
+    override val title: String,
+    override val type: Type? = null,
+    override val cover: ImageHolder? = null,
+    override val artists: List<Artist> = listOf(),
+    override val trackCount: Long? = null,
+    override val duration: Long? = null,
+    val releaseDate: Date? = null,
+    override val description: String? = null,
+    override val background: ImageHolder? = cover,
+    override val label: String? = null,
+    override val isExplicit: Boolean = false,
+    override val subtitle: String? = null,
+    override val extras: Map<String, String> = mapOf(),
+    override val isRadioSupported: Boolean = true,
+    override val isFollowable: Boolean = false,
+    override val isSaveable: Boolean = true,
+    override val isLikeable: Boolean = false,
+    override val isHideable: Boolean = false,
+    override val isShareable: Boolean = true,
+) : EchoMediaItem.Lists {
+
+    override val date = releaseDate
+
+    override val subtitleWithOutE = subtitle ?: buildString {
+        append(artists.joinToString(", ") { it.name })
+    }.trim().ifBlank { null }
+
+    /**
+     * The type of the album.
+     * This can be actual album types like [PreRelease], [Single], [EP], [LP], [Compilation]
+     * or Special types like :
+     * - [Show] - Will represent the tracks as "Episodes"
+     * - [Book] - Will represent the tracks as "Chapters"
+     *
+     * Other types will be represented as "Songs"
+     */
+    enum class Type {
+        PreRelease, Single, EP, LP, Compilation, Show, Book
+    }
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\Artist.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import com.joaomagdaleno.music_hub.common.clients.ArtistClient
+import com.joaomagdaleno.music_hub.common.clients.FollowClient
+import com.joaomagdaleno.music_hub.common.clients.HideClient
+import com.joaomagdaleno.music_hub.common.clients.LikeClient
+import com.joaomagdaleno.music_hub.common.clients.RadioClient
+import com.joaomagdaleno.music_hub.common.clients.SaveClient
+import com.joaomagdaleno.music_hub.common.clients.ShareClient
+import kotlinx.serialization.Serializable
+
+/**
+ * A data class representing an artist
+ *
+ * @property id The id of the artist
+ * @property name The name of the artist
+ * @property cover The cover image of the artist
+ * @property bio The bio of the artist
+ * @property background The background image of the artist
+ * @property banners The banners of the artist (not used yet)
+ * @property subtitle The subtitle of the artist, used to display information under the name
+ * @property extras Any extra data you want to associate with the artist
+ * @property isRadioSupported Whether the artist can be used to create a radio. Checkout [RadioClient]
+ * @property isFollowable Whether the artist can be followed. Checkout [FollowClient]
+ * @property isSaveable Whether the artist can be saved to library. Checkout [SaveClient]
+ * @property isLikeable Whether the artist can be liked. Checkout [LikeClient]
+ * @property isHideable Whether the artist can be hidden. Checkout [HideClient]
+ * @property isShareable Whether the artist can be shared. Checkout [ShareClient]
+ *
+ * @see ArtistClient
+ */
+@Serializable
+data class Artist(
+    override val id: String,
+    val name: String,
+    override val cover: ImageHolder? = null,
+    val bio: String? = null,
+    override val background: ImageHolder? = cover,
+    val banners: List<ImageHolder> = listOf(),
+    override val subtitle: String? = null,
+    override val extras: Map<String, String> = mapOf(),
+    override val isRadioSupported: Boolean = true,
+    override val isFollowable: Boolean = true,
+    override val isSaveable: Boolean = true,
+    override val isLikeable: Boolean = false,
+    override val isHideable: Boolean = false,
+    override val isShareable: Boolean = true,
+) : EchoMediaItem {
+    override val title = name
+    override val description = bio
+    override val subtitleWithOutE = subtitle
+}
+
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\Chapter.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import com.joaomagdaleno.music_hub.common.models.Chapter.SkipType.ASK
+import com.joaomagdaleno.music_hub.common.models.Chapter.SkipType.NONE
+import com.joaomagdaleno.music_hub.common.models.Chapter.SkipType.SKIP
+import kotlinx.serialization.Serializable
+
+/**
+ * Represents a chapter in a track.
+ * @property name the name of the chapter.
+ * @property startTime the start time of the chapter in milliseconds.
+ * @property endTime the end time of the chapter in milliseconds, or null if it is not defined.
+ * @property skipType the type of skip behavior for the chapter.
+ */
+@Serializable
+data class Chapter(
+    val name: String,
+    val startTime: Long,
+    val endTime: Long? = null,
+    val skipType: SkipType = NONE,
+) {
+
+    /**
+     * Represents the type of skip behavior for a chapter.
+     * - [NONE] The chapter is not skipped.
+     * - [SKIP] The chapter is automatically skipped.
+     * - [ASK] The user is prompted whether to skip the chapter.
+     */
+    enum class SkipType {
+        NONE, SKIP, ASK
+    }
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\Date.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import kotlinx.serialization.Serializable
+import java.text.DateFormat
+import java.util.Calendar
+import java.util.Locale
+
+@Suppress("MemberVisibilityCanBePrivate")
+@Serializable
+data class Date(
+    val epochTimeMs: Long
+) : Comparable<Date> {
+
+    val calendar by lazy {
+        Calendar.getInstance()!!.apply {
+            timeInMillis = epochTimeMs
+        }
+    }
+
+    val date by lazy { calendar.time!! }
+
+    constructor(
+        year: Int,
+        month: Int? = null,
+        day: Int? = null,
+    ) : this(
+        Calendar.getInstance().apply {
+            set(year, (month ?: 1) - 1, day ?: 1)
+        }.timeInMillis
+    )
+
+    companion object {
+        fun Int.toYearDate() = Date(this)
+    }
+
+
+    val year: Int by lazy { calendar.get(Calendar.YEAR) }
+    val month: Int? by lazy {
+        val isFirstDayOfYear =
+            calendar.get(Calendar.MONTH) == Calendar.JANUARY && calendar.get(Calendar.DAY_OF_MONTH) == 1
+        if (!isFirstDayOfYear) calendar.get(Calendar.MONTH) + 1 else null
+    }
+
+    val day: Int? by lazy {
+        if (calendar.get(Calendar.DAY_OF_MONTH) == 1) null
+        else calendar.get(Calendar.DAY_OF_MONTH)
+    }
+
+    override fun compareTo(other: Date): Int {
+        return date.compareTo(other.date)
+    }
+
+    override fun toString(): String = when {
+        month == null || day == null -> year.toString()
+        else -> DateFormat.getDateInstance(DateFormat.SHORT, Locale.getDefault()).format(date)
+    }
+
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\DownloadContext.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import kotlinx.serialization.Serializable
+
+/**
+ * Download context for a track
+ *
+ * @param extensionId The extension that the track belongs to.
+ * @param track The track to download.
+ * @param sortOrder The order of the [track] in the [context].
+ * @param context The context of the media item, Album/Playlist/Artist.
+ */
+@Serializable
+data class DownloadContext(
+    val extensionId: String,
+    val track: Track,
+    val sortOrder: Int? = null,
+    val context: EchoMediaItem? = null
+)
+
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\EchoMediaItem.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import com.joaomagdaleno.music_hub.common.clients.FollowClient
+import com.joaomagdaleno.music_hub.common.clients.HideClient
+import com.joaomagdaleno.music_hub.common.clients.LikeClient
+import com.joaomagdaleno.music_hub.common.clients.RadioClient
+import com.joaomagdaleno.music_hub.common.clients.SaveClient
+import com.joaomagdaleno.music_hub.common.clients.ShareClient
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonClassDiscriminator
+
+/**
+ * A class representing a media item in Echo.
+ *
+ * Use [toShelf] to convert a media item to [Shelf.Item].
+ *
+ * Example:
+ * ```kotlin
+ * val track = api.getTrack("track_id")
+ * val shelfItem = mediaItem.toShelf()
+ * ```
+ * @property id The id of the media item
+ * @property title The title of the media item
+ * @property cover The cover image of the media item
+ * @property description A description of the media item, used to display additional information
+ * @property background The background image of the media item, used to display a background image
+ * @property subtitle The subtitle of the media item, used to display information under the title
+ * @property extras Any extra data you want to associate with the media item
+ * @property isFollowable Whether the media item can be followed. Checkout [FollowClient]
+ * @property isSaveable Whether the media item can be saved to library. Checkout [SaveClient]
+ * @property isLikeable Whether the media item can be liked. Checkout [LikeClient]
+ * @property isHideable Whether the media item can be hidden. Checkout [HideClient]
+ * @property isRadioSupported Whether the media item can be loaded to get [Radio]. Checkout [RadioClient]
+ * @property isShareable Whether the media item can be shared. Checkout [ShareClient]
+ *
+ * @see Track
+ * @see Artist
+ * @see User
+ * @see Album
+ * @see Playlist
+ * @see Radio
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@JsonClassDiscriminator("mediaItemType")
+@Serializable
+sealed interface EchoMediaItem {
+    val id: String
+    val title: String
+    val cover: ImageHolder?
+    val description: String?
+    val background: ImageHolder?
+    val subtitle: String?
+    val extras: Map<String, String>
+    val isRadioSupported: Boolean
+    val isFollowable: Boolean
+    val isSaveable: Boolean
+    val isLikeable: Boolean
+    val isHideable: Boolean
+    val isShareable: Boolean
+    val isExplicit: Boolean get() = false
+    val isPrivate: Boolean get() = false
+
+    @Serializable
+    sealed interface Lists : EchoMediaItem {
+        val artists: List<Artist>
+        val trackCount: Long?
+        val duration: Long? get() = null
+        val date: Date? get() = null
+        val label: String? get() = null
+        val type: Album.Type? get() = null
+
+        override val subtitleWithOutE
+            get() = subtitle ?: buildString {
+                append(artists.joinToString(", ") { it.name })
+            }.trim().ifBlank { null }
+    }
+
+
+    val subtitleWithOutE: String?
+
+    val subtitleWithE
+        get() = buildString {
+            if (isExplicit) append("\uD83C\uDD74 ")
+            append(subtitleWithOutE ?: "")
+        }.trim().ifBlank { null }
+
+    fun sameAs(other: EchoMediaItem): Boolean {
+        return this::class == other::class && id == other.id
+    }
+
+    fun toShelf() = Shelf.Item(this)
+
+    fun copyMediaItem(
+        id: String = this.id,
+        title: String = this.title,
+        cover: ImageHolder? = this.cover,
+        description: String? = this.description,
+        subtitle: String? = this.subtitle,
+        extras: Map<String, String> = this.extras,
+        isRadioSupported: Boolean = this.isRadioSupported,
+        isFollowable: Boolean = this.isFollowable,
+        isSaveable: Boolean = this.isSaveable
+    ): EchoMediaItem = when (this) {
+        is Artist -> copy(
+            id = id,
+            name = title,
+            cover = cover,
+            bio = description,
+            subtitle = subtitle,
+            extras = extras,
+            isRadioSupported = isRadioSupported,
+            isFollowable = isFollowable,
+            isSaveable = isSaveable
+        )
+
+        is Album -> copy(
+            id = id,
+            title = title,
+            cover = cover,
+            description = description,
+            subtitle = subtitle,
+            extras = extras,
+            isRadioSupported = isRadioSupported,
+            isFollowable = isFollowable,
+            isSaveable = isSaveable
+        )
+
+        is Playlist -> copy(
+            id = id,
+            title = title,
+            cover = cover,
+            description = description,
+            subtitle = subtitle,
+            extras = extras,
+            isRadioSupported = isRadioSupported,
+            isFollowable = isFollowable,
+            isSaveable = isSaveable
+        )
+
+        is Radio -> copy(
+            id = id,
+            title = title,
+            cover = cover,
+            description = description,
+            subtitle = subtitle,
+            extras = extras,
+            isFollowable = isFollowable,
+            isSaveable = isSaveable
+        )
+
+        is Track -> copy(
+            id = id,
+            title = title,
+            cover = cover,
+            description = description,
+            subtitle = subtitle,
+            extras = extras,
+            isRadioSupported = isRadioSupported,
+            isFollowable = isFollowable,
+            isSaveable = isSaveable
+        )
+    }
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\ExtensionType.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import com.joaomagdaleno.music_hub.common.Extension
+
+/**
+ * Enum class to define the type of extension
+ * @param feature the string used to identify the extension in the AndroidManifest uses-feature tag
+ *
+ * @see [Extension]
+ */
+enum class ExtensionType(val feature: String) {
+    MUSIC("music"),
+    TRACKER("tracker"),
+    LYRICS("lyrics"),
+    MISC("misc");
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\Feed.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import com.joaomagdaleno.music_hub.common.helpers.PagedData
+import kotlinx.serialization.Serializable
+
+/**
+ * Represents a feed of multiple [T] items, Used in various contexts like home, library, etc.
+ *
+ * ### Feeds without Tabs
+ * - The simplest way to create a feed is to show a list of [T] items, you can just do
+ * the following to convert a list of [T] items to a Feed:
+ * ```
+ * val feed = listOf<T>().toFeed()
+ * ```
+ *
+ * - If you want to show a feed that loads more stuff when scrolled to end, you need to use
+ * the [PagedData] class. This class allows you to load more items as the user scrolls.
+ * And You can use the following to convert a [PagedData] to a feed:
+ * ```
+ * val feed = pagedData.toFeed()
+ * ```
+ *
+ * ### Feeds with Tabs
+ * Feeds can have multiple [Tab] items, each representing a different category. When a tab is
+ * selected, the [getPagedData] is called with the selected tab to retrieve a pair of [PagedData]
+ * and [Buttons]. If the [tabs] list is empty, the getPagedData will be called with `null`.
+ * An example of a feed with tabs:
+ * ```
+ * val feed = Feed(
+ *      listOf("Tab1", "Tab2").map { Tab(it, it) }
+ *  ) { tab ->
+ *      val pagedData = when (tab?.id) {
+ *          "Tab1" -> loadPagedDataForTab1()
+ *          "Tab2" -> loadPagedDataForTab2()
+ *          else -> throw IllegalArgumentException("Unknown tab")
+ *      }
+ *      pagedData.toFeedData()
+ *  }
+ * ```
+ *
+ * ### Buttons And Background
+ * Feeds can also have [Buttons] shown below the tabs. Echo automatically handles searching and
+ * filtering depending on the data provided in the items. You can provide a custom track list to
+ * be used when play/shuffle button is clicked. You can send the buttons as `null`, if you want
+ * echo to use the default buttons for the feed. Use the [Buttons.EMPTY] to force a feed to have
+ * no buttons.
+ *
+ * An example of converting [PagedData] to [Feed.Data] with [Buttons]:
+ * ```
+ * val feedData = pagedData.toFeedData(
+ *     buttons = Feed.Buttons(showPlayAndShuffle = true),
+ *     background = "https://example.com/background.jpg".toImageHolder()
+ * )
+ * ```
+ *
+ * @property tabs The list of tabs in the feed.
+ * @property getPagedData to retrieve the shelves with [Buttons] for a given tab
+ *
+ * @see Tab
+ * @see PagedData
+ * @see Buttons
+ */
+data class Feed<T : Any>(
+    val tabs: List<Tab>,
+    val getPagedData: suspend (Tab?) -> Data<T>
+) {
+
+    /**
+     * A list of [Tab] items that are not sort tabs.
+     * These tabs are used to load data in the feed and are not considered for sorting.
+     **/
+    val notSortTabs = tabs.filterNot { it.isSort }
+
+    /**
+     * Represents the loaded data of the [Feed].
+     *
+     * @property pagedData The [PagedData] containing the items for the feed.
+     * @property buttons The [Buttons] to be shown in the feed. If `null`, the buttons will be decided automatically.
+     * @property background The [ImageHolder] to be used as the background of the feed. If `null`, the background will be decided automatically.
+     * */
+    data class Data<T : Any>(
+        val pagedData: PagedData<T>,
+        val buttons: Buttons? = null,
+        val background: ImageHolder? = null
+    )
+
+    /**
+     * A data class representing the buttons that can be shown in the feed.
+     *
+     * @property showSearch Whether to show the search button.
+     * @property showSort Whether to show the sort button.
+     * @property showPlayAndShuffle Whether to show the play and shuffle buttons.
+     * @property customTrackList To play a custom list of tracks when play and shuffle buttons are clicked.
+     */
+    @Serializable
+    data class Buttons(
+        val showSearch: Boolean = true,
+        val showSort: Boolean = true,
+        val showPlayAndShuffle: Boolean = false,
+        val customTrackList: List<Track>? = null,
+    ) {
+        companion object {
+            val EMPTY = Buttons(
+                showSearch = false,
+                showSort = false,
+                showPlayAndShuffle = false,
+                customTrackList = null
+            )
+        }
+    }
+
+    companion object {
+
+        /**
+         * Convenience function to convert a [PagedData] to a [Feed.Data].
+         */
+        fun <T : Any> PagedData<T>.toFeedData(
+            buttons: Buttons? = null, background: ImageHolder? = null
+        ) = Data(this, buttons, background)
+
+        /**
+         * Convenience function to create a [Feed] from a [PagedData] of [T] items.
+         */
+        fun <T : Any> PagedData<T>.toFeed(
+            buttons: Buttons? = null, background: ImageHolder? = null
+        ) = Feed(listOf()) { toFeedData(buttons, background) }
+
+        /**
+         * Convenience function to convert a list of [T] items to a [Feed.Data].
+         */
+        fun <T : Any> List<T>.toFeedData(
+            buttons: Buttons? = null, background: ImageHolder? = null
+        ) = Data(PagedData.Single { this }, buttons, background)
+
+        /**
+         * Convenience function to create a [Feed] from a list of [T] items.
+         */
+        fun <T : Any> List<T>.toFeed(
+            buttons: Buttons? = null, background: ImageHolder? = null
+        ) = Feed(listOf()) { PagedData.Single { this }.toFeedData(buttons, background) }
+
+        /**
+         * Convenience function to load all items in the [Feed].
+         * Please use sparringly.
+         */
+        suspend fun <T : Any> Feed<T>.loadAll() = run {
+            if (tabs.isEmpty()) return@run pagedDataOfFirst().loadAll()
+            notSortTabs.flatMap { getPagedData(it).pagedData.loadAll() }
+        }
+
+        /**
+         * Convenience function to load all items in the [Feed] for the firstOrNull [Tab].
+         */
+        suspend fun <T : Any> Feed<T>.pagedDataOfFirst() = run {
+            getPagedData(notSortTabs.firstOrNull()).pagedData
+        }
+    }
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\ImageHolder.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import com.joaomagdaleno.music_hub.common.models.ImageHolder.Companion.toImageHolder
+import com.joaomagdaleno.music_hub.common.models.NetworkRequest.Companion.toGetRequest
+import kotlinx.serialization.Serializable
+
+/**
+ * A class representing an image.
+ *
+ * Use [toImageHolder] to convert a string to a [NetworkRequestImageHolder].
+ *
+ * @see [NetworkRequestImageHolder]
+ */
+@Serializable
+sealed class ImageHolder {
+
+    /**
+     * Whether to crop the image
+     */
+    abstract val crop: Boolean
+
+    /**
+     * A data class representing an image from a network request
+     *
+     * @param request The request to fetch the image
+     * @param crop Whether to crop the image
+     */
+    @Serializable
+    data class NetworkRequestImageHolder(val request: NetworkRequest, override val crop: Boolean) :
+        ImageHolder()
+
+    /**
+     * A data class representing an image from a Resource URI
+     *
+     * @param uri The URI of the image
+     * @param crop Whether to crop the image
+     */
+    @Serializable
+    data class ResourceUriImageHolder(val uri: String, override val crop: Boolean) : ImageHolder()
+
+    /**
+     * A data class representing an image from a resource
+     *
+     * @param resId The resource ID of the image
+     * @param crop Whether to crop the image
+     */
+    @Serializable
+    data class ResourceIdImageHolder(val resId: Int, override val crop: Boolean) : ImageHolder()
+
+    /**
+     * A data class representing an image from a hex color
+     * supported format: #RRGGBB or #AARRGGBB
+     *
+     * @param hex The hex color code of the image
+     * @param crop Whether to crop the image
+     */
+    @Serializable
+    data class HexColorImageHolder(val hex: String) : ImageHolder() {
+        init {
+            require(hexPattern.matches(hex)) {
+                "Invalid hex color format: $hex. Use #RRGGBB or #AARRGGBB."
+            }
+        }
+
+        override val crop = false
+    }
+
+    companion object {
+        private val hexPattern = Regex("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$")
+
+        /**
+         * Converts a string to a [NetworkRequestImageHolder]
+         *
+         * @param headers The headers to be sent with the request
+         * @param crop Whether to crop the image
+         */
+        fun String.toImageHolder(
+            headers: Map<String, String> = mapOf(),
+            crop: Boolean = false
+        ) = NetworkRequestImageHolder(this.toGetRequest(headers), crop)
+
+        /**
+         * Converts a string to a [ResourceUriImageHolder]
+         *
+         * @param crop Whether to crop the image
+         */
+        fun String.toResourceUriImageHolder(crop: Boolean = false) = ResourceUriImageHolder(this, crop)
+
+        /**
+         * Converts an integer to a [ResourceIdImageHolder]
+         *
+         * @param crop Whether to crop the image
+         */
+        fun Int.toResourceImageHolder(crop: Boolean = false) = ResourceIdImageHolder(this, crop)
+
+        /**
+         * Converts a hex color code to a [HexColorImageHolder]
+         *
+         * @param crop Whether to crop the image
+         */
+        fun String.toHexColorImageHolder() = HexColorImageHolder(this)
+    }
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\ImportType.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+/**
+ * Enum class to define the type of import,
+ * - [BuiltIn]: Imported from the built-in Repo
+ * - [App]: Imported from the installed packages
+ * - [File]: Imported from the internal storage
+ */
+enum class ImportType {
+    BuiltIn, App, File,
+}
+
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\Lyrics.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import com.joaomagdaleno.music_hub.common.clients.LyricsClient
+import kotlinx.serialization.Serializable
+
+/**
+ * Represents lyrics of a song, can be loaded later in [LyricsClient.loadLyrics].
+ *
+ * @property id the unique identifier of the lyrics.
+ * @property title the title of the lyrics.
+ * @property subtitle the subtitle of the lyrics.
+ * @property lyrics the lyrics of the song.
+ * @property extras additional information about the lyrics.
+ *
+ * @see Lyric
+ */
+@Serializable
+data class Lyrics(
+    val id: String,
+    val title: String,
+    val subtitle: String? = null,
+    val lyrics: Lyric? = null,
+    val extras: Map<String, String> = emptyMap()
+) {
+
+    /**
+     * Represents a lyric of a song.
+     *
+     * This can be a [Simple] lyric or a [Timed] lyric.
+     *
+     * @see Simple
+     * @see Timed
+     */
+    @Serializable
+    sealed class Lyric
+
+    /**
+     * Represents a simple lyric of a song.
+     *
+     * @property text the text of the lyric.
+     */
+    @Serializable
+    data class Simple(val text: String) : Lyric()
+
+    /**
+     * Represents a timed lyric of a song.
+     *
+     * @property list the list of timed lyric items.
+     * @property fillTimeGaps whether to fill the time gaps between the items.
+     *
+     * @see Item
+     */
+    @Serializable
+    data class Timed(
+        val list: List<Item>,
+        val fillTimeGaps: Boolean = true
+    ) : Lyric()
+
+    /**
+     * Represents a word-by-word lyric of a song.
+     *
+     * @property list the list of lists of timed lyric items, where each inner list represents a word.
+     * @property fillTimeGaps whether to fill the time gaps between the items.
+     *
+     * @see Item
+     */
+    @Serializable
+    data class WordByWord(
+        val list: List<List<Item>>,
+        val fillTimeGaps: Boolean = true
+    ) : Lyric()
+
+    /**
+     * Represents a timed lyric item.
+     *
+     * @property text the text of the lyric.
+     * @property startTime the start time of the lyric.
+     * @property endTime the end time of the lyric.
+     */
+    @Serializable
+    data class Item(
+        val text: String,
+        val startTime: Long,
+        val endTime: Long
+    )
+}
+
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\Message.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import com.joaomagdaleno.music_hub.common.providers.MessageFlowProvider
+
+/**
+ * A message to be sent to the app.
+ *
+ * @see MessageFlowProvider
+ * @param message The message to be sent.
+ * @param action The action to be performed when the message is clicked.
+ */
+data class Message(
+    val message: String,
+    val action: Action? = null
+) {
+    /**
+     * An action to be performed when the message is clicked.
+     *
+     * @param name The  action button's text.
+     * @param handler The handler to be called when the action is clicked.
+     */
+    data class Action(
+        val name: String,
+        val handler: (() -> Unit)
+    )
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\Metadata.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import kotlinx.serialization.Serializable
+
+/**
+ * Metadata for an extension.
+ *
+ * @property className The class name of the extension
+ * @property path The file path of the extension's file
+ * @property importType The type of import for the extension
+ * @property type The type of extension
+ * @property id The id of the extension
+ * @property name The name of the extension
+ * @property version The version of the extension
+ * @property description The description of the extension
+ * @property author The author of the extension
+ * @property authorUrl The author's site to open
+ * @property icon The icon of the extension
+ * @property repoUrl The repository URL of the extension
+ * @property updateUrl The update URL of the extension
+ * @property preservedPackages The packages to preserve, ideally for extensions that use native libraries
+ * @property isEnabled Whether the extension is enabled
+ */
+@Serializable
+data class Metadata(
+    val className: String,
+    val path: String,
+    val importType: ImportType,
+    val type: ExtensionType,
+    val id: String,
+    val name: String,
+    val version: String,
+    val description: String,
+    val author: String,
+    val authorUrl: String? = null,
+    val icon: ImageHolder? = null,
+    val repoUrl: String? = null,
+    val updateUrl: String? = null,
+    val preservedPackages: List<String> = listOf(),
+    val isEnabled: Boolean = true
+)
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\NetworkConnection.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import com.joaomagdaleno.music_hub.common.models.NetworkConnection.Metered
+import com.joaomagdaleno.music_hub.common.models.NetworkConnection.NotConnected
+import com.joaomagdaleno.music_hub.common.models.NetworkConnection.Unmetered
+
+
+/**
+ * Enum class to define the type of network,
+ * - [NotConnected]: No network connection
+ * - [Metered]: Connected to a metered network (e.g., mobile data)
+ * - [Unmetered]: Connected to an unmetered network (e.g., Wi-Fi)
+ */
+enum class NetworkConnection {
+    NotConnected, Metered, Unmetered
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\NetworkRequest.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import com.joaomagdaleno.music_hub.common.models.NetworkRequest.Companion.toGetRequest
+import com.joaomagdaleno.music_hub.common.models.NetworkRequest.Method.CONNECT
+import com.joaomagdaleno.music_hub.common.models.NetworkRequest.Method.DELETE
+import com.joaomagdaleno.music_hub.common.models.NetworkRequest.Method.GET
+import com.joaomagdaleno.music_hub.common.models.NetworkRequest.Method.HEAD
+import com.joaomagdaleno.music_hub.common.models.NetworkRequest.Method.OPTIONS
+import com.joaomagdaleno.music_hub.common.models.NetworkRequest.Method.PATCH
+import com.joaomagdaleno.music_hub.common.models.NetworkRequest.Method.POST
+import com.joaomagdaleno.music_hub.common.models.NetworkRequest.Method.PUT
+import com.joaomagdaleno.music_hub.common.models.NetworkRequest.Method.TRACE
+import kotlinx.serialization.Serializable
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
+
+/**
+ * A data class to represent a network request.
+ *
+ * @param url The URL to make the request to
+ * @param headers The headers to be sent with the request
+ * @param method The HTTP method to use for the request, defaults to [Method.GET]
+ * @param bodyBase64 The body of the request encoded in Base64, can be null
+ *
+ * @see [toGetRequest]
+ */
+@OptIn(ExperimentalEncodingApi::class)
+@Serializable
+data class NetworkRequest(
+    val url: String,
+    val headers: Map<String, String> = emptyMap(),
+    val method: Method = GET,
+    val bodyBase64: String? = null,
+) {
+
+    /**
+     * Represents the HTTP methods that can be used in a network request.
+     * - [GET] for retrieving data
+     * - [POST] for sending data
+     * - [PUT] for updating data
+     * - [DELETE] for deleting data
+     * - [PATCH] for partially updating data
+     * - [HEAD] for retrieving the headers of a resource without the body
+     * - [OPTIONS] for requesting information about the communication options available
+     * - [TRACE] for tracing the path to the resource
+     * - [CONNECT] for establishing a tunnel to the server
+     */
+    enum class Method {
+        GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE, CONNECT
+    }
+
+    /**
+     * The body of the request decoded from Base64.
+     * If [bodyBase64] is null, this will also be null.
+     *
+     * @return The decoded body as a [ByteArray] or null if [bodyBase64] is null.
+     */
+    val body by lazy {
+        bodyBase64?.let { Base64.decode(it) }
+    }
+
+    /**
+     * A map of headers with all keys converted to lowercase.
+     * This is useful for case-insensitive header lookups.
+     */
+    val lowerCaseHeaders by lazy {
+        headers.mapKeys { it.key.lowercase() }
+    }
+
+    constructor(
+        method: Method,
+        url: String,
+        headers: Map<String, String> = emptyMap(),
+        body: ByteArray? = null,
+    ) : this(
+        url = url,
+        headers = headers,
+        method = method,
+        bodyBase64 = body?.let { Base64.encode(it) }
+    )
+
+    companion object {
+
+        /**
+         * Converts the string to a [NetworkRequest] object
+         *
+         * @param headers The headers to be sent with the request
+         *
+         * @return A [NetworkRequest] object
+         */
+        fun String.toGetRequest(headers: Map<String, String> = emptyMap()): NetworkRequest {
+            return NetworkRequest(this, headers)
+        }
+    }
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\Playlist.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import com.joaomagdaleno.music_hub.common.clients.FollowClient
+import com.joaomagdaleno.music_hub.common.clients.HideClient
+import com.joaomagdaleno.music_hub.common.clients.LikeClient
+import com.joaomagdaleno.music_hub.common.clients.PlaylistClient
+import com.joaomagdaleno.music_hub.common.clients.PlaylistEditClient
+import com.joaomagdaleno.music_hub.common.clients.PlaylistEditPrivacyClient
+import com.joaomagdaleno.music_hub.common.clients.RadioClient
+import com.joaomagdaleno.music_hub.common.clients.SaveClient
+import com.joaomagdaleno.music_hub.common.clients.ShareClient
+import kotlinx.serialization.Serializable
+
+/**
+ * A data class representing a playlist
+ *
+ * @property id The id of the playlist
+ * @property title The title of the playlist
+ * @property isEditable Whether the playlist is editable. Checkout [PlaylistEditClient]
+ * @property isPrivate Whether the playlist is private. Checkout [PlaylistEditPrivacyClient]
+ * @property cover The cover image of the playlist
+ * @property authors The authors of the playlist
+ * @property trackCount The total number of tracks in the playlist
+ * @property duration The total duration of the playlist in milliseconds
+ * @property creationDate The creation date of the playlist
+ * @property description The description of the playlist
+ * @property background The background image of the playlist
+ * @property subtitle The subtitle of the playlist, used to display information under the title
+ * @property extras Any extra data you want to associate with the playlist
+ * @property isRadioSupported Whether the playlist can be used to create a radio. Checkout [RadioClient]
+ * @property isFollowable Whether the playlist can be followed. Checkout [FollowClient]
+ * @property isSaveable Whether the playlist can be saved to library. Checkout [SaveClient]
+ * @property isLikeable Whether the playlist can be liked. Checkout [LikeClient]
+ * @property isHideable Whether the playlist can be hidden. Checkout [HideClient]
+ * @property isShareable Whether the playlist can be shared. Checkout [ShareClient]
+ *
+ * @see PlaylistClient
+ */
+@Serializable
+data class Playlist(
+    override val id: String,
+    override val title: String,
+    val isEditable: Boolean,
+    override val isPrivate: Boolean = true,
+    override val cover: ImageHolder? = null,
+    val authors: List<Artist> = listOf(),
+    override val trackCount: Long? = null,
+    override val duration: Long? = null,
+    val creationDate: Date? = null,
+    override val description: String? = null,
+    override val background: ImageHolder? = cover,
+    override val subtitle: String? = null,
+    override val extras: Map<String, String> = mapOf(),
+    override val isRadioSupported: Boolean = true,
+    override val isFollowable: Boolean = false,
+    override val isSaveable: Boolean = true,
+    override val isLikeable: Boolean = false,
+    override val isHideable: Boolean = false,
+    override val isShareable: Boolean = true,
+) : EchoMediaItem.Lists {
+    override val artists = authors
+    override val date = creationDate
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\Progress.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import kotlinx.serialization.Serializable
+
+/**
+ * Progress data class to hold the progress of the download.
+ *
+ * @param size The total size of the file, 0 if unknown.
+ * @param progress The progress of the download.
+ * @param speed The speed of the download in bytes per second, 0 if unknown.
+ */
+@Serializable
+data class Progress(
+    val size: Long = 0,
+    val progress: Long = 0,
+    val speed: Long = 0,
+)
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\QuickSearchItem.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonClassDiscriminator
+
+/**
+ * Represents a quick search item.
+ * This can be a [Query] or a [Media] item.
+ *
+ * @property searched whether the item was already searched by the user.
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@JsonClassDiscriminator("quickSearchItemType")
+@Serializable
+sealed class QuickSearchItem {
+    abstract val searched: Boolean
+
+    /**
+     * Represents a search query.
+     *
+     * @property query the search query.
+     * @property extras additional information about the search query.
+     */
+    @Serializable
+    data class Query(
+        val query: String,
+        override val searched: Boolean,
+        val extras: Map<String, String> = mapOf()
+    ) : QuickSearchItem()
+
+    /**
+     * Represents a media item.
+     *
+     * @property media the media item.
+     *
+     * @see EchoMediaItem
+     */
+    @Serializable
+    data class Media(
+        val media: EchoMediaItem,
+        override val searched: Boolean
+    ) : QuickSearchItem()
+
+    open val title: String
+        get() = when (this) {
+            is Query -> query
+            is Media -> media.title
+        }
+
+    fun sameAs(other: QuickSearchItem): Boolean {
+        return when (this) {
+            is Query -> other is Query && query == other.query
+            is Media -> other is Media && media.sameAs(other.media)
+        }
+    }
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\Radio.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import com.joaomagdaleno.music_hub.common.clients.FollowClient
+import com.joaomagdaleno.music_hub.common.clients.HideClient
+import com.joaomagdaleno.music_hub.common.clients.LikeClient
+import com.joaomagdaleno.music_hub.common.clients.SaveClient
+import com.joaomagdaleno.music_hub.common.clients.ShareClient
+import kotlinx.serialization.Serializable
+
+/**
+ * A data class representing a radio, that can load tracks and be directly played when clicked.
+ *
+ * @property id The id of the radio
+ * @property title The title of the radio
+ * @property cover The cover image of the radio
+ * @property authors The authors of the radio
+ * @property trackCount The number of tracks in the radio, if applicable
+ * @property subtitle The subtitle of the radio, used to display information under the title
+ * @property extras Any extra data you want to associate with the radio
+ * @property isFollowable Whether the radio can be followed. Checkout [FollowClient]
+ * @property isSaveable Whether the radio can be saved to library. Checkout [SaveClient]
+ * @property isLikeable Whether the radio can be liked. Checkout [LikeClient]
+ * @property isHideable Whether the radio can be hidden. Checkout [HideClient]
+ * @property isShareable Whether the radio can be shared. Checkout [ShareClient]
+ */
+@Serializable
+data class Radio(
+    override val id: String,
+    override val title: String,
+    override val cover: ImageHolder? = null,
+    val authors: List<Artist> = listOf(),
+    override val trackCount: Long? = null,
+    override val description: String? = null,
+    override val subtitle: String? = null,
+    override val extras: Map<String, String> = mapOf(),
+    override val isFollowable: Boolean = false,
+    override val isSaveable: Boolean = false,
+    override val isLikeable: Boolean = false,
+    override val isHideable: Boolean = false,
+    override val isShareable: Boolean = true,
+) : EchoMediaItem.Lists {
+    override val isRadioSupported = false
+    override val artists = authors
+    override val background: ImageHolder? = null
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\Shelf.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import com.joaomagdaleno.music_hub.common.helpers.PagedData
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import kotlinx.serialization.json.JsonClassDiscriminator
+
+/**
+ * Represents a shelf (group of Media Items or Categories) in the app feed.
+ *
+ * This can be [Lists] shelf, an [Item] shelf or a [Category] shelf.
+ *
+ * @see Lists
+ * @see Item
+ * @see Category
+ */
+@OptIn(ExperimentalSerializationApi::class)
+@JsonClassDiscriminator("shelfType")
+@Serializable
+sealed interface Shelf {
+    val id: String
+    val title: String
+    val extras: Map<String, String>
+
+    /**
+     * Represents a list of media items or categories.
+     * If [more] is not null, a "More" button will be displayed
+     * and clicking on it will load a separate page for loading the [PagedData].
+     *
+     * Can be a list of [Items], [Tracks] or [Categories].
+     *
+     * @property title the title of the list.
+     * @property list the list of media items or categories.
+     * @property subtitle the subtitle of the list.
+     * @property type the type of the list.
+     * @property more the more data of the list.
+     *
+     * @see Items
+     * @see Tracks
+     * @see Categories
+     */
+    @OptIn(ExperimentalSerializationApi::class)
+    @JsonClassDiscriminator("shelfType")
+    @Serializable
+    sealed interface Lists<T : Any> : Shelf {
+        val list: List<T>
+        val subtitle: String?
+        val type: Type
+        val more: Feed<Shelf>?
+
+        /**
+         * Represents the type of the list.
+         *
+         * - [Type.Linear] items displayed in a horizontally.
+         * - [Type.Grid] items displayed in a grid layout, vertically. limited to 8 items.
+         */
+        enum class Type {
+            Linear, Grid
+        }
+
+        /**
+         * Represents a list of [EchoMediaItem].
+         *
+         * @property id the unique identifier of the list.
+         * @property title the title of the list.
+         * @property list the list of media items.
+         * @property subtitle the subtitle of the list.
+         * @property type the type of the list.
+         * @property more the more data of the list.
+         */
+        @Serializable
+        data class Items(
+            override val id: String,
+            override val title: String,
+            override val list: List<EchoMediaItem>,
+            override val subtitle: String? = null,
+            override val type: Type = Type.Linear,
+            @Transient override val more: Feed<Shelf>? = null,
+            override val extras: Map<String, String> = mapOf()
+        ) : Lists<EchoMediaItem>
+
+        /**
+         * Represents a list of [Track], these will be numbered, otherwise use [Items] instead.
+         *
+         * @property id the unique identifier of the list.
+         * @property title the title of the list.
+         * @property list the list of tracks.
+         * @property subtitle the subtitle of the list.
+         * @property type the type of the list.
+         * @property more the more data of the list.
+         */
+        @Serializable
+        data class Tracks(
+            override val id: String,
+            override val title: String,
+            override val list: List<Track>,
+            override val subtitle: String? = null,
+            override val type: Type = Type.Linear,
+            @Transient override val more: Feed<Shelf>? = null,
+            override val extras: Map<String, String> = mapOf()
+        ) : Lists<Track>
+
+        /**
+         * Represents a list of [Category].
+         *
+         * @property id the unique identifier of the list.
+         * @property title the title of the list.
+         * @property list the list of categories.
+         * @property subtitle the subtitle of the list.
+         * @property type the type of the list.
+         * @property more the more data of the list.
+         */
+        @Serializable
+        data class Categories(
+            override val id: String,
+            override val title: String,
+            override val list: List<Category>,
+            override val subtitle: String? = null,
+            override val type: Type = Type.Linear,
+            @Transient override val more: Feed<Shelf>? = null,
+            override val extras: Map<String, String> = mapOf()
+        ) : Lists<Category>
+    }
+
+    /**
+     * Represents a media item.
+     *
+     * @property media the media item.
+     */
+    @Serializable
+    data class Item(
+        val media: EchoMediaItem
+    ) : Shelf {
+        override val id = media.id
+        override val title = media.title
+        override val extras = media.extras
+    }
+
+    /**
+     * Represents a category of media items.
+     *
+     * If [feed] is not null, clicking on this will load a separate page for loading the [Feed].
+     * If [feed] is null, the category will act as a header.
+     *
+     * @property id the unique identifier of the category.
+     * @property title the title of the category.
+     * @property feed the items of the category.
+     * @property subtitle the subtitle of the category.
+     * @property image the image of the category.
+     * @property backgroundColor the background color in hex. (#RRGGBB & #AARRGGBB)
+     * @property extras additional information about the category.
+     */
+    @Serializable
+    data class Category(
+        override val id: String,
+        override val title: String,
+        @Transient val feed: Feed<Shelf>? = null,
+        val subtitle: String? = null,
+        val image: ImageHolder? = null,
+        val backgroundColor: String? = null,
+        override val extras: Map<String, String> = mapOf(),
+    ) : Shelf
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\Streamable.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import com.joaomagdaleno.music_hub.common.clients.TrackClient
+import com.joaomagdaleno.music_hub.common.models.NetworkRequest.Companion.toGetRequest
+import com.joaomagdaleno.music_hub.common.models.Streamable.Media.Companion.toBackgroundMedia
+import com.joaomagdaleno.music_hub.common.models.Streamable.Media.Companion.toMedia
+import com.joaomagdaleno.music_hub.common.models.Streamable.Media.Companion.toServerMedia
+import com.joaomagdaleno.music_hub.common.models.Streamable.Media.Companion.toSubtitleMedia
+import com.joaomagdaleno.music_hub.common.models.Streamable.Source.Companion.toSource
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import kotlinx.serialization.json.JsonClassDiscriminator
+import java.io.InputStream
+
+/**
+ * A data class representing an unloaded streamable item that is used when playing a [Track]
+ * The streamable item can be of three types:
+ * - [Streamable.server] - To represent a server that contains data to be played
+ * - [Streamable.background] - To represent a background video
+ * - [Streamable.subtitle] - To represent subtitle
+ *
+ * See [TrackClient.loadStreamableMedia] for loading this streamable item.
+ *
+ * @property id The id of the streamable item
+ * @property quality The quality of the streamable item, this is used to sort the streamable items
+ * @property type The type of the streamable item
+ * @property title The title of the streamable item
+ * @property extras Any extra data you want to associate with the streamable item
+ *
+ * @see Streamable.Media
+ */
+@Suppress("unused")
+@Serializable
+data class Streamable(
+    val id: String,
+    val quality: Int,
+    val type: MediaType,
+    val title: String? = null,
+    val extras: Map<String, String> = mapOf()
+) {
+
+    /**
+     * A class that represents a loaded streamable media.
+     *
+     * There are three types of media:
+     * - [Subtitle] - To represent a loaded subtitle media
+     * - [Server] - To represent a loaded server media
+     * - [Background] - To represent a loaded background media
+     *
+     * @see toMedia
+     * @see toSubtitleMedia
+     * @see toServerMedia
+     * @see toBackgroundMedia
+     */
+    @OptIn(ExperimentalSerializationApi::class)
+    @JsonClassDiscriminator("mediaType")
+    @Serializable
+    sealed class Media {
+
+        /**
+         * A data class representing a loaded subtitle for a [Track].
+         *
+         * Headers are unfortunately not supported for subtitles.
+         *
+         * @property url The url of the subtitle
+         * @property type The type of the subtitle
+         *
+         * @see SubtitleType
+         * @see toSubtitleMedia
+         */
+        @Serializable
+        data class Subtitle(val url: String, val type: SubtitleType) : Media()
+
+        /**
+         * A data class representing a loaded server media for a [Track].
+         *
+         * The sources will all load at the same time if [merged] is true and combined into a
+         * single media source like a M3U8 with multiple qualities.
+         *
+         * If [merged] is false, the sources will be loaded separately and
+         * the user can switch between them.
+         *
+         * @property sources The list of sources for the server media
+         * @property merged Whether the server media is merged or not
+         *
+         * @see Source
+         * @see Source.toMedia
+         * @see toServerMedia
+         */
+        @Serializable
+        data class Server(val sources: List<Source>, val merged: Boolean) : Media()
+
+        /**
+         * A data class representing a loaded background video for a [Track].
+         * The sound of the background video will be removed.
+         *
+         * @property request The request for the background media
+         *
+         * @see NetworkRequest
+         * @see toBackgroundMedia
+         */
+        @Serializable
+        data class Background(val request: NetworkRequest) : Media()
+        companion object {
+            /**
+             * Creates a [Server] media from this [Source].
+             */
+            fun Source.toMedia() = Server(listOf(this), false)
+
+            /**
+             * Creates a [Background] media from this String Url.
+             *
+             * @param headers The headers to be used for the request
+             * @return A [Background] media from the String Url
+             */
+            fun String.toBackgroundMedia(headers: Map<String, String> = mapOf()) =
+                Background(this.toGetRequest(headers))
+
+            /**
+             * Creates a single [Source] server media from this String Url.
+             *
+             * @param headers The headers to be used for the request
+             * @param type The type of the source
+             * @return A single [Source.Http] media with the given [type]
+             */
+            fun String.toServerMedia(
+                headers: Map<String, String> = mapOf(),
+                type: SourceType = SourceType.Progressive,
+                isVideo: Boolean = false
+            ) = this.toSource(headers, type, isVideo).toMedia()
+
+            /**
+             * Creates a [Subtitle] media from this String Url.
+             *
+             * @param type The type of the subtitle
+             * @return A [Subtitle] media from the String Url
+             */
+            fun String.toSubtitleMedia(type: SubtitleType) = Subtitle(this, type)
+        }
+    }
+
+    /**
+     * A class representing Media Decryption for a [Source].
+     *
+     * There is only one type of decryption:
+     * - [Widevine] - To represent a Widevine decryption
+     */
+    @OptIn(ExperimentalSerializationApi::class)
+    @JsonClassDiscriminator("decryptionType")
+    @Serializable
+    sealed class Decryption {
+
+        /**
+         * A data class representing a Widevine decryption for a [Source].
+         *
+         * @property license The license request for the Widevine decryption
+         * @property isMultiSession Whether the Widevine decryption is multi-session or not
+         *
+         * @see NetworkRequest
+         */
+        @Serializable
+        data class Widevine(
+            val license: NetworkRequest,
+            val isMultiSession: Boolean,
+        ) : Decryption()
+    }
+
+    /**
+     * A class representing the actual source where streamable audio/video is present.
+     *
+     * There are three types of sources:
+     * - [Http] - To represent a source that contains Audio/Video on a Http Url.
+     * - [Raw] - To represent a source that contains Audio/Video in a Byte Stream.
+     *
+     * @property quality The quality of the source, this is used to sort the sources
+     * @property title The title of the source
+     *
+     * @see SourceType
+     * @see toSource
+     * @see Media.toServerMedia
+     */
+    @OptIn(ExperimentalSerializationApi::class)
+    @JsonClassDiscriminator("sourceType")
+    @Serializable
+    sealed class Source {
+        abstract val id: String
+        abstract val quality: Int
+        abstract val title: String?
+        abstract val isVideo: Boolean
+        abstract val isLive: Boolean
+
+        /**
+         * A data class representing a source that contains Audio/Video on a Http Url.
+         *
+         * @property request The request for the source
+         * @property type The type of the source
+         * @property decryption The decryption for the source
+         * @param isLive If true, will prevent caching of the source
+         *
+         * @see NetworkRequest
+         * @see Decryption
+         */
+        @Serializable
+        data class Http(
+            val request: NetworkRequest,
+            val type: SourceType = SourceType.Progressive,
+            val decryption: Decryption? = null,
+            override val quality: Int = 0,
+            override val title: String? = null,
+            override val isVideo: Boolean = false,
+            override val isLive: Boolean = false
+        ) : Source() {
+            override val id = request.url
+        }
+
+        /**
+         * A data class representing a source that contains Audio/Video in a Byte Stream.
+         *
+         * @property streamProvider A function that provides an [InputStream] from a given position.
+         *
+         * @see InputProvider
+         */
+        @Serializable
+        data class Raw(
+            @Transient val streamProvider: InputProvider? = null,
+            override val id: String,
+            override val quality: Int = 0,
+            override val title: String? = null,
+            override val isVideo: Boolean = false,
+            override val isLive: Boolean = false
+        ) : Source()
+
+        companion object {
+            /**
+             * Creates a [Http] source from the String Url.
+             *
+             * @param headers The headers to be used for the request
+             * @param type The type of the source
+             * @return A [Source] from the String Url
+             */
+            fun String.toSource(
+                headers: Map<String, String> = mapOf(),
+                type: SourceType = SourceType.Progressive,
+                isVideo: Boolean = false,
+                isLive: Boolean = false
+            ) = Http(this.toGetRequest(headers), type, isVideo = isVideo, isLive = isLive)
+
+            fun InputProvider.toSource(
+                id: String, isVideo: Boolean = false, isLive: Boolean = false
+            ) = Raw(this, id, isVideo = isVideo, isLive = isLive)
+        }
+    }
+
+    /**
+     * An interface that provides an [InputStream] from a given position.
+     *
+     * This is used for [Streamable.Source.Raw] to provide the stream data.
+     */
+    fun interface InputProvider {
+
+        /**
+         * Provides an [InputStream] from a given position.
+         *
+         * @param position The position to start reading from, 0 if the stream should start from the beginning
+         * @param length The total bytes that should be the end of the stream, -1 if unknown. Important for seeking.
+         * @return An [InputStream] from the given position and the total bytes that can be read, or -1 if unknown.
+         */
+        suspend fun provide(position: Long, length: Long): Pair<InputStream, Long>
+    }
+
+    companion object {
+
+        /**
+         * Creates a [Streamable] with the given [id], [quality], [title], and [extras] for a server media.
+         *
+         * @param id The id of the streamable item
+         * @param quality The quality of the streamable item, this is used to sort the streamable items
+         * @param title The title of the streamable item
+         * @param extras Any extra data you want to associate with the streamable item
+         * @return A [Streamable] with the given [id], [quality], [title], and [extras] for a server media
+         */
+        fun server(
+            id: String, quality: Int, title: String? = null, extras: Map<String, String> = mapOf()
+        ) = Streamable(id, quality, MediaType.Server, title, extras)
+
+        /**
+         * Creates a [Streamable] with the given [id], [quality], [title], and [extras] for a background media.
+         *
+         * @param id The id of the streamable item
+         * @param quality The quality of the streamable item, this is used to sort the streamable items
+         * @param title The title of the streamable item
+         * @param extras Any extra data you want to associate with the streamable item
+         * @return A [Streamable] with the given [id], [quality], [title], and [extras] for a background media
+         */
+        fun background(
+            id: String, quality: Int, title: String? = null, extras: Map<String, String> = mapOf()
+        ) = Streamable(id, quality, MediaType.Background, title, extras)
+
+        /**
+         * Creates a [Streamable] with the given [id], [quality], [title], and [extras] for a subtitle media.
+         *
+         * @param id The id of the streamable item
+         * @param title The title of the streamable item
+         * @param extras Any extra data you want to associate with the streamable item
+         * @return A [Streamable] with the given [id], [title], and [extras] for a subtitle media
+         */
+        fun subtitle(
+            id: String, title: String? = null, extras: Map<String, String> = mapOf()
+        ) = Streamable(id, 0, MediaType.Subtitle, title, extras)
+    }
+
+    /**
+     * An enum class representing the type of media
+     */
+    enum class MediaType {
+        /** Represents an unloaded background streamable */
+        Background,
+
+        /** Represents an unloaded server streamable */
+        Server,
+
+        /** Represents an unloaded subtitle streamable */
+        Subtitle
+    }
+
+    /**
+     * An enum class representing the type of subtitle
+     */
+    enum class SubtitleType {
+        /** WebVTT subtitle format */
+        VTT,
+
+        /** SubRip subtitle format */
+        SRT,
+
+        /** Advanced SubStation Alpha subtitle format */
+        ASS
+    }
+
+    /**
+     * An enum representing the type of [Source].
+     */
+    enum class SourceType {
+        /**
+         * Source that contain Audio/Video in container format File.
+         */
+        Progressive,
+
+        /**
+         * Source that is a M3U8 File.
+         */
+        HLS,
+
+        /**
+         * Source that is a Dash Manifest File.
+         */
+        DASH
+    }
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\Tab.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import com.joaomagdaleno.music_hub.common.models.Feed.Companion.loadAll
+import kotlinx.serialization.Serializable
+
+/**
+ * A data class representing a tab
+ *
+ * @property id The id of the tab
+ * @property title The title of the tab
+ * @property isSort Whether the tab is a sort tab, if true, it will not ne considered for loading in the [Feed.loadAll] method.
+ * @property extras Any extra data you want to associate with the tab
+ */
+@Serializable
+data class Tab(
+    val id: String,
+    val title: String,
+    val isSort: Boolean = false,
+    val extras: Map<String, String> = emptyMap(),
+)
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\Track.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import com.joaomagdaleno.music_hub.common.clients.FollowClient
+import com.joaomagdaleno.music_hub.common.clients.HideClient
+import com.joaomagdaleno.music_hub.common.clients.LikeClient
+import com.joaomagdaleno.music_hub.common.clients.RadioClient
+import com.joaomagdaleno.music_hub.common.clients.SaveClient
+import com.joaomagdaleno.music_hub.common.clients.ShareClient
+import com.joaomagdaleno.music_hub.common.clients.TrackClient
+import kotlinx.serialization.Serializable
+import java.util.Locale
+
+/**
+ * A class representing a track that can be played in Echo.
+ *
+ * @property id The id of the track
+ * @property title The title of the track
+ * @property type The type of the track, can be Audio, Video, or HorizontalVideo
+ * @property cover The cover of the track
+ * @property artists The artists of the track
+ * @property album The album of the track
+ * @property duration The duration of the track in milliseconds
+ * @property playedDuration The duration of the track that has been played, in milliseconds
+ * @property plays The number of plays of the track
+ * @property releaseDate The release date of the track
+ * @property description The description of the track
+ * @property background The background image of the track
+ * @property isrc The IRSC code of the track
+ * @property genres The genres of the track
+ * @property albumDiscNumber The disc number of the track in the album
+ * @property albumOrderNumber The order number of the track in the album, if [albumDiscNumber] is not null, this is the order number in that disc
+ * @property playlistAddedDate The date when the track was added to a playlist
+ * @property isExplicit Whether the track is explicit
+ * @property subtitle The subtitle of the track, used to display information under the title
+ * @property extras Any extra data you want to associate with the track
+ * @property isPlayable Whether the track is playable.
+ * @property streamables The streamables of the track
+ * @property isRadioSupported Whether the track can used to create a radio. Checkout [RadioClient]
+ * @property isFollowable Whether the track can be followed. Checkout [FollowClient]
+ * @property isSaveable Whether the track can be saved to library. Checkout [SaveClient]
+ * @property isLikeable Whether the track can be liked. Checkout [LikeClient]
+ * @property isHideable Whether the track can be hidden. Checkout [HideClient]
+ * @property isShareable Whether the track can be shared. Checkout [ShareClient]
+ *
+ * @see Streamable
+ * @see TrackClient
+ */
+@Serializable
+data class Track(
+    override val id: String,
+    override val title: String,
+    val type: Type = Type.Song,
+    override val cover: ImageHolder? = null,
+    val artists: List<Artist> = listOf(),
+    val album: Album? = null,
+    val duration: Long? = null,
+    val playedDuration: Long? = null,
+    val plays: Long? = null,
+    val releaseDate: Date? = null,
+    override val description: String? = null,
+    override val background: ImageHolder? = cover,
+    val genres: List<String> = listOf(),
+    val isrc: String? = null,
+    val albumOrderNumber: Long? = null,
+    val albumDiscNumber: Long? = null,
+    val playlistAddedDate: Date? = null,
+    override val isExplicit: Boolean = false,
+    override val subtitle: String? = null,
+    override val extras: Map<String, String> = mapOf(),
+    val isPlayable: Playable = Playable.Yes,
+    val streamables: List<Streamable> = listOf(),
+    override val isRadioSupported: Boolean = true,
+    override val isFollowable: Boolean = false,
+    override val isSaveable: Boolean = true,
+    override val isLikeable: Boolean = true,
+    override val isHideable: Boolean = true,
+    override val isShareable: Boolean = true,
+) : EchoMediaItem {
+
+    enum class Type {
+        Song, Podcast, VideoSong, Video, HorizontalVideo
+    }
+
+    @Serializable
+    sealed interface Playable {
+        @Serializable
+        data object Yes : Playable
+
+        @Serializable
+        data object RegionLocked : Playable
+
+        @Serializable
+        data object Unreleased : Playable
+
+        @Serializable
+        data class No(val reason: String) : Playable
+    }
+
+    /**
+     * The streamable subtitles of the track.
+     * @see Streamable.subtitle
+     * @see Streamable.Media.Subtitle
+     */
+    val subtitles: List<Streamable> by lazy {
+        streamables.filter { it.type == Streamable.MediaType.Subtitle }
+    }
+
+    /**
+     * The streamable servers of the track.
+     * @see Streamable.server
+     * @see Streamable.Media.Server
+     */
+    val servers: List<Streamable> by lazy {
+        streamables.filter { it.type == Streamable.MediaType.Server }
+    }
+
+    /**
+     * The streamable backgrounds of the track.
+     * @see Streamable.background
+     * @see Streamable.Media.Background
+     */
+    val backgrounds: List<Streamable> by lazy {
+        streamables.filter { it.type == Streamable.MediaType.Background }
+    }
+
+    override val subtitleWithOutE = subtitle ?: buildString {
+        if (duration != null) append(duration.toDurationString())
+        val artists = artists.joinToString(", ") { it.name }
+        if (artists.isNotBlank()) {
+            if (duration != null) append(" • ")
+            append(artists)
+        }
+    }.trim().ifBlank { null }
+
+    override val subtitleWithE = buildString {
+        if (isExplicit) append("\uD83C\uDD74 ")
+        append(subtitleWithOutE ?: "")
+    }.trim().ifBlank { null }
+
+    companion object {
+        fun Long.toDurationString(): String {
+            val seconds = this / 1000
+            val minutes = seconds / 60
+            val hours = minutes / 60
+            return buildString {
+                if (hours > 0) append(String.format(Locale.getDefault(), "%02d:", hours))
+                append(String.format(Locale.getDefault(), "%02d:%02d", minutes % 60, seconds % 60))
+            }.trim()
+        }
+    }
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\TrackDetails.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import kotlinx.serialization.Serializable
+
+/**
+ * A data class that holds the details of a track that is in the player.
+ *
+ * @param extensionId the extension id of the extension that the track is from.
+ * @param context the context of the track.
+ * @param track the track itself.
+ * @param currentPosition the current position of the track in milliseconds.
+ * @param totalDuration the total duration of the track in milliseconds, or null if unknown.
+ *
+ * @see EchoMediaItem
+ * @see Track
+ */
+@Serializable
+data class TrackDetails(
+    val extensionId: String,
+    val track: Track,
+    val context: EchoMediaItem?,
+    val currentPosition: Long,
+    val totalDuration: Long?,
+)
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\models\User.kt ----------
+package com.joaomagdaleno.music_hub.common.models
+
+import kotlinx.serialization.Serializable
+
+/**
+ * A data class representing a user
+ * 
+ * @property id The id of the user
+ * @property name The name of the user
+ * @property cover The cover image of the user
+ * @property subtitle The subtitle of the user, used to display information under the name
+ * @property extras Any extra data you want to associate with the user
+ */
+@Serializable
+data class User(
+    val id: String,
+    val name: String,
+    val cover: ImageHolder? = null,
+    val subtitle: String? = null,
+    val extras: Map<String, String> = emptyMap(),
+)
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\providers\GlobalSettingsProvider.kt ----------
+package com.joaomagdaleno.music_hub.common.providers
+
+import com.joaomagdaleno.music_hub.common.settings.Settings
+
+/**
+ * Interface to provide global [Settings] to the extension
+ */
+interface GlobalSettingsProvider {
+    /**
+     * Called when the extension is initialized, to provide the global [Settings] to the extension
+     */
+    fun setGlobalSettings(globalSettings: Settings)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\providers\LyricsExtensionsProvider.kt ----------
+package com.joaomagdaleno.music_hub.common.providers
+
+import com.joaomagdaleno.music_hub.common.LyricsExtension
+
+/**
+ * Interface to provide installed [LyricsExtension]s to this extension
+ */
+interface LyricsExtensionsProvider {
+    /**
+     * List of required [LyricsExtension]s. If empty, all installed extensions will be provided.
+     * If not empty, only the extensions with the specified ids will be provided
+     */
+    val requiredLyricsExtensions: List<String>
+
+    /**
+     * Called when the extension is initialized,
+     * to provide the [requiredLyricsExtensions] to the extension.
+     *
+     * Also called when the extension list is updated.
+     */
+    fun setLyricsExtensions(extensions: List<LyricsExtension>)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\providers\MessageFlowProvider.kt ----------
+package com.joaomagdaleno.music_hub.common.providers
+
+import com.joaomagdaleno.music_hub.common.models.Message
+import kotlinx.coroutines.flow.MutableSharedFlow
+
+/**
+ * Interface to provide functionality of sending messages to the app, via using a shared flow.
+ *
+ * @see MutableSharedFlow
+ * @see Message
+ */
+interface MessageFlowProvider {
+    /**
+     * Injecting the message flow, called once when the extension is initialized.
+     *
+     * use the following to use the message flow:
+     * ```kotlin
+     * messageFlow.emit(Message("Hello World!"))
+     * // or
+     * val action = Action("Click me!") { /* do something */  }
+     * messageFlow.emit(Message("Hello World!", action))
+     * ```
+     *
+     * @param messageFlow The shared flow to send messages to the app.
+     */
+    fun setMessageFlow(messageFlow: MutableSharedFlow<Message>)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\providers\MetadataProvider.kt ----------
+package com.joaomagdaleno.music_hub.common.providers
+
+import com.joaomagdaleno.music_hub.common.models.Metadata
+
+interface MetadataProvider {
+    fun setMetadata(metadata: Metadata)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\providers\MiscExtensionsProvider.kt ----------
+package com.joaomagdaleno.music_hub.common.providers
+
+import com.joaomagdaleno.music_hub.common.MiscExtension
+
+/**
+ * Interface to provide installed [MiscExtension]s to this extension
+ */
+interface MiscExtensionsProvider {
+
+    /**
+     * List of required [MiscExtension]s. If empty, all installed extensions will be provided.
+     * If not empty, only the extensions with the specified ids will be provided
+     */
+    val requiredMiscExtensions: List<String>
+
+    /**
+     * Called when the extension is initialized,
+     * to provide the [requiredMiscExtensions] to the extension.
+     *
+     * Also called when the extension list is updated.
+     */
+    fun setMiscExtensions(extensions: List<MiscExtension>)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\providers\MusicExtensionsProvider.kt ----------
+package com.joaomagdaleno.music_hub.common.providers
+
+import com.joaomagdaleno.music_hub.common.MusicExtension
+
+/**
+ * Interface to provide installed [MusicExtension]s to this extension
+ */
+interface MusicExtensionsProvider {
+    /**
+     * List of required [MusicExtension]s. If empty, all installed extensions will be provided.
+     * If not empty, only the extensions with the specified ids will be provided
+     */
+    val requiredMusicExtensions: List<String>
+
+    /**
+     * Called when the extension is initialized,
+     * to provide the [requiredMusicExtensions] to the extension.
+     *
+     * Also called when the extension list is updated.
+     */
+    fun setMusicExtensions(extensions: List<MusicExtension>)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\providers\NetworkConnectionProvider.kt ----------
+package com.joaomagdaleno.music_hub.common.providers
+
+import com.joaomagdaleno.music_hub.common.models.NetworkConnection
+
+/**
+ * Interface to provide the current network connection of the app
+ */
+interface NetworkConnectionProvider {
+
+    /**
+     * Called when the network connection changes,
+     * to provide the current [NetworkConnection] to the extension
+     */
+    fun setNetworkConnection(networkConnection: NetworkConnection)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\providers\SettingsProvider.kt ----------
+package com.joaomagdaleno.music_hub.common.providers
+
+import com.joaomagdaleno.music_hub.common.settings.Setting
+import com.joaomagdaleno.music_hub.common.settings.Settings
+
+/**
+ * Interface to provide [Settings] to the extension
+ */
+interface SettingsProvider {
+    /**
+     * List of [Setting]s to be displayed in the settings screen
+     */
+    suspend fun getSettingItems() : List<Setting>
+
+    /**
+     * Called when the extension is initialized, to provide the [Settings] to the extension
+     */
+    fun setSettings(settings: Settings)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\providers\TrackerExtensionsProvider.kt ----------
+package com.joaomagdaleno.music_hub.common.providers
+
+import com.joaomagdaleno.music_hub.common.TrackerExtension
+
+/**
+ * Interface to provide installed [TrackerExtension]s to this extension
+ */
+interface TrackerExtensionsProvider {
+    /**
+     * List of required [TrackerExtension]s. If empty, all installed extensions will be provided.
+     * If not empty, only the extensions with the specified ids will be provided
+     */
+    val requiredTrackerExtensions: List<String>
+
+    /**
+     * Called when the extension is initialized,
+     * to provide the [requiredTrackerExtensions] to the extension.
+     *
+     * Also called when the extension list is updated.
+     */
+    fun setTrackerExtensions(extensions: List<TrackerExtension>)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\providers\WebViewClientProvider.kt ----------
+package com.joaomagdaleno.music_hub.common.providers
+
+import com.joaomagdaleno.music_hub.common.helpers.WebViewClient
+
+interface WebViewClientProvider {
+    fun setWebViewClient(webViewClient: WebViewClient)
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\settings\Setting.kt ----------
+package com.joaomagdaleno.music_hub.common.settings
+
+/**
+ * A sealed interface that represents a setting. These are the types of [Setting]s:
+ * - [SettingCategory]
+ * - [SettingItem]
+ * - [SettingSwitch]
+ * - [SettingSlider]
+ * - [SettingTextInput]
+ * - [SettingList]
+ * - [SettingMultipleChoice]
+ * - [SettingOnClick]
+ *
+ * @property title The title of the setting.
+ * @property key The unique key of the setting.
+ */
+sealed interface Setting {
+    val title: String
+    val key: String
+}
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\settings\SettingCategory.kt ----------
+package com.joaomagdaleno.music_hub.common.settings
+
+/**
+ * A category of settings. The UI will group the [items] with the following [title].
+ *
+ * @param title The title of the category.
+ * @param key should be ignored.
+ * @param items The [Setting]s to be grouped in the category.
+ */
+data class SettingCategory(
+    override val title: String,
+    override val key: String,
+    val items: List<Setting>
+) : Setting
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\settings\SettingItem.kt ----------
+package com.joaomagdaleno.music_hub.common.settings
+
+import com.joaomagdaleno.music_hub.common.clients.SettingsChangeListenerClient
+
+/**
+ * A [Setting] item that can be used to show some data in the UI
+ * or as a Button with the help of [SettingsChangeListenerClient].
+ *
+ * @param title The title of the setting.
+ * @param key The unique key of the setting, will be called when the setting is clicked.
+ * @param summary The summary of the setting.
+ */
+data class SettingItem(
+    override val title: String,
+    override val key: String,
+    val summary: String? = null,
+) : Setting
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\settings\SettingList.kt ----------
+package com.joaomagdaleno.music_hub.common.settings
+
+/**
+ * A setting that allows the user to select a single string from a list of options.
+ * Value can be accessed from [Settings.getString]
+ *
+ * @param title The title of the setting.
+ * @param key The key of the setting.
+ * @param summary The summary of the setting.
+ * @param entryTitles The titles of the entries.
+ * @param entryValues The values of the entries.
+ * @param defaultEntryIndex The index of the default entry.
+ */
+data class SettingList(
+    override val title: String,
+    override val key: String,
+    val summary: String? = null,
+    val entryTitles: List<String>,
+    val entryValues: List<String>,
+    val defaultEntryIndex: Int? = null
+) : Setting
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\settings\SettingMultipleChoice.kt ----------
+package com.joaomagdaleno.music_hub.common.settings
+
+/**
+ * A setting that allows the user to select multiple items from a list of options.
+ * Values can be accessed from [Settings.getStringSet]
+ *
+ * @param title The title of the setting.
+ * @param key The unique key of the setting.
+ * @param summary The summary of the setting.
+ * @param entryTitles The titles of the entries.
+ * @param entryValues The values of the entries.
+ * @param defaultEntryIndices The indices of the default entries.
+ */
+data class SettingMultipleChoice(
+    override val title: String,
+    override val key: String,
+    val summary: String? = null,
+    val entryTitles: List<String>,
+    val entryValues: List<String>,
+    val defaultEntryIndices: Set<Int>? = null
+) : Setting
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\settings\SettingOnClick.kt ----------
+package com.joaomagdaleno.music_hub.common.settings
+
+import com.joaomagdaleno.music_hub.common.providers.SettingsProvider
+
+/**
+ * Represents a setting that can be clicked to perform an action.
+ * The [SettingsProvider.getSettingItems] will be called again after the action is performed.
+ *
+ * @property title The title of the setting.
+ * @property key The unique key for the setting.
+ * @property summary An optional summary for the setting.
+ * @property onClick The action to perform when the setting is clicked.
+ */
+data class SettingOnClick(
+    override val title: String,
+    override val key: String,
+    val summary: String? = null,
+    val onClick: suspend () -> Unit,
+) : Setting
+
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\settings\SettingSlider.kt ----------
+package com.joaomagdaleno.music_hub.common.settings
+
+/**
+ * A slider that allows the user to select a value from a range.
+ * Use [allowOverride] to allow the user to use values outside the range.
+ * Value can be accessed from [Settings.getInt]
+ *
+ * @param title The title of the setting.
+ * @param key The key of the setting.
+ * @param summary The summary of the setting.
+ * @param defaultValue The default value of the setting.
+ * @param from The minimum value of the slider.
+ * @param to The maximum value of the slider.
+ * @param steps The number of steps between the minimum and maximum values, if null, the slider will be continuous.
+ * @param allowOverride Whether the user can use values outside the range.
+ */
+data class SettingSlider (
+    override val title: String,
+    override val key: String,
+    val summary: String? = null,
+    val defaultValue: Int? = null,
+    val from: Int,
+    val to: Int,
+    val steps: Int? = null,
+    val allowOverride: Boolean = false
+) : Setting
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\settings\SettingSwitch.kt ----------
+package com.joaomagdaleno.music_hub.common.settings
+
+/**
+ * A switch that allows the user to toggle a setting on or off.
+ * Value can be accessed from [Settings.getBoolean]
+ *
+ * @param title The title of the setting.
+ * @param key The key of the setting.
+ * @param summary The summary of the setting.
+ * @param defaultValue The default value of the setting.
+ */
+data class SettingSwitch(
+    override val title: String,
+    override val key: String,
+    val summary: String? = null,
+    val defaultValue: Boolean
+) : Setting
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\settings\SettingTextInput.kt ----------
+package com.joaomagdaleno.music_hub.common.settings
+
+/**
+ * A setting that allows the user to input a string.
+ * Value can be accessed from [Settings.getString], recommended to use [String.isNullOrBlank].
+ *
+ * @param title The title of the setting.
+ * @param key The key of the setting.
+ * @param summary The summary of the setting.
+ * @param defaultValue The default value of the setting.
+ */
+data class SettingTextInput(
+    override val title: String,
+    override val key: String,
+    val summary: String? = null,
+    val defaultValue: String? = null
+) : Setting
+
+---------- FILE: common\src\commonMain\kotlin\com\joaomagdaleno\music_hub\common\settings\Settings.kt ----------
+package com.joaomagdaleno.music_hub.common.settings
+
+/**
+ * Interface to provide settings to the extension.
+ * This can be used to store data that needs to be persisted. (Recommended to not store sensitive data)
+ *
+ * Following [Setting] Can be used for following types of data:
+ * - String: [SettingTextInput], [SettingList]
+ * - String Set: [SettingMultipleChoice]
+ * - Integer: [SettingSlider]
+ * - Boolean: [SettingSwitch]
+ */
+interface Settings {
+    /**
+     * Get the [String] value for the given key. Returns null if the key is not found.
+     */
+    fun getString(key: String): String?
+
+    /**
+     * Store the value for the given key.
+     * @param value: The value to store. If null, the key will be removed.
+     */
+    fun putString(key: String, value: String?)
+
+    /**
+     * Get the [Set] of [String]s for the given key. Returns null if the key is not found.
+     */
+    fun getStringSet(key: String): Set<String>?
+
+    /**
+     * Store the value for the given key.
+     * @param value: The value to store. If null, the key will be removed.
+     */
+    fun putStringSet(key: String, value: Set<String>?)
+
+    /**
+     * Get the [Int] value for the given key. Returns null if the key is not found.
+     */
+    fun getInt(key: String): Int?
+
+    /**
+     * Store the value for the given key.
+     * @param value: The value to store. If null, the key will be removed.
+     */
+    fun putInt(key: String, value: Int?)
+
+    /**
+     * Get the [Boolean] value for the given key. Returns null if the key is not found.
+     */
+    fun getBoolean(key: String): Boolean?
+
+    /**
+     * Store the value for the given key.
+     * @param value: The value to store. If null, the key will be removed.
+     */
+    fun putBoolean(key: String, value: Boolean?)
+}
+
+---------- FILE: common\styles.css ----------
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap');
+
+:root {
+	--default-font-family: 'Google Sans', Inter, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Droid Sans, Helvetica Neue, Arial, sans-serif;
+	--font-family-default: 'Google Sans', Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Droid Sans, Helvetica Neue, Arial, sans-serif;
+}
+
+.theme-dark {
+	--color-scrollbar: rgba(255, 255, 255, 0.40);
+	--color-scrollbar-track: #262628;
+}
+

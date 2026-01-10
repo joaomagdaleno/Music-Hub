@@ -7,7 +7,10 @@ import androidx.paging.LoadState
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.common.models.Feed
 import com.joaomagdaleno.music_hub.common.models.Playlist
+import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.databinding.FragmentMediaDetailsBinding
+import com.joaomagdaleno.music_hub.ui.feed.FeedData
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
@@ -45,9 +48,9 @@ class MediaDetailsFragment : Fragment(R.layout.fragment_media_details) {
             "${parent.feedId}_tracks",
             Feed.Buttons(showPlayAndShuffle = true),
             true,
-            viewModel.tracksLoadedFlow, viewModel.trackCachedFlow,
-            cached = { viewModel.trackCachedFlow.value?.getOrThrow() },
-            loader = { viewModel.tracksLoadedFlow.value?.getOrThrow() }
+            viewModel.tracksLoadedFlow, viewModel.trackSourceCachedFlow,
+            cached = { viewModel.trackSourceCachedFlow.value },
+            loader = { viewModel.tracksLoadedFlow.value as? FeedData.State<Feed<Shelf>> }
         )
     }
 
@@ -56,9 +59,9 @@ class MediaDetailsFragment : Fragment(R.layout.fragment_media_details) {
             "${parent.feedId}_feed",
             Feed.Buttons(),
             false,
-            viewModel.feedCachedFlow, viewModel.feedLoadedFlow,
-            cached = { viewModel.feedCachedFlow.value?.getOrThrow() },
-            loader = { viewModel.feedLoadedFlow.value?.getOrThrow() }
+            viewModel.feedSourceCachedFlow, viewModel.feedSourceLoadedFlow,
+            cached = { viewModel.feedSourceCachedFlow.value },
+            loader = { viewModel.feedSourceLoadedFlow.value }
         )
     }
 

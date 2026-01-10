@@ -16,9 +16,9 @@ class DownloadingTask(
     override suspend fun work(trackId: Long) {
         var download = getDownload()
         val server = downloader.getServer(trackId, download)
-        val source = server.sources[index]
+        val source = server.streams[index]
         val downloadContext = getDownloadContext()
-        val file = withDownloadExtension { download(progressFlow, downloadContext, source) }
+        val file = downloadProvider.download(progressFlow, downloadContext, source)
         download = getDownload()
         download =
             download.copy(toMergeFilesData = (download.toMergeFiles + file.toString()).toJson())

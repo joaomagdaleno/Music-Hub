@@ -4,14 +4,11 @@ import android.os.Parcelable
 import androidx.paging.cachedIn
 import com.joaomagdaleno.music_hub.common.helpers.PagedData
 import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
-import com.joaomagdaleno.music_hub.common.models.ExtensionType
 import com.joaomagdaleno.music_hub.common.models.Feed
 import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.common.models.Tab
 import com.joaomagdaleno.music_hub.di.App
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtensionOrThrow
-import com.joaomagdaleno.music_hub.extensions.builtin.offline.MediaStoreUtils.searchBy
+import kotlinx.coroutines.flow.emptyFlow
 import com.joaomagdaleno.music_hub.ui.common.PagedSource
 import com.joaomagdaleno.music_hub.ui.feed.FeedType.Companion.toFeedType
 import com.joaomagdaleno.music_hub.ui.feed.viewholders.HorizontalListViewHolder
@@ -39,23 +36,24 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.lang.ref.WeakReference
+import com.joaomagdaleno.music_hub.utils.FileLogger
 
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 data class FeedData(
     private val feedId: String,
     private val scope: CoroutineScope,
     private val app: App,
-    private val extensionLoader: ExtensionLoader,
-    private val cached: suspend ExtensionLoader.() -> State<Feed<Shelf>>?,
-    private val load: suspend ExtensionLoader.() -> State<Feed<Shelf>>?,
+    private val repository: com.joaomagdaleno.music_hub.data.repository.MusicRepository,
+    private val cached: suspend com.joaomagdaleno.music_hub.data.repository.MusicRepository.() -> State<Feed<Shelf>>?,
+    private val load: suspend com.joaomagdaleno.music_hub.data.repository.MusicRepository.() -> State<Feed<Shelf>>?,
     private val defaultButtons: Feed.Buttons,
     private val noVideos: Boolean,
     private val extraLoadFlow: Flow<*>
 ) {
-    val current = extensionLoader.current
-    val usersFlow = extensionLoader.db.currentUsersFlow
-    suspend fun getExtension(id: String) =
-        extensionLoader.getFlow(ExtensionType.MUSIC).getExtensionOrThrow(id)
+    // Monolithic: No current source flow, assume always present
+    val current = MutableStateFlow<String?>("internal")
+    val usersFlow = emptyFlow<Unit>()
+    fun getSource(id: String) = Unit // Placeholder if needed
 
     val layoutManagerStates = hashMapOf<Int, Parcelable?>()
     val visibleScrollableViews = hashMapOf<Int, WeakReference<HorizontalListViewHolder>>()
@@ -90,18 +88,18 @@ data class FeedData(
         state: Result<State<Feed<Shelf>>?>, tab: Tab?
     ) = withContext(Dispatchers.IO) {
         runCatching {
-            val (extensionId, item, feed) = state.getOrThrow() ?: return@runCatching null
-            State(extensionId, item, feed.getPagedData(tab))
+            val (origin, item, feed) = state.getOrThrow() ?: return@runCatching null
+            State(origin, item, feed.getPagedData(tab))
         }
     }
 
     val dataFlow = cachedDataFlow.combine(loadedDataFlow) { cached, loaded ->
-        val extensionId = (loaded?.getOrNull() ?: cached?.getOrNull())?.extensionId
+        val origin = (loaded?.getOrNull() ?: cached?.getOrNull())?.origin
         val tabId = selectedTabFlow.value?.id
         searchQuery = null
         searchToggled = false
-        val id = "$extensionId-$feedId-$tabId"
-        feedSortState.value = extensionId?.let { app.context.getFromCache(id, "sort") }
+        val id = "$origin-$feedId-$tabId"
+        feedSortState.value = origin?.let { app.context.getFromCache(id, "sort") }
         loadedShelves.value = null
         cached to loaded
     }
@@ -114,7 +112,7 @@ data class FeedData(
     val tabsFlow = stateFlow.map { (cached, loaded) ->
         val state = (loaded?.getOrNull() ?: cached?.getOrNull()) ?: return@map listOf()
         state.feed.tabs.map {
-            FeedTab(feedId, state.extensionId, it)
+            FeedTab(feedId, state.origin, it)
         }
     }
 
@@ -124,13 +122,13 @@ data class FeedData(
 
     data class FeedTab(
         val feedId: String,
-        val extensionId: String,
+        val origin: String,
         val tab: Tab
     )
 
     data class Buttons(
         val feedId: String,
-        val extensionId: String,
+        val origin: String,
         val buttons: Feed.Buttons,
         val item: EchoMediaItem? = null,
         val sortState: FeedSort.State? = null,
@@ -140,7 +138,7 @@ data class FeedData(
         val feed = data.run { second?.getOrNull() ?: first?.getOrNull() } ?: return@combine null
         Buttons(
             feedId,
-            feed.extensionId,
+            feed.origin,
             feed.feed.buttons ?: defaultButtons,
             feed.item,
             state,
@@ -181,7 +179,7 @@ data class FeedData(
         val data = if (feedSortState.value != null || searchQuery != null) {
             result.mapCatching { state ->
                 state ?: return@mapCatching PagedData.empty()
-                val extensionId = state.extensionId
+                val origin = state.origin
                 val data = state.feed.pagedData
 
                 val sortState = feedSortState.value
@@ -203,17 +201,15 @@ data class FeedData(
                     shelves = sortState.feedSort?.sorter?.invoke(app.context, shelves) ?: shelves
                     if (sortState.reversed) shelves = shelves.reversed()
                     if (sortState.save)
-                        app.context.saveToCache("$extensionId-$feedId-$tabId", sortState, "sort")
+                        app.context.saveToCache("$origin-$feedId-$tabId", sortState, "sort")
                 }
                 if (query != null) {
-                    shelves = shelves.searchBy(query) {
-                        listOf(it.title)
-                    }.map { it.second }
+                    shelves = shelves.filter { it.title.contains(query, true) }
                 }
                 PagedData.Single {
                     shelves.toFeedType(
                         feedId,
-                        extensionId,
+                        origin,
                         state.item,
                         tabId,
                         noVideos
@@ -222,13 +218,13 @@ data class FeedData(
             }
         } else result.mapCatching { state ->
             state ?: return@mapCatching PagedData.empty()
-            val extId = state.extensionId
+            val origin = state.origin
             val data = state.feed.pagedData
             data.loadPage(null)
             var start = 0L
             data.map { result ->
                 result.map {
-                    val list = it.toFeedType(feedId, extId, state.item, tabId, noVideos, start)
+                    val list = it.toFeedType(feedId, origin, state.item, tabId, noVideos, start)
                     start += list.size
                     list
                 }.getOrThrow()
@@ -252,27 +248,40 @@ data class FeedData(
         loadedFeedTypeFlow.value == null
     }.stateIn(scope, Lazily, true)
 
-    fun selectTab(extensionId: String?, pos: Int) {
+    fun selectTab(origin: String?, pos: Int) {
         val state = stateFlow.value.run { second?.getOrNull() ?: first?.getOrNull() }
         val tab = state?.feed?.tabs?.getOrNull(pos)
-            ?.takeIf { state.extensionId == extensionId }
+            ?.takeIf { state.origin == origin }
         app.context.saveToCache(feedId, tab?.id, "selected_tab")
         selectedTabFlow.value = tab
     }
 
-    fun refresh() = scope.launch { refreshFlow.emit(Unit) }
+    fun refresh() = scope.launch { 
+        FileLogger.log("FeedData", "refresh() called for feedId=$feedId")
+        refreshFlow.emit(Unit) 
+    }
 
     init {
+        FileLogger.log("FeedData", "init start for feedId=$feedId")
         scope.launch(Dispatchers.IO) {
             listOfNotNull(current, refreshFlow, usersFlow, extraLoadFlow)
                 .merge().debounce(100L).collectLatest {
+                    FileLogger.log("FeedData", "collectLatest triggered for feedId=$feedId")
                     cachedState.value = null
                     loadedState.value = null
-                    extensionLoader.current.value ?: return@collectLatest
-                    cachedState.value = runCatching { cached(extensionLoader) }
-                    loadedState.value = runCatching { load(extensionLoader) }
+                    // Monolithic: Always load
+                    FileLogger.log("FeedData", "Loading cached for feedId=$feedId")
+                    cachedState.value = runCatching { cached(repository) }
+                    FileLogger.log("FeedData", "Cached result: ${cachedState.value?.isSuccess} for feedId=$feedId")
+                    FileLogger.log("FeedData", "Loading fresh for feedId=$feedId")
+                    loadedState.value = runCatching { load(repository) }
+                    FileLogger.log("FeedData", "Loaded result: ${loadedState.value?.isSuccess} for feedId=$feedId")
+                    loadedState.value?.exceptionOrNull()?.let { ex ->
+                        FileLogger.log("FeedData", "Load exception for feedId=$feedId: ${ex.message}", ex)
+                    }
                 }
         }
+
         scope.launch {
             stateFlow.collect { result ->
                 val feed = result.run { second?.getOrNull() ?: first?.getOrNull() }?.feed?.tabs
@@ -285,7 +294,7 @@ data class FeedData(
     }
 
     data class State<T>(
-        val extensionId: String,
+        val origin: String,
         val item: EchoMediaItem?,
         val feed: T,
     )

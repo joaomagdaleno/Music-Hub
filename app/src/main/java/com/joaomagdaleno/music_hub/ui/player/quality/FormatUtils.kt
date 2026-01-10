@@ -66,8 +66,8 @@ object FormatUtils {
         val videos = groups.filter { it.type == C.TRACK_TYPE_VIDEO }
         val subtitles = groups.filter { it.type == C.TRACK_TYPE_TEXT }
         val sourceTitle = server?.run {
-            if (merged) sources.mapNotNull { it.title }
-            else listOfNotNull(sources.getOrNull(index ?: -1)?.title)
+            if (merged) streams.mapNotNull { it.title }
+            else listOfNotNull(streams.getOrNull(index ?: -1)?.title)
         }.orEmpty()
         return sourceTitle + listOfNotNull(
             audios.getSelectedFormat()?.toAudioDetails(),

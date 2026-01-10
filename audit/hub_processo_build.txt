@@ -1,0 +1,193 @@
+================================================================================
+PROCESS AUDIT: hub_processo_build.txt
+DATE: 2026-01-08 15:23:52
+FILE COUNT: 5
+================================================================================
+
+---------- FILE: app\build.gradle.kts ----------
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlinx.serialization)
+
+    alias(libs.plugins.gms) apply false
+    alias(libs.plugins.crashlytics) apply false
+}
+
+val hasGoogleServices = file("google-services.json").exists()
+val gitHash = execute("git", "rev-parse", "HEAD").take(7)
+val gitCount = execute("git", "rev-list", "--count", "HEAD").toInt()
+val version = "3.0.$gitCount"
+
+android {
+    namespace = "com.joaomagdaleno.music_hub"
+    compileSdk = 36
+
+    defaultConfig {
+        applicationId = "com.joaomagdaleno.music_hub"
+        minSdk = 24
+        targetSdk = 36
+        versionCode = gitCount
+        versionName = "v${version}_$gitHash($gitCount)"
+    }
+
+    signingConfigs {
+        create("release") {
+            val path = System.getenv("KEYSTORE_PATH")
+            if (path != null) {
+                storeFile = file(path)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            if (signingConfigs.getByName("release").storeFile != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+        create("nightly") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".nightly"
+            resValue("string", "app_name", "Music Hub Nightly")
+        }
+        create("stable") {
+            initWith(getByName("release"))
+            if (signingConfigs.getByName("release").storeFile != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
+    }
+
+    buildFeatures {
+        buildConfig = true
+        viewBinding = true
+    }
+
+    androidResources {
+        @Suppress("UnstableApiUsage")
+        generateLocaleConfig = true
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+kotlin {
+    jvmToolchain(17)
+}
+
+dependencies {
+    implementation(project(":common"))
+    implementation(libs.kotlin.reflect)
+    implementation(libs.bundles.androidx)
+    implementation(libs.material)
+    implementation(libs.bundles.paging)
+    implementation(libs.filekache)
+    implementation(libs.bundles.room)
+    ksp(libs.room.compiler)
+    implementation(libs.bundles.koin)
+    implementation(libs.bundles.media3)
+    implementation(libs.bundles.coil)
+
+    implementation(libs.pikolo)
+    implementation(libs.fadingedgelayout)
+    implementation(libs.fastscroll)
+    implementation(libs.kenburnsview)
+    implementation(libs.nestedscrollwebview)
+    implementation(libs.acsbendi.webview)
+    implementation(libs.jaudiotagger)
+
+    if (!hasGoogleServices) return@dependencies
+    implementation(libs.bundles.firebase)
+}
+
+if (hasGoogleServices) {
+    apply(plugin = libs.plugins.gms.get().pluginId)
+    apply(plugin = libs.plugins.crashlytics.get().pluginId)
+}
+
+fun execute(vararg command: String): String = providers.exec {
+    commandLine(*command)
+}.standardOutput.asText.get().trim()
+
+---------- FILE: build.gradle.kts ----------
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+plugins {
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.android.kmp.library) apply false
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.gms) apply false
+}
+
+---------- FILE: gradle.properties ----------
+#Gradle
+org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=1G -Dfile.encoding=UTF-8
+org.gradle.parallel=true
+org.gradle.caching=true
+org.gradle.configuration-cache=true
+org.gradle.configureondemand=true
+org.gradle.daemon=true
+#Kotlin
+kotlin.code.style=official
+kotlin.daemon.jvmargs=-Xmx2048M
+#Dokka
+org.jetbrains.dokka.experimental.gradle.pluginMode=V2Enabled
+org.jetbrains.dokka.experimental.gradle.pluginMode.noWarn=true
+#Android
+android.useAndroidX=true
+android.enableJetifier=true
+android.nonTransitiveRClass=true
+
+---------- FILE: gradle\wrapper\gradle-wrapper.properties ----------
+#Tue Feb 18 16:12:29 IST 2025
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-9.0.0-bin.zip
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+
+
+---------- FILE: settings.gradle.kts ----------
+pluginManagement {
+    repositories {
+        google {
+            content {
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("androidx.*")
+            }
+        }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+@Suppress("UnstableApiUsage")
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+    }
+}
+
+rootProject.name = "Echo"
+include(":app")
+include(":common")
+ 
+

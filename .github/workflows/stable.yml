@@ -26,21 +26,27 @@ jobs:
           cache: 'gradle'
 
       - name: Cook KeyStore
-        run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > $GITHUB_WORKSPACE/signing-key.jks
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: echo "$KEYSTORE_B64" | base64 -d > $GITHUB_WORKSPACE/signing-key.jks
 
       - name: Cook Google Services
-        run: echo "${{ secrets.GOOGLE_SERVICES_B64 }}" | base64 -d > app/google-services.json
+        env:
+          GOOGLE_SERVICES_B64: ${{ secrets.GOOGLE_SERVICES_B64 }}
+        run: echo "$GOOGLE_SERVICES_B64" | base64 -d > app/google-services.json
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
       - name: Build with Gradle
+        env:
+          PASSWORD: ${{ secrets.PASSWORD }}
         run: |
           ./gradlew assembleStable \
           -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
-          -Pandroid.injected.signing.store.password=${{ secrets.PASSWORD }} \
+          -Pandroid.injected.signing.store.password=$PASSWORD \
           -Pandroid.injected.signing.key.alias=key0 \
-          -Pandroid.injected.signing.key.password=${{ secrets.PASSWORD }}
+          -Pandroid.injected.signing.key.password=$PASSWORD
           cp app/build/outputs/apk/stable/app-stable.apk app/build/${{ env.VERSION }}.apk
 
       - name: Upload APK
@@ -48,35 +54,27 @@ jobs:
         with:
           path: app/build/outputs/apk/stable/app-stable.apk
 
+      - name: Record Build Metrics ⏱️
+        run: |
+          mkdir -p metrics
+          APK_SIZE=$(stat -c%s "app/build/outputs/apk/stable/app-stable.apk")
+          echo "{
+            \"platform\": \"android\",
+            \"version\": \"${{ env.VERSION }}\",
+            \"apk_size_bytes\": $APK_SIZE,
+            \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+            \"commit\": \"${{ github.sha }}\"
+          }" > metrics/android_telemetry.json
+
+      - name: Upload Telemetry
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-telemetry
+          path: metrics/android_telemetry.json
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           make_latest: true
           body: ${{ env.COMMIT }}
           files: app/build/${{ env.VERSION }}.apk
-
-      - name: Upload APK to Discord
-        shell: bash
-        env:
-          WEBHOOK: ${{ secrets.DISCORD_RELEASE_WEBHOOK }}
-        run: |
-          message=$(echo "@everyone **${{ env.VERSION }}**\n${{ env.COMMIT }}")
-          curl -F "payload_json={\"content\":\"${message}\"}" \
-          -F "echo_beta=@app/build/${{ env.VERSION }}.apk" \
-          ${{ env.WEBHOOK }}
-
-      - name: Upload APK to Telegram
-        shell: bash
-        env:
-          BOT_ID: ${{ secrets.TELEGRAM_BOT_ID }}
-          CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
-          THREAD_ID: ${{ secrets.TELEGRAM_THREAD_ID }}
-        run: |
-          regex='s/[\_\*\[\]\(\)\~\`\>\#\+\-\=\|\{\}\.\!]/\\&/g'
-          message=$(printf "${{ env.COMMIT }}" | sed -E "$regex")
-          curl -F "chat_id=${{ env.CHANNEL_ID }}" \
-          -F "message_thread_id=${{ env.THREAD_ID }}" \
-          -F "document=@app/build/${{ env.VERSION }}.apk" \
-          -F "caption=${message}" \
-          -F "parse_mode=MarkdownV2" \
-          https://api.telegram.org/bot${{ env.BOT_ID }}/sendDocument

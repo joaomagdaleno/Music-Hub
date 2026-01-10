@@ -1,0 +1,109 @@
+Configuration on demand is an incubating feature.
+Reusing configuration cache.
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:extractDebugSupportedLocales UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:mergeDebugNativeLibs NO-SOURCE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:stripDebugDebugSymbols NO-SOURCE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:generateDebugLocaleConfig UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :app:kspDebugKotlin UP-TO-DATE
+
+> Task :app:compileDebugKotlin
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/helpers/ClientException.kt:3:51 Unresolved reference 'LoginClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/settings/SettingItem.kt:3:51 Unresolved reference 'SettingsChangeListenerClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:173:17 Conflicting overloads:
+fun Track.toItem(context: Context, extensionId: String, con: EchoMediaItem? = ...): MediaItem
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:192:17 Conflicting overloads:
+fun Track.toItem(context: Context, extensionId: String, con: EchoMediaItem? = ...): MediaItem
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:227:25 Overload resolution ambiguity between candidates:
+fun Track.toItem(context: Context, extensionId: String, con: EchoMediaItem? = ...): MediaItem
+fun Track.toItem(context: Context, extensionId: String, con: EchoMediaItem? = ...): MediaItem
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:256:62 Overload resolution ambiguity between candidates:
+fun Track.toItem(context: Context, extensionId: String, con: EchoMediaItem? = ...): MediaItem
+fun Track.toItem(context: Context, extensionId: String, con: EchoMediaItem? = ...): MediaItem
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:328:34 Overload resolution ambiguity between candidates:
+fun Track.toItem(context: Context, extensionId: String, con: EchoMediaItem? = ...): MediaItem
+fun Track.toItem(context: Context, extensionId: String, con: EchoMediaItem? = ...): MediaItem
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:9:43 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:67:33 Unresolved reference 'metadata'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:117:24 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:155:60 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:155:76 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:159:40 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:159:40 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T> Iterable<T>.find(predicate: (T) -> Boolean): T?
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:159:45 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:159:50 Unresolved reference 'id'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedLoadingAdapter.kt:11:53 Unresolved reference 'Cached'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedLoadingAdapter.kt:12:58 Unresolved reference 'AppException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedLoadingAdapter.kt:28:48 Unresolved reference 'AppException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedLoadingAdapter.kt:81:37 Unresolved reference 'AppException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedLoadingAdapter.kt:109:24 Unresolved reference 'AppException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedLoadingAdapter.kt:111:24 Unresolved reference 'Cached'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedLoadingAdapter.kt:137:65 Unresolved reference 'AppException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/main/LibraryFragment.kt:9:51 Unresolved reference 'LibraryFeedClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaViewModel.kt:43:58 No value passed for parameter 'isFollowed'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaViewModel.kt:43:58 No value passed for parameter 'followers'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaViewModel.kt:43:58 No value passed for parameter 'isSaved'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaViewModel.kt:43:58 No value passed for parameter 'isLiked'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaViewModel.kt:43:58 No value passed for parameter 'isHidden'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaViewModel.kt:43:58 No value passed for parameter 'showRadio'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaViewModel.kt:43:58 No value passed for parameter 'showShare'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/info/TrackInfoViewModel.kt:43:83 No value passed for parameter 'isFollowed'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/info/TrackInfoViewModel.kt:43:83 No value passed for parameter 'followers'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/info/TrackInfoViewModel.kt:43:83 No value passed for parameter 'isSaved'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/info/TrackInfoViewModel.kt:43:83 No value passed for parameter 'isLiked'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/info/TrackInfoViewModel.kt:43:83 No value passed for parameter 'isHidden'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/info/TrackInfoViewModel.kt:43:83 No value passed for parameter 'showRadio'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/info/TrackInfoViewModel.kt:43:83 No value passed for parameter 'showShare'.
+
+> Task :app:compileDebugKotlin FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 23s
+32 actionable tasks: 1 executed, 31 up-to-date
+Configuration cache entry reused.

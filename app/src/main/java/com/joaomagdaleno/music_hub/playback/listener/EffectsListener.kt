@@ -14,7 +14,6 @@ import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.copyTo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -124,7 +123,16 @@ class EffectsListener(
             return if (!hasCustom) null
             else getSharedPreferences("fx_$string", Context.MODE_PRIVATE)!!.apply {
                 if (getBoolean("init", false)) return@apply
-                settings.copyTo(this)
+                settings.all.forEach { (key, value) ->
+                    when (value) {
+                        is Boolean -> edit { putBoolean(key, value) }
+                        is Float -> edit { putFloat(key, value) }
+                        is Int -> edit { putInt(key, value) }
+                        is Long -> edit { putLong(key, value) }
+                        is String -> edit { putString(key, value) }
+                        is Set<*> -> edit { putStringSet(key, value as Set<String>) }
+                    }
+                }
                 edit { putBoolean("init", true) }
             }
         }

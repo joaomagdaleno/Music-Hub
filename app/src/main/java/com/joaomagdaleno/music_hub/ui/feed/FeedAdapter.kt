@@ -47,7 +47,7 @@ class FeedAdapter(
     object DiffCallback : DiffUtil.ItemCallback<FeedType>() {
         override fun areContentsTheSame(oldItem: FeedType, newItem: FeedType) = oldItem == newItem
         override fun areItemsTheSame(oldItem: FeedType, newItem: FeedType): Boolean {
-            if (oldItem.extensionId != newItem.extensionId) return false
+            if (oldItem.origin != newItem.origin) return false
             if (newItem.type != oldItem.type) return false
             if (oldItem.id != newItem.id) return false
             return true
@@ -154,7 +154,7 @@ class FeedAdapter(
 
     fun withLoading(fragment: Fragment, vararg before: GridAdapter): GridAdapter.Concat {
         val tabs = TabsAdapter<FeedTab>({ tab.title }) { view, index, tab ->
-            listener.onTabSelected(view, tab.feedId, tab.extensionId, index)
+            listener.onTabSelected(view, tab.feedId, tab.origin, index)
         }
         fragment.observe(viewModel.tabsFlow) { tabs.data = it }
         fragment.observe(viewModel.selectedTabIndexFlow) { tabs.selected = it }
@@ -251,7 +251,7 @@ class FeedAdapter(
                 override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                     val feed = (viewHolder as MediaViewHolder).feed ?: return
                     val track = feed.item as? Track ?: return
-                    listener.onTrackSwiped(viewHolder.itemView, feed.extensionId, track)
+                    listener.onTrackSwiped(viewHolder.itemView, feed.origin, track)
                     viewHolder.bindingAdapter?.notifyItemChanged(viewHolder.bindingAdapterPosition)
                 }
 

@@ -18,8 +18,8 @@ class MediaItemAdapter(
     DiffCallback
 ), GridAdapter {
 
-    data class Item(val extensionId: String, val item: EchoMediaItem) {
-        val id = extensionId + item.id
+    data class Item(val origin: String, val item: EchoMediaItem) {
+        val id = origin + item.id
     }
 
     object DiffCallback : DiffUtil.ItemCallback<Item>() {

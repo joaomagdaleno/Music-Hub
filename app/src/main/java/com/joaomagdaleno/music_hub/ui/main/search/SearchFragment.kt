@@ -8,15 +8,12 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
 import com.google.android.material.transition.MaterialSharedAxis
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.clients.SearchFeedClient
 import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Feed.Companion.toFeed
 import com.joaomagdaleno.music_hub.common.models.Feed.Buttons.Companion.EMPTY
 import com.joaomagdaleno.music_hub.common.models.QuickSearchItem
 import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.databinding.FragmentSearchBinding
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getAs
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtension
-import com.joaomagdaleno.music_hub.extensions.cache.Cached
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyBackPressCallback
@@ -28,19 +25,21 @@ import com.joaomagdaleno.music_hub.ui.feed.FeedData
 import com.joaomagdaleno.music_hub.ui.feed.FeedViewModel
 import com.joaomagdaleno.music_hub.ui.main.HeaderAdapter
 import com.joaomagdaleno.music_hub.ui.main.MainFragment.Companion.applyInsets
-import com.joaomagdaleno.music_hub.ui.main.search.SearchViewModel.Companion.saveInHistory
+
 import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
 import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
 import kotlinx.coroutines.flow.combine
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.android.ext.android.inject
 
 class SearchFragment : Fragment(R.layout.fragment_search) {
 
-    private val argId by lazy { arguments?.getString("extensionId") }
+    private val argId by lazy { arguments?.getString("origin") }
     private val searchViewModel by viewModel<SearchViewModel>()
+    private val repository: com.joaomagdaleno.music_hub.data.repository.MusicRepository by inject()
 
-    private var extensionId = ""
+    private var origin = ""
 
     private val feedData by lazy {
         val vm by viewModel<FeedViewModel>()
@@ -50,22 +49,30 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             EMPTY,
             false,
             searchViewModel.queryFlow,
-            cached = {
-                val curr = music.getExtension(argId) ?: current.value!!
-                val query = searchViewModel.queryFlow.value
-                val feed = Cached.getFeedShelf(app, curr.id, "$id-$query")
-                FeedData.State(curr.id, null, feed.getOrThrow())
-            }
+            cached = { null } // Skip cache
         ) {
-            val curr = music.getExtension(argId) ?: current.value!!
             val query = searchViewModel.queryFlow.value
-            curr.saveInHistory(vm.app.context, query)
-            val feed = Cached.savingFeed(
-                app, curr, "$id-$query",
-                curr.getAs<SearchFeedClient, Feed<Shelf>> { loadSearchFeed(query) }.getOrThrow()
-            )
-            extensionId = curr.id
-            FeedData.State(curr.id, null, feed)
+            // Use searchViewModel or repository directly?
+            // SearchViewModel has searchResults but here we are in a loader lambda.
+            // We can call repository.search(query) directly.
+            if (query.isBlank()) {
+                FeedData.State("internal", null, emptyList<Shelf>().toFeed())
+            } else {
+                searchViewModel.saveQuery(query) // Save history
+                val results = repository.search(query)
+                val tracks = if(results.isEmpty()) {
+                     // Try loading as ID/Link
+                     listOfNotNull(repository.getTrack(query))
+                } else results
+                
+                // search returns List<Track>. Convert to Shelf.
+                // Or maybe SearchClient returned Feed<Shelf>? 
+                // Repository.search returns List<Track>.
+                // We wrap it in a Shelf.
+                val shelf = Shelf.Lists.Tracks("search_results", getString(R.string.search), tracks)
+                val feed = listOf<Shelf>(shelf).toFeed()
+                FeedData.State("internal", null, feed)
+            }
         }
     }
 
@@ -127,7 +134,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         }
         binding.quickSearchView.editText.setText(searchViewModel.queryFlow.value)
         binding.quickSearchView.editText.doOnTextChanged { text, _, _, _ ->
-            searchViewModel.quickSearch(extensionId, text.toString())
+            searchViewModel.quickSearch(text.toString())
         }
         binding.quickSearchView.editText.setOnEditorActionListener { textView, _, _ ->
             val query = textView.text.toString()
@@ -146,18 +153,14 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                     }
 
                     is QuickSearchItem.Media -> {
-                        val extensionId = item.extensionId
-                        listener.onMediaClicked(transitionView, extensionId, actualItem.media, null)
+                        val origin = item.origin
+                        listener.onMediaClicked(transitionView, origin, actualItem.media, null)
                     }
                 }
             }
 
             override fun onDeleteClick(item: QuickSearchAdapter.Item) =
-                searchViewModel.deleteSearch(
-                    item.extensionId,
-                    item.actual,
-                    binding.quickSearchView.editText.text.toString()
-                )
+                searchViewModel.deleteSearch(item.actual)
 
             override fun onLongClick(item: QuickSearchAdapter.Item, transitionView: View) =
                 when (val actualItem = item.actual) {
@@ -167,9 +170,9 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                     }
 
                     is QuickSearchItem.Media -> {
-                        val extensionId = item.extensionId
+                        val origin = item.origin
                         listener.onMediaLongClicked(
-                            transitionView, extensionId, actualItem.media,
+                            transitionView, origin, actualItem.media,
                             null, null, -1
                         )
                         true
@@ -187,7 +190,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         binding.quickSearchRecyclerView.adapter = quickSearchAdapter
         observe(searchViewModel.quickFeed) { list ->
             quickSearchAdapter.submitList(list.map {
-                QuickSearchAdapter.Item(extensionId, it)
+                QuickSearchAdapter.Item(origin, it)
             })
         }
     }

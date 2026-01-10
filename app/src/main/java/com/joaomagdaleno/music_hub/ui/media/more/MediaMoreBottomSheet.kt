@@ -6,18 +6,13 @@ import androidx.fragment.app.Fragment
 import androidx.paging.LoadState
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.clients.ExtensionClient
-import com.joaomagdaleno.music_hub.common.clients.PlaylistEditClient
-import com.joaomagdaleno.music_hub.common.clients.TrackClient
 import com.joaomagdaleno.music_hub.common.models.Artist
 import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
 import com.joaomagdaleno.music_hub.common.models.Playlist
 import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.databinding.DialogMediaMoreBinding
 import com.joaomagdaleno.music_hub.download.Downloader
-import com.joaomagdaleno.music_hub.extensions.MediaState
-import com.joaomagdaleno.music_hub.extensions.builtin.offline.OfflineExtension
-import com.joaomagdaleno.music_hub.extensions.builtin.unified.UnifiedExtension.Companion.EXTENSION_ID
+import com.joaomagdaleno.music_hub.common.models.MediaState
 import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
@@ -49,7 +44,7 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     companion object {
         fun newInstance(
             contId: Int,
-            extensionId: String,
+            origin: String,
             item: EchoMediaItem,
             loaded: Boolean,
             fromPlayer: Boolean = false,
@@ -59,7 +54,7 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
         ) = MediaMoreBottomSheet().apply {
             arguments = Bundle().apply {
                 putInt("contId", contId)
-                putString("extensionId", extensionId)
+                putString("origin", origin)
                 putSerialized("item", item)
                 putBoolean("loaded", loaded)
                 putSerialized("context", context)
@@ -72,7 +67,7 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
 
     private val args by lazy { requireArguments() }
     private val contId by lazy { args.getInt("contId", -1).takeIf { it != -1 }!! }
-    private val extensionId by lazy { args.getString("extensionId")!! }
+    private val origin by lazy { args.getString("origin")!! }
     private val item by lazy { args.getSerialized<EchoMediaItem>("item")!!.getOrThrow() }
     private val loaded by lazy { args.getBoolean("loaded") }
     private val itemContext by lazy { args.getSerialized<EchoMediaItem?>("context")?.getOrThrow() }
@@ -82,14 +77,14 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     private val delete by lazy { args.getBoolean("delete", false) }
 
     private val vm by viewModel<MediaViewModel> {
-        parametersOf(false, extensionId, item, loaded, delete)
+        parametersOf(false, origin, item, loaded)
     }
     private val playerViewModel by activityViewModel<PlayerViewModel>()
 
     private val actionAdapter by lazy { MoreButtonAdapter() }
     private val headerAdapter by lazy {
         MoreHeaderAdapter({ dismiss() }, {
-            openItemFragment(extensionId, item, loaded)
+            openItemFragment(origin, item, loaded)
             dismiss()
         })
     }
@@ -109,11 +104,10 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
         val actionFlow =
             combine(vm.downloadsFlow, vm.uiResultFlow) { _, _ -> }
         observe(actionFlow) {
-            val client = vm.extensionFlow.value?.instance?.value()?.getOrNull()
             val result = vm.uiResultFlow.value?.getOrNull()
             val downloads = vm.downloadsFlow.value.filter { it.download.finalFile != null }
             val loaded = if (result != null) true else loaded
-            val list = getButtons(client, result, loaded, downloads)
+            val list = getButtons(result, loaded, downloads)
             actionAdapter.submitList(list)
             headerAdapter.item = result?.item ?: item
         }
@@ -133,14 +127,13 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     }
 
     private fun getButtons(
-        client: ExtensionClient?,
         state: MediaState.Loaded<*>?,
         loaded: Boolean,
         downloads: List<Downloader.Info>
     ) = getPlayerButtons() +
-            getPlayButtons(client, state?.item ?: item, loaded) +
-            getPlaylistEditButtons(client, state, loaded) +
-            getDownloadButtons(client, state, downloads) +
+            getPlayButtons(state?.item ?: item, loaded) +
+            getPlaylistEditButtons(state, loaded) +
+            getDownloadButtons(state, downloads) +
             getActionButtons(state) +
             getItemButtons(state?.item ?: item)
 
@@ -157,75 +150,76 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     ) else listOf()
 
     private fun getPlayButtons(
-        client: ExtensionClient?, item: EchoMediaItem, loaded: Boolean
-    ) = if (client is TrackClient) listOfNotNull(
+        item: EchoMediaItem, loaded: Boolean
+    ) = if (item is Track) listOfNotNull(
         button("play", R.string.play, R.drawable.ic_play) {
-            playerViewModel.play(extensionId, item, loaded)
+            playerViewModel.play(origin, item, loaded)
         },
         if (playerViewModel.queue.isNotEmpty())
             button("next", R.string.add_to_next, R.drawable.ic_playlist_play) {
-                playerViewModel.addToNext(extensionId, item, loaded)
+                playerViewModel.addToNext(origin, item, loaded)
             }
         else null,
         if (playerViewModel.queue.size > 1)
             button("queue", R.string.add_to_queue, R.drawable.ic_playlist_add) {
-                playerViewModel.addToQueue(extensionId, item, loaded)
+                playerViewModel.addToQueue(origin, item, loaded)
             }
         else null
     ) else listOf()
 
     fun getPlaylistEditButtons(
-        client: ExtensionClient?, state: MediaState<*>?, loaded: Boolean
+        state: MediaState<*>?, loaded: Boolean
     ) = run {
-        if (client !is PlaylistEditClient) return@run listOf()
         val item = state?.item ?: item
         val isEditable = item is Playlist && item.isEditable
+        // In monolithic mode, always show save to playlist for tracks
+        // and always show edit/delete for editable playlists
         listOfNotNull(
-            if (loaded) button(
+            if (item is Track && loaded) button(
                 "save_to_playlist", R.string.save_to_playlist, R.drawable.ic_library_music
             ) {
-                SaveToPlaylistBottomSheet.newInstance(extensionId, item)
+                SaveToPlaylistBottomSheet.newInstance(origin, item)
                     .show(parentFragmentManager, null)
             } else null,
             if (isEditable) button(
                 "edit_playlist", R.string.edit_playlist, R.drawable.ic_edit_note
             ) {
                 openFragment<EditPlaylistFragment>(
-                    EditPlaylistFragment.getBundle(extensionId, item, loaded)
+                    EditPlaylistFragment.getBundle(origin, item, loaded)
                 )
             } else null,
             if (isEditable) button(
                 "delete_playlist", R.string.delete_playlist, R.drawable.ic_delete
             ) {
-                DeletePlaylistBottomSheet.show(requireActivity(), extensionId, item, loaded)
+                DeletePlaylistBottomSheet.show(requireActivity(), origin, item, loaded)
             } else null,
             if ((itemContext as? Playlist)?.isEditable == true && item is Track) button(
                 "remove_from_playlist", R.string.remove, R.drawable.ic_cancel
             ) {
                 EditPlaylistBottomSheet.newInstance(
-                    extensionId, itemContext as Playlist, tabId, pos
+                    origin, itemContext as Playlist, tabId, pos
                 ).show(parentFragmentManager, null)
             } else null
         )
     }
 
     fun getDownloadButtons(
-        client: ExtensionClient?, state: MediaState<*>?, downloads: List<Downloader.Info>
+        state: MediaState<*>?, downloads: List<Downloader.Info>
     ) = run {
         val item = state?.item ?: item
         val shouldShowDelete = when (item) {
             is Track -> downloads.any { it.download.trackId == item.id }
             else -> downloads.any { it.context?.itemId == item.id }
         }
-        val downloadable =
-            state != null && client is TrackClient && state.item.extras[EXTENSION_ID] != OfflineExtension.metadata.id
+        // In monolithic mode, everything is downloadable if it's a track
+        val downloadable = item is Track
 
         listOfNotNull(
             if (downloadable) button(
                 "download", R.string.download, R.drawable.ic_download_for_offline
             ) {
                 val downloadViewModel by activityViewModel<DownloadViewModel>()
-                downloadViewModel.addToDownload(requireActivity(), extensionId, item, itemContext)
+                downloadViewModel.addToDownload(requireActivity(), origin, item, itemContext)
             } else null,
             if (shouldShowDelete) button(
                 "delete_download", R.string.delete_download, R.drawable.ic_scan_delete
@@ -234,7 +228,6 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
                 downloadViewModel.deleteDownload(item)
             } else null
         )
-
     }
 
     fun getActionButtons(
@@ -268,7 +261,7 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
         if (state?.showRadio == true) button(
             "radio", R.string.radio, R.drawable.ic_sensors
         ) {
-            playerViewModel.radio(extensionId, state.item, true)
+            playerViewModel.radio(origin, state.item, true)
         } else null,
         if (state?.showShare == true) button(
             "share", R.string.share, R.drawable.ic_share
@@ -283,7 +276,7 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
         is Artist -> listOf()
     }.map {
         button(it.id, it.title, it.icon) {
-            openItemFragment(extensionId, it)
+            openItemFragment(origin, it)
         }
     }
 
@@ -293,11 +286,11 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     }
 
     private fun openItemFragment(
-        extensionId: String?, item: EchoMediaItem?, loaded: Boolean = false
+        origin: String?, item: EchoMediaItem?, loaded: Boolean = false
     ) {
-        extensionId ?: return
+        origin ?: return
         item ?: return
-        openFragment<MediaFragment>(MediaFragment.getBundle(extensionId, item, loaded))
+        openFragment<MediaFragment>(MediaFragment.getBundle(origin, item, loaded))
         dismiss()
     }
 }

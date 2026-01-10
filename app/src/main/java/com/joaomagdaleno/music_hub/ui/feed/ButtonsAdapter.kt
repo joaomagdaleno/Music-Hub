@@ -84,14 +84,14 @@ class ButtonsAdapter(
                 val list = if (feed?.item == null) {
                     feed?.buttons?.customTrackList ?: getAllLoaded()
                 } else null
-                listener.onPlayClicked(it, feed?.extensionId, feed?.item, list, false)
+                listener.onPlayClicked(it, feed?.origin, feed?.item, list, false)
             }
             binding.shuffleButton.setOnClickListener {
                 val feed = feed
                 val list = if (feed?.item == null) {
                     feed?.buttons?.customTrackList ?: getAllLoaded()
                 } else null
-                listener.onPlayClicked(it, feed?.extensionId, feed?.item, list, true)
+                listener.onPlayClicked(it, feed?.origin, feed?.item, list, true)
             }
         }
 

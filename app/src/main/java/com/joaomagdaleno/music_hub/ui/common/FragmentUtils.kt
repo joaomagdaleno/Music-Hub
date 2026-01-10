@@ -22,8 +22,6 @@ import com.joaomagdaleno.music_hub.common.models.Playlist
 import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler.Companion.createSnack
 import com.joaomagdaleno.music_hub.ui.download.DownloadFragment
-import com.joaomagdaleno.music_hub.ui.extensions.ExtensionsViewModel
-import com.joaomagdaleno.music_hub.ui.extensions.WebViewUtils.onWebViewIntent
 import com.joaomagdaleno.music_hub.ui.media.MediaFragment
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -102,36 +100,19 @@ object FragmentUtils {
             openFragment<DownloadFragment>()
             return
         }
-        val webViewRequest = intent.hasExtra("webViewRequest")
-        if (webViewRequest) {
-            onWebViewIntent(intent)
-            return
-        }
         val uri = intent.data
         when (uri?.scheme) {
             "echo" -> runCatching { openItemFragmentFromUri(uri) }
-            "file" -> {
-                val viewModel by viewModel<ExtensionsViewModel>()
-                viewModel.installWithPrompt(listOf(uri.toFile()))
-            }
         }
     }
 
     private fun FragmentActivity.openItemFragmentFromUri(uri: Uri) {
-        when (val extensionType = uri.host) {
+        when (val sourceType = uri.host) {
             "music" -> {
-                val extensionId = uri.pathSegments.firstOrNull()
-                if (extensionId == null) {
-                    createSnack("No extension id found")
-                    return
-                }
+                val origin = uri.pathSegments.firstOrNull() ?: "internal"
                 val type = uri.pathSegments.getOrNull(1)
-                val id = uri.pathSegments.getOrNull(2)
-                if (id == null) {
-                    val vm by viewModel<ExtensionsViewModel>()
-                    vm.changeExtension(extensionId)
-                    return
-                }
+                val id = uri.pathSegments.getOrNull(2) ?: return
+                
                 val name = uri.getQueryParameter("name").orEmpty()
                 val item: EchoMediaItem? = when (type) {
                     "artist" -> Artist(id, name)
@@ -144,11 +125,11 @@ object FragmentUtils {
                     createSnack("Invalid item type")
                     return
                 }
-                openFragment<MediaFragment>(null, MediaFragment.getBundle(extensionId, item, false))
+                openFragment<MediaFragment>(null, MediaFragment.getBundle(origin, item, false))
             }
 
             else -> {
-                createSnack("Opening $extensionType extension is not possible")
+                createSnack("Opening $sourceType source is not possible")
             }
         }
     }

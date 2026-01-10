@@ -50,7 +50,7 @@ import com.joaomagdaleno.music_hub.common.models.Streamable
 import com.joaomagdaleno.music_hub.databinding.FragmentPlayerBinding
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.background
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.context
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.extensionId
+import com.joaomagdaleno.music_hub.playback.MediaItemUtils.origin
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.isLiked
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.isLoaded
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.showBackground
@@ -84,6 +84,7 @@ import com.joaomagdaleno.music_hub.utils.ui.UiUtils.marquee
 import com.joaomagdaleno.music_hub.utils.ui.UiUtils.toTimeString
 import com.joaomagdaleno.music_hub.utils.ui.ViewPager2Utils.registerOnUserPageChangeCallback
 import com.joaomagdaleno.music_hub.utils.ui.ViewPager2Utils.supportBottomSheetBehavior
+import androidx.core.view.HapticFeedbackConstantsCompat
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import kotlin.math.abs
@@ -97,6 +98,7 @@ class PlayerFragment : Fragment() {
     private val adapter by lazy {
         PlayerTrackAdapter(uiViewModel, viewModel.playerState.current, adapterListener)
     }
+    private var lastHapticTime = -1L
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
@@ -142,11 +144,14 @@ class PlayerFragment : Fragment() {
         fun updateOutline() {
             val offset = max(0f, uiViewModel.playerSheetOffset.value)
             val inv = 1 - offset
+            val curve = offset * offset // Non-linear for snappier finish
+            val invCurve = 1 - curve
+            
             view.elevation = maxElevation * inv
             currHeight = collapseHeight + ((view.height - collapseHeight) * offset).toInt()
-            currLeft = (leftPadding * inv).toInt()
-            currRight = view.width - (rightPadding * inv).toInt()
-            currRound = max(padding * inv, padding * uiViewModel.playerBackProgress.value * 2)
+            currLeft = (leftPadding * invCurve).toInt()
+            currRight = view.width - (rightPadding * invCurve).toInt()
+            currRound = max(padding * invCurve, padding * uiViewModel.playerBackProgress.value * 2)
             view.invalidateOutline()
         }
         observe(uiViewModel.combined) {
@@ -325,6 +330,11 @@ class PlayerFragment : Fragment() {
             val index = viewModel.playerState.current.value?.index
             if (index != pos && isUser) viewModel.seek(pos)
         }
+        viewPager.registerOnPageChangeCallback(object : androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
+            override fun onPageScrolled(pos: Int, offset: Float, offsetPx: Int) {
+                adapter.playerOffsetUpdated()
+            }
+        })
 
         fun submit() {
             adapter.submitList(viewModel.queue) {
@@ -359,6 +369,9 @@ class PlayerFragment : Fragment() {
             .addOnCheckedStateChangedListener(playPauseListener)
         binding.playerCollapsedContainer.collapsedTrackPlayPause
             .addOnCheckedStateChangedListener(playPauseListener)
+        binding.playerControls.trackPlayPause.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_START)
+        }
         observe(viewModel.isPlaying) {
             binding.run {
                 playPauseListener.enabled = false
@@ -382,6 +395,12 @@ class PlayerFragment : Fragment() {
                     bufferBar.progress = buff.toInt()
                     seekBar.value = max(0f, min(curr.toFloat(), seekBar.valueTo))
                     trackCurrentTime.text = curr.toTimeString()
+                } else {
+                    val value = seekBar.value.toLong()
+                    if (abs(value - lastHapticTime) >= 1000) {
+                        lastHapticTime = value
+                        seekBar.performHapticFeedback(HapticFeedbackConstantsCompat.CLOCK_TICK)
+                    }
                 }
             }
         }
@@ -444,12 +463,14 @@ class PlayerFragment : Fragment() {
             }
 
             trackNext.setOnClickListener {
+                it.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_START)
                 viewModel.next()
                 (trackNext.icon as Animatable).start()
             }
             observe(viewModel.nextEnabled) { trackNext.isEnabled = it }
 
             trackPrevious.setOnClickListener {
+                it.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_START)
                 viewModel.previous()
                 (trackPrevious.icon as Animatable).start()
             }
@@ -457,6 +478,9 @@ class PlayerFragment : Fragment() {
 
             val shuffleListener = CheckBoxListener { viewModel.setShuffle(it) }
             trackShuffle.addOnCheckedStateChangedListener(shuffleListener)
+            trackShuffle.setOnClickListener {
+                it.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_START)
+            }
             observe(viewModel.shuffleMode) {
                 shuffleListener.enabled = false
                 trackShuffle.isChecked = it
@@ -464,6 +488,7 @@ class PlayerFragment : Fragment() {
             }
 
             trackRepeat.setOnClickListener {
+                it.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_START)
                 val mode = when (viewModel.repeatMode.value) {
                     REPEAT_MODE_OFF -> REPEAT_MODE_ALL
                     REPEAT_MODE_ALL -> REPEAT_MODE_ONE
@@ -554,18 +579,31 @@ class PlayerFragment : Fragment() {
 
     private fun FragmentPlayerBinding.applyCurrent(item: MediaItem) {
         val track = item.track
-        val extId = item.extensionId
+        val origin = item.origin
         expandedToolbar.run {
             val itemContext = item.context
             title = if (itemContext != null) context.getString(R.string.playing_from) else null
             subtitle = itemContext?.title
             setOnMenuItemClickListener {
-                if (it.itemId != R.id.menu_more) return@setOnMenuItemClickListener false
-                onMoreClicked(item)
-                true
+                when (it.itemId) {
+                    R.id.menu_more -> {
+                        onMoreClicked(item)
+                        true
+                    }
+
+                    R.id.menu_audio_fx -> {
+                        AudioEffectsBottomSheet().show(parentFragmentManager, null)
+                        true
+                    }
+
+                    else -> false
+                }
             }
         }
         playerControls.run {
+            trackHeart.setOnClickListener {
+                it.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_START)
+            }
             trackTitle.text = track.title
             trackTitle.marquee()
             val artists = track.artists
@@ -576,7 +614,7 @@ class PlayerFragment : Fragment() {
                 val start = artistNames.indexOf(artist.name)
                 val end = start + artist.name.length
                 val clickableSpan = SimpleItemSpan(trackArtist.context) {
-                    openItem(extId, artist)
+                    openItem(origin, artist)
                 }
                 runCatching {
                     span.setSpan(
@@ -591,21 +629,21 @@ class PlayerFragment : Fragment() {
             trackHeart.isChecked = item.isLiked
             likeListener.enabled = true
             lifecycleScope.launch {
-                val isTrackClient = viewModel.isLikeClient(item.extensionId)
+                val isTrackClient = viewModel.isLikeClient(item.origin)
                 trackHeart.isVisible = isTrackClient
             }
         }
     }
 
-    private fun openItem(extension: String, item: EchoMediaItem) {
+    private fun openItem(source: String, item: EchoMediaItem) {
         requireActivity().openFragment<MediaFragment>(
-            null, MediaFragment.getBundle(extension, item, false)
+            null, MediaFragment.getBundle(source, item, false)
         )
     }
 
     private fun onMoreClicked(item: MediaItem) {
         MediaMoreBottomSheet.newInstance(
-            R.id.navHostFragment, item.extensionId, item.track, item.isLoaded, true
+            R.id.navHostFragment, item.origin, item.track, item.isLoaded, true
         ).show(requireActivity().supportFragmentManager, null)
     }
 

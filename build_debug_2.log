@@ -1,0 +1,293 @@
+Configuration on demand is an incubating feature.
+Reusing configuration cache.
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:generateDebugResources
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:extractDebugSupportedLocales
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :app:generateDebugLocaleConfig UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:packageDebugResources
+> Task :app:parseDebugLocalResources
+> Task :app:mergeDebugResources
+> Task :app:dataBindingGenBaseClassesDebug
+> Task :app:processDebugResources
+> Task :app:kspDebugKotlin
+> Task :app:compileDebugKotlin
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/models/Streamable.kt:8:61 Unresolved reference 'Streamable'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/models/Streamable.kt:129:22 Unresolved reference 'toStream'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/db/MusicDatabase.kt:42:46 Unresolved reference 'sourceName'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/InternalDownloadProvider.kt:45:24 Unresolved reference 'Source'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/InternalDownloadProvider.kt:46:23 Unresolved reference 'sources'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/InternalDownloadProvider.kt:52:28 Unresolved reference 'Source'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/InternalDownloadProvider.kt:54:52 Unresolved reference 'id'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/InternalDownloadProvider.kt:54:56 Unresolved reference 'build'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/InternalDownloadProvider.kt:128:31 Unresolved reference 'source'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/InternalDownloadProvider.kt:128:57 Unresolved reference 'source'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/LocalProvider.kt:14:51 Unresolved reference 'MusicSource'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/LocalProvider.kt:15:5 'name' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/LocalProvider.kt:17:5 'search' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/LocalProvider.kt:63:25 No parameter with name 'sourceName' found.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/LocalProvider.kt:77:5 'getStreamUrl' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/LocalProvider.kt:81:5 'getRecommendations' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/MusicProvider.kt:16:66 Unresolved reference 'emptyProviderList'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/YoutubeProvider.kt:12:23 Unresolved reference 'MusicSource'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/YoutubeProvider.kt:13:5 'name' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/YoutubeProvider.kt:16:5 'search' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/YoutubeProvider.kt:21:5 'getStreamUrl' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/YoutubeProvider.kt:25:5 'getRecommendations' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/YoutubeProvider.kt:29:5 'getHomeFeed' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/YoutubeProvider.kt:43:5 'getAlbumTracks' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/YoutubeProvider.kt:48:5 'getArtistTracks' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/YoutubeProvider.kt:53:5 'getTrack' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/YoutubeProvider.kt:62:17 No parameter with name 'sourceName' found.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/YoutubeProvider.kt:71:5 'getRadio' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/YoutubeProvider.kt:80:5 'getPlaylistTracks' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/providers/YoutubeProvider.kt:94:13 No parameter with name 'sourceName' found.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:7:51 Unresolved reference 'LocalProvider'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:8:51 Unresolved reference 'YoutubeProvider'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:24:32 Unresolved reference 'LocalProvider'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:30:35 Unresolved reference 'YoutubeProvider'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:37:42 Unresolved reference 'search'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:97:35 Unresolved reference 'getStreamUrl'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:238:41 Unresolved reference 'getAllTracks'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/di/DI.kt:38:9 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/di/DI.kt:38:61 Unresolved reference 'LocalProvider'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/di/DI.kt:40:9 None of the following candidates is applicable:
+fun <reified R> Module.singleOf(crossinline constructor: () -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1> Module.singleOf(crossinline constructor: (T1) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2> Module.singleOf(crossinline constructor: (T1, T2) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3> Module.singleOf(crossinline constructor: (T1, T2, T3) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4> Module.singleOf(crossinline constructor: (T1, T2, T3, T4) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5, reified T6> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5, T6) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5, reified T6, reified T7> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5, T6, T7) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5, reified T6, reified T7, reified T8> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5, T6, T7, T8) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5, reified T6, reified T7, reified T8, reified T9> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5, T6, T7, T8, T9) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5, reified T6, reified T7, reified T8, reified T9, reified T10> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5, reified T6, reified T7, reified T8, reified T9, reified T10, reified T11> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5, reified T6, reified T7, reified T8, reified T9, reified T10, reified T11, reified T12> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5, reified T6, reified T7, reified T8, reified T9, reified T10, reified T11, reified T12, reified T13> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5, reified T6, reified T7, reified T8, reified T9, reified T10, reified T11, reified T12, reified T13, reified T14> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5, reified T6, reified T7, reified T8, reified T9, reified T10, reified T11, reified T12, reified T13, reified T14, reified T15> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5, reified T6, reified T7, reified T8, reified T9, reified T10, reified T11, reified T12, reified T13, reified T14, reified T15, reified T16> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5, reified T6, reified T7, reified T8, reified T9, reified T10, reified T11, reified T12, reified T13, reified T14, reified T15, reified T16, reified T17> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5, reified T6, reified T7, reified T8, reified T9, reified T10, reified T11, reified T12, reified T13, reified T14, reified T15, reified T16, reified T17, reified T18> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5, reified T6, reified T7, reified T8, reified T9, reified T10, reified T11, reified T12, reified T13, reified T14, reified T15, reified T16, reified T17, reified T18, reified T19> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5, reified T6, reified T7, reified T8, reified T9, reified T10, reified T11, reified T12, reified T13, reified T14, reified T15, reified T16, reified T17, reified T18, reified T19, reified T20> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5, reified T6, reified T7, reified T8, reified T9, reified T10, reified T11, reified T12, reified T13, reified T14, reified T15, reified T16, reified T17, reified T18, reified T19, reified T20, reified T21> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+fun <reified R, reified T1, reified T2, reified T3, reified T4, reified T5, reified T6, reified T7, reified T8, reified T9, reified T10, reified T11, reified T12, reified T13, reified T14, reified T15, reified T16, reified T17, reified T18, reified T19, reified T20, reified T21, reified T22> Module.singleOf(crossinline constructor: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22) -> R, noinline options: (BeanDefinition<R>.() -> Unit)? = ...): KoinDefinition<R>
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/Downloader.kt:66:21 Argument type mismatch: actual type is 'Int', but 'Long' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/Downloader.kt:67:21 Argument type mismatch: actual type is 'T? (of fun <T> T.takeIf)', but 'K? (of fun <K> ELVIS_CALL)' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/Downloader.kt:67:21 Argument type mismatch: actual type is 'K (of fun <K> ELVIS_CALL)', but 'String' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/Downloader.kt:67:30 Unresolved reference 'sourceName'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/Downloader.kt:67:41 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/Downloader.kt:67:50 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/Downloader.kt:67:75 Argument type mismatch: actual type is 'String', but 'K (of fun <K> ELVIS_CALL)' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/Downloader.kt:68:21 Argument type mismatch: actual type is 'String', but 'String' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/Downloader.kt:69:21 Argument type mismatch: actual type is 'Long?', but 'Long?' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/Downloader.kt:70:21 Argument type mismatch: actual type is 'Int?', but 'Int?' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/Downloader.kt:71:21 Argument type mismatch: actual type is 'String', but 'String' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/Downloader.kt:72:21 Argument type mismatch: actual type is 'TaskType', but 'TaskType' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/Downloader.kt:99:44 Unresolved reference 'sourceName'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/Downloader.kt:100:29 No parameter with name 'sourceName' found.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/tasks/DownloadingTask.kt:19:22 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/tasks/DownloadingTask.kt:19:29 Unresolved reference 'sources'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/tasks/DownloadingTask.kt:21:60 Argument type mismatch: actual type is 'Context', but 'DownloadContext' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/tasks/DownloadingTask.kt:21:60 Cannot access 'val context: Context': it is private in 'com/joaomagdaleno/music_hub/download/tasks/BaseTask'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/tasks/LoadingTask.kt:39:24 Unresolved reference 'sources'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/RawDataSource.kt:24:60 Unresolved reference 'Source'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/RawDataSource.kt:25:31 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/RawDataSource.kt:25:31 Function 'component1()' is ambiguous for this expression: 
+fun <T> Array<out T>.component1(): T
+fun ByteArray.component1(): Byte
+fun ShortArray.component1(): Short
+fun IntArray.component1(): Int
+fun LongArray.component1(): Long
+fun FloatArray.component1(): Float
+fun DoubleArray.component1(): Double
+fun BooleanArray.component1(): Boolean
+fun CharArray.component1(): Char
+fun <T> List<T>.component1(): T
+fun <K, V> Map.Entry<K, V>.component1(): K
+fun UIntArray.component1(): UInt
+fun ULongArray.component1(): ULong
+fun UByteArray.component1(): UByte
+fun UShortArray.component1(): UShort.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/RawDataSource.kt:25:31 Function 'component2()' is ambiguous for this expression: 
+fun <T> Array<out T>.component2(): T
+fun ByteArray.component2(): Byte
+fun ShortArray.component2(): Short
+fun IntArray.component2(): Int
+fun LongArray.component2(): Long
+fun FloatArray.component2(): Float
+fun DoubleArray.component2(): Double
+fun BooleanArray.component2(): Boolean
+fun CharArray.component2(): Char
+fun <T> List<T>.component2(): T
+fun <K, V> Map.Entry<K, V>.component2(): V
+fun UIntArray.component2(): UInt
+fun ULongArray.component2(): ULong
+fun UByteArray.component2(): UByte
+fun UShortArray.component2(): UShort.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/RawDataSource.kt:26:24 Unresolved reference 'streamProvider'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/RawDataSource.kt:26:41 Unresolved reference 'provide'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableDataSource.kt:52:21 'when' expression must be exhaustive. Add an 'else' branch.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableDataSource.kt:52:78 Unresolved reference 'Source'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableDataSource.kt:53:31 Unresolved reference 'Source'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableDataSource.kt:56:31 Unresolved reference 'Source'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableDataSource.kt:57:43 Unresolved reference 'request'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableDataSource.kt:57:51 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableDataSource.kt:57:55 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableDataSource.kt:58:88 Unresolved reference 'headers'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableDataSource.kt:59:45 Unresolved reference 'url'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableDataSource.kt:59:79 Unresolved reference 'headers'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableDataSource.kt:71:24 Unresolved reference 'Source'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableDataSource.kt:72:21 'when' expression must be exhaustive. Add an 'else' branch.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableDataSource.kt:72:27 Unresolved reference 'Streamable.Source'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableDataSource.kt:73:31 Unresolved reference 'Source'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableDataSource.kt:73:46 Unresolved reference 'request'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableDataSource.kt:74:31 Unresolved reference 'Source'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableDataSource.kt:74:54 Unresolved reference 'id'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableLoader.kt:33:46 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableLoader.kt:33:46 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableLoader.kt:40:22 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableLoader.kt:40:30 Unresolved reference 'loadOrigin'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableLoader.kt:46:11 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableLoader.kt:46:11 Not enough information to infer type argument for 'B'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:65:31 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:65:31 Function 'component1()' is ambiguous for this expression: 
+fun <T> Array<out T>.component1(): T
+fun ByteArray.component1(): Byte
+fun ShortArray.component1(): Short
+fun IntArray.component1(): Int
+fun LongArray.component1(): Long
+fun FloatArray.component1(): Float
+fun DoubleArray.component1(): Double
+fun BooleanArray.component1(): Boolean
+fun CharArray.component1(): Char
+fun <T> List<T>.component1(): T
+fun <K, V> Map.Entry<K, V>.component1(): K
+fun UIntArray.component1(): UInt
+fun ULongArray.component1(): ULong
+fun UByteArray.component1(): UByte
+fun UShortArray.component1(): UShort.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:65:31 Function 'component2()' is ambiguous for this expression: 
+fun <T> Array<out T>.component2(): T
+fun ByteArray.component2(): Byte
+fun ShortArray.component2(): Short
+fun IntArray.component2(): Int
+fun LongArray.component2(): Long
+fun FloatArray.component2(): Float
+fun DoubleArray.component2(): Double
+fun BooleanArray.component2(): Boolean
+fun CharArray.component2(): Char
+fun <T> List<T>.component2(): T
+fun <K, V> Map.Entry<K, V>.component2(): V
+fun UIntArray.component2(): UInt
+fun ULongArray.component2(): ULong
+fun UByteArray.component2(): UByte
+fun UShortArray.component2(): UShort.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:70:31 Unresolved reference 'mediaId'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:72:35 Unresolved reference 'streams'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:76:42 Unresolved reference 'first'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:81:32 Unresolved reference 'merged'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:82:25 The spread operator (*foo) cannot be applied to an argument of nullable type.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:82:34 Unresolved reference 'mapIndexed'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:82:47 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:82:54 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:87:46 Unresolved reference 'getOrNull'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:88:32 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:88:56 Argument type mismatch: actual type is 'Any', but 'List<uninferred T (of fun <T> select)>' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:88:65 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:88:70 Unresolved reference 'quality'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:89:48 Unresolved reference 'indexOf'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:91:68 Argument type mismatch: actual type is 'Any', but 'Streamable.Stream?' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableResolver.kt:23:26 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableResolver.kt:23:26 Not enough information to infer type argument for 'R'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableResolver.kt:23:40 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableResolver.kt:23:40 Not enough information to infer type argument for 'V'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableResolver.kt:23:67 Unresolved reference 'sources'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableResolver.kt:24:30 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableResolver.kt:24:30 Not enough information to infer type argument for 'R'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableResolver.kt:24:30 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableResolver.kt:24:34 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableResolver.kt:25:21 Unresolved reference 'isLive'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/PlayerViewModel.kt:27:60 Unresolved reference 'sourceIndex'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/PlayerViewModel.kt:201:38 Unresolved reference 'buildSource'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/PlayerViewModel.kt:300:10 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/PlayerViewModel.kt:300:10 Not enough information to infer type argument for 'R'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/PlayerViewModel.kt:300:39 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/PlayerViewModel.kt:302:45 Unresolved reference 'sourceIndex'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/PlayerViewModel.kt:303:13 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/PlayerViewModel.kt:303:13 Not enough information to infer type argument for 'C'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/FormatUtils.kt:68:35 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/FormatUtils.kt:68:35 Not enough information to infer type argument for 'R'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/FormatUtils.kt:69:13 Not enough information to infer type argument for 'K'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/FormatUtils.kt:69:25 Unresolved reference 'sources'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/FormatUtils.kt:69:46 Unresolved reference 'it'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/FormatUtils.kt:70:18 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/FormatUtils.kt:70:18 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/FormatUtils.kt:70:32 Unresolved reference 'sources'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/FormatUtils.kt:70:64 Unresolved reference 'title'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/FormatUtils.kt:72:16 Return type mismatch: expected 'List<String>', actual 'String'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/QualitySelectionBottomSheet.kt:93:54 Unresolved reference 'merged'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/QualitySelectionBottomSheet.kt:93:69 Unresolved reference 'sources'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/QualitySelectionBottomSheet.kt:93:82 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/QualitySelectionBottomSheet.kt:95:17 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/QualitySelectionBottomSheet.kt:95:17 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/QualitySelectionBottomSheet.kt:97:21 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/QualitySelectionBottomSheet.kt:97:74 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/QualitySelectionBottomSheet.kt:98:24 Unresolved reference 'title'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/QualitySelectionBottomSheet.kt:98:66 Unresolved reference 'quality'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/QualitySelectionBottomSheet.kt:105:34 Unresolved reference 'groups'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/QualitySelectionBottomSheet.kt:105:51 Unresolved reference 'it'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/QualitySelectionBottomSheet.kt:106:34 Unresolved reference 'groups'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/QualitySelectionBottomSheet.kt:106:51 Unresolved reference 'it'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/QualitySelectionBottomSheet.kt:107:37 Unresolved reference 'groups'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/quality/QualitySelectionBottomSheet.kt:107:54 Unresolved reference 'it'.
+
+> Task :app:compileDebugKotlin FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+34 actionable tasks: 10 executed, 24 up-to-date
+Configuration cache entry reused.
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 3m 24s

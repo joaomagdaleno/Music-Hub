@@ -21,7 +21,7 @@ class HeaderViewHolder(
         binding.more.setOnClickListener {
             listener.openFeed(
                 it,
-                feed?.extensionId,
+                feed?.origin,
                 feed?.id,
                 feed?.title,
                 feed?.subtitle,
@@ -29,7 +29,7 @@ class HeaderViewHolder(
             )
         }
         binding.shuffle.setOnClickListener {
-            listener.onPlayClicked(it, feed?.extensionId, feed?.context, feed?.tracks, true)
+            listener.onPlayClicked(it, feed?.origin, feed?.context, feed?.tracks, true)
         }
     }
 

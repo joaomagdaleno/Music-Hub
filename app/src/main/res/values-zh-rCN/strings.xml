@@ -15,7 +15,6 @@
     <string name="back">返回</string>
     <string name="x_permission_required">需要 %1$s 权限</string>
     <string name="read_storage">读取存储</string>
-    <string name="extension_installed_successfully">扩展已成功安装.</string>
     <string name="okay">好的</string>
     <string name="webview">网页视图</string>
     <string name="recently_added">最近添加</string>
@@ -45,12 +44,10 @@
     <string name="library">媒体库</string>
     <string name="more">更多</string>
     <string name="downloading_x">正在下载 %1$s</string>
-    <string name="cancel_all">取消全部</string>
     <string name="download_progress">下载进度</string>
     <string name="logout_and_login">注销和登录</string>
     <string name="login">登录</string>
     <string name="view">查看</string>
-    <string name="extension_out_of_date">过期</string>
     <string name="no_internet">无网络</string>
     <string name="downloads">下载</string>
     <string name="choose_a_color">选择一个颜色</string>
@@ -79,11 +76,8 @@
     <string name="write_storage_permission_summary">用于创建和编辑本地播放列表</string>
     <string name="like">点赞</string>
     <string name="ui">用户界面</string>
-    <string name="installation_type">安装类型</string>
     <string name="repeat_all">循环全部</string>
-    <string name="extension">扩展</string>
     <string name="cache_size_summary">音频与视频的缓存（以MB为单位）</string>
-    <string name="extension_installer">扩展安装器</string>
     <string name="list_is_empty">列表为空</string>
     <string name="animations">动画</string>
     <string name="value_not_set">未设置</string>
@@ -96,7 +90,7 @@
     <string name="following_x">正在关注 %1$s</string>
     <string name="repeat_off">循环关闭</string>
     <string name="app">应用程序</string>
-    <string name="extensions">扩展</string>
+    <string name="data_sources">Data Sources</string>
     <string name="cache_size">缓存大小</string>
     <string name="equalizer">均衡器</string>
     <string name="settings">设置</string>
@@ -104,9 +98,6 @@
     <string name="install">安装</string>
     <string name="file">文件</string>
     <string name="could_not_find_the_file">无法找到文件.</string>
-    <string name="add_extensions">添加扩展</string>
-    <string name="extension_uninstalled_successfully">扩展已成功卸载.</string>
-    <string name="invalid_extension_list">无效的扩展列表</string>
     <string name="theme">主题</string>
     <string name="x_radio">%1$s 电台</string>
     <string name="refresh_library_on_reload_summary">每次加载 feed 时扫描设备</string>
@@ -116,14 +107,10 @@
     <string name="blacklist_folder_keywords">黑名单文件夹关键字</string>
     <string name="blacklist_folder_keywords_summary">要屏蔽文件夹的关键词，使用逗号分隔</string>
     <string name="show_tab_summary">将显示扩展的标签作为类别</string>
-    <string name="unified_liked_playlist_summary">您喜欢的来自各种扩展的曲目</string>
+    <string name="internal_liked_playlist_summary">您喜欢的来自各种扩展的曲目</string>
     <string name="n_items">%1$d 个项目</string>
     <string name="playlist_liked_desc">您喜欢的曲目</string>
-    <string name="error_loading_extension_from_x">从 %1$s 加载扩展时出错</string>
-    <string name="extension_x_not_found">未找到扩展 %1$s</string>
-    <string name="required_extensions_missing_x">缺少所需扩展：%1$s</string>
     <string name="x_login_required">需要 %1$s 登录</string>
-    <string name="x_is_not_supported_in_x">%2$s 不支持 %1$s</string>
     <string name="account_session_expired_in_x">帐户会话已于 %1$s 过期</string>
     <string name="error_x">错误: %1$s</string>
     <string name="str_copy">复制</string>
@@ -144,14 +131,10 @@
     <string name="skip_silence_summary">跳过歌曲中的静音部分，以提供无缝播放.</string>
     <string name="auto_start_radio">自动启动无线电</string>
     <string name="auto_start_radio_summary">自动添加播放列表中曲目的相关歌曲，以获得无限队列</string>
-    <string name="installation_type_summary">应用程序安装将允许在 Echo 中打开以下链接：</string>
-    <string name="installation_type_warning">如果你以文件形式安装扩展，则此功能不可用.</string>
     <string name="allow_opening_links">允许打开链接</string>
     <string name="open_links_instruction">要允许打开这些链接，您需要：\n- 向下滚动并点击“默认打开”\n- 点击“+ 添加链接”</string>
-    <string name="extension_updated_successfully">%1$s 更新成功</string>
     <string name="link">链接</string>
     <string name="link_or_code">链接或代码</string>
-    <string name="extension_installed">%1$s （已安装）</string>
     <string name="theme_summary">想当盲人吗？</string>
     <string name="custom_theme_color">自定义主题颜色</string>
     <string name="custom_theme_color_summary">使用自定义主题颜色，而不是系统主题.</string>
@@ -164,11 +147,8 @@
     <string name="show_background_summary">播放器中的背景视频或曲目图片模糊</string>
     <string name="x_disabled">%1$s （已禁用）</string>
     <string name="by_x">由 %1$s</string>
-    <string name="x_extension">%1$s 扩展</string>
     <string name="no_user_found">未找到用户</string>
     <string name="select_x_account">选择 %1$s 账户</string>
-    <string name="add_extension">添加扩展</string>
-    <string name="error_updating_extension">更新时出错</string>
     <string name="x_login">%1$s 登录</string>
     <string name="x_is_required">%1$s 被需要</string>
     <string name="playing_from">播放自</string>
@@ -266,7 +246,6 @@
     <string name="keep_queue_summary">当您重新打开应用程序时，恢复播放器队列.</string>
     <string name="adding_x_to_queue">正在将 %1$s 添加到队列</string>
     <string name="unliking_x">已取消喜欢 %1$s</string>
-    <string name="x_extensions">%1$s扩展</string>
     <string name="sleep_timer_desc">设置定时关闭，在一定时间后停止播放</string>
     <string name="equalizer_summary">打开设备均衡器设置</string>
     <string name="sleep_on_specific_time">在特定时间关闭</string>
@@ -281,7 +260,6 @@
     <string name="more_brain_capacity_summary">启用此功能可以帮助解决音频延迟并增加电池使用量（禁用音频卸载）。</string>
     <string name="saved_to_x">已保存至 %1$s</string>
     <string name="merging_x">正在合并 %1$s</string>
-    <string name="no_download_extension">未找到下载扩展，请使用代码“echodown”获取.</string>
     <string name="apply_player_color_to_app_summary">延迟警告！！！</string>
     <string name="apply_player_color_to_app">将播放器颜色应用到整个应用程序</string>
     <string name="delete_download">删除下载</string>
@@ -364,7 +342,6 @@
     <plurals name="number_items">
         <item quantity="other">%1$d 个项目</item>
     </plurals>
-    <string name="x_specific_quality_summary">%1$s 特定的流质量，将覆盖默认的流质量选择</string>
     <string name="n_songs">%1$d 首歌曲</string>
     <string name="scroll_bar">滚动栏</string>
     <string name="scroll_bar_summary">侧面的滚动条可加快访问速度（可能会有故障）</string>

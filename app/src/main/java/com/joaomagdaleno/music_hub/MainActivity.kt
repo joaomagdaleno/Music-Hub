@@ -14,14 +14,12 @@ import com.google.android.material.color.DynamicColors
 import com.google.android.material.color.DynamicColorsOptions
 import com.google.android.material.navigation.NavigationBarView
 import com.joaomagdaleno.music_hub.databinding.ActivityMainBinding
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
 import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.setupExceptionHandler
 import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.setupIntents
 import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler.Companion.setupSnackBar
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.setupNavBarAndInsets
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.setupPlayerBehavior
-import com.joaomagdaleno.music_hub.ui.extensions.ExtensionsViewModel.Companion.configureExtensionsUpdater
 import com.joaomagdaleno.music_hub.ui.main.MainFragment
 import com.joaomagdaleno.music_hub.ui.player.PlayerFragment
 import com.joaomagdaleno.music_hub.ui.player.PlayerFragment.Companion.PLAYER_COLOR
@@ -30,6 +28,7 @@ import com.joaomagdaleno.music_hub.utils.PermsUtils.checkAppPermissions
 import com.joaomagdaleno.music_hub.utils.ui.UiUtils.isNightMode
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import com.joaomagdaleno.music_hub.utils.FileLogger
 
 open class MainActivity : AppCompatActivity() {
 
@@ -37,10 +36,11 @@ open class MainActivity : AppCompatActivity() {
 
     val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
     private val uiViewModel by viewModel<UiViewModel>()
-    private val extensionLoader by inject<ExtensionLoader>()
+    private val feedViewModel by viewModel<com.joaomagdaleno.music_hub.ui.feed.FeedViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        FileLogger.log("MainActivity", "onCreate() called. savedInstanceState=${savedInstanceState != null}")
         setTheme(getAppTheme())
         DynamicColors.applyToActivityIfAvailable(
             this, applyUiChanges(this, uiViewModel)
@@ -57,14 +57,22 @@ open class MainActivity : AppCompatActivity() {
         setupNavBarAndInsets(uiViewModel, binding.root, binding.navView as NavigationBarView)
         setupPlayerBehavior(uiViewModel, binding.playerFragmentContainer)
         setupExceptionHandler(setupSnackBar(uiViewModel, binding.root))
-        checkAppPermissions { extensionLoader.setPermGranted() }
-        configureExtensionsUpdater()
+        
+        // Auto-refresh home feed when storage permission is granted
+        checkAppPermissions {
+            FileLogger.log("MainActivity", "Storage permission granted - refreshing home feed")
+            feedViewModel.feedDataMap["home"]?.refresh()
+        }
+        configureAppUpdater()
+        
         supportFragmentManager.commit {
             if (savedInstanceState != null) return@commit
+            FileLogger.log("MainActivity", "Adding MainFragment and PlayerFragment")
             add<MainFragment>(R.id.navHostFragment, "main")
             add<PlayerFragment>(R.id.playerFragmentContainer, "player")
         }
         setupIntents(uiViewModel)
+        FileLogger.log("MainActivity", "onCreate() complete")
     }
 
     companion object {

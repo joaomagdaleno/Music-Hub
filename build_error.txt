@@ -1,0 +1,55 @@
+Configuration on demand is an incubating feature.
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugResValues
+> Task :app:dataBindingMergeDependencyArtifactsDebug
+> Task :app:extractDebugSupportedLocales
+> Task :app:generateDebugResources
+> Task :app:generateDebugLocaleConfig
+> Task :app:generateDebugBuildConfig
+> Task :app:mergeDebugResources
+> Task :app:packageDebugResources
+> Task :app:mapDebugSourceSetPaths
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:checkDebugAarMetadata
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:processDebugManifestForPackage
+> Task :app:parseDebugLocalResources
+> Task :app:dataBindingGenBaseClassesDebug
+> Task :app:processDebugResources
+> Task :app:kspDebugKotlin
+> Task :app:compileDebugKotlin
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:116:9 Unresolved reference 'FileLogger'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:121:9 Unresolved reference 'FileLogger'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:129:13 Unresolved reference 'FileLogger'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:145:21 Unresolved reference 'FileLogger'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:150:13 Unresolved reference 'FileLogger'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:155:13 Unresolved reference 'FileLogger'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:171:21 Unresolved reference 'FileLogger'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:176:13 Unresolved reference 'FileLogger'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:179:9 Unresolved reference 'FileLogger'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:211:9 Unresolved reference 'FileLogger'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:215:18 Unresolved reference 'FileLogger'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:219:9 Unresolved reference 'FileLogger'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/repository/MusicRepository.kt:268:9 Unresolved reference 'FileLogger'.
+
+> Task :app:compileDebugKotlin FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 2m 42s
+20 actionable tasks: 20 executed

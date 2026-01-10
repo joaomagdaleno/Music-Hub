@@ -1,0 +1,214 @@
+Configuration on demand is an incubating feature.
+Reusing configuration cache.
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:extractDebugSupportedLocales UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:generateDebugLocaleConfig UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :app:mergeDebugNativeLibs NO-SOURCE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:stripDebugDebugSymbols NO-SOURCE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:kspDebugKotlin
+
+> Task :app:compileDebugKotlin
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/AlbumClient.kt:3:43 Unresolved reference 'MusicExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/ArtistClient.kt:3:43 Unresolved reference 'MusicExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/DownloadClient.kt:21:28 Unresolved reference 'ExtensionClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/FollowClient.kt:3:43 Unresolved reference 'MusicExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/HomeFeedClient.kt:3:43 Unresolved reference 'MusicExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/LibraryFeedClient.kt:3:43 Unresolved reference 'MusicExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/LyricsClient.kt:3:43 Unresolved reference 'LyricsExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/LyricsClient.kt:4:43 Unresolved reference 'MusicExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/LyricsClient.kt:23:26 Unresolved reference 'ExtensionClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/QuickSearchClient.kt:3:43 Unresolved reference 'MusicExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/SaveClient.kt:3:43 Unresolved reference 'MusicExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/SearchFeedClient.kt:3:43 Unresolved reference 'MusicExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/TrackClient.kt:3:43 Unresolved reference 'MusicExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/TrackerClient.kt:3:43 Unresolved reference 'MusicExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/TrackerClient.kt:4:43 Unresolved reference 'TrackerExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/TrackerClient.kt:20:27 Unresolved reference 'ExtensionClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/models/Metadata.kt:29:15 Serializer has not been found for type 'ERROR CLASS: Symbol not found for ExtensionType'. To use context serializer as fallback, explicitly annotate type or property with @Contextual
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/common/models/Metadata.kt:29:15 Unresolved reference 'ExtensionType'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/di/DI.kt:46:9 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/di/DI.kt:46:60 Unresolved reference 'AppDatabase'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:6:43 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:7:51 Unresolved reference 'ExtensionClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:11:58 Unresolved reference 'AppException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:12:58 Unresolved reference 'ExtensionNotFoundException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:23:21 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:24:24 Unresolved reference 'ExtensionClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:27:43 Unresolved reference 'instance'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:27:60 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:28:29 Type mismatch: inferred type is 'ERROR CLASS: Unresolved name: toAppException', but 'Throwable' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:28:32 Unresolved reference 'toAppException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:31:39 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:33:20 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:33:24 Unresolved reference 'ExtensionClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:34:22 Unresolved reference 'ExtensionClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:39:39 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:41:21 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:41:25 Unresolved reference 'ExtensionClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:42:22 Unresolved reference 'ExtensionClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:54:36 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:57:9 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:59:39 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:62:13 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:64:17 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:67:24 Unresolved reference 'ExtensionClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:68:9 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:69:9 Unresolved reference 'instance'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:69:36 Suspension functions can only be called within coroutine body.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:71:31 Unresolved reference 'toAppException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:71:46 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:74:36 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:74:62 Unresolved reference 'instance'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:76:22 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:78:31 Unresolved reference 'id'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:81:22 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:82:22 Argument type mismatch: actual type is 'String?', but 'String?' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:82:35 Unresolved reference 'ExtensionNotFoundException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:82:35 Type mismatch: inferred type is 'ERROR CLASS: Unresolved name: ExtensionNotFoundException', but 'Throwable' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:84:14 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:85:45 Unresolved reference 'id'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:92:65 Unresolved reference 'name'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:92:75 Overload resolution ambiguity between candidates:
+fun String.prefs(context: Context): SharedPreferences
+fun <ERROR TYPE REF: Symbol not found for Extension>.prefs(context: Context): <ERROR TYPE REF: cycle>
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:93:9 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:93:48 Unresolved reference 'metadata'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:93:48 Type checking has run into a recursive problem. Easiest workaround: specify the types of your declarations explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/ExtensionUtils.kt:96:36 Overload resolution ambiguity between candidates:
+fun Metadata.prefs(context: Context): <ERROR TYPE REF: Ambiguity: prefs, [com/joaomagdaleno/music_hub/extensions/ExtensionUtils.prefs, com/joaomagdaleno/music_hub/extensions/ExtensionUtils.prefs]>
+fun <ERROR TYPE REF: Symbol not found for Extension>.prefs(context: Context): <ERROR TYPE REF: cycle>
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/internal/InternalDownloadSource.kt:8:50 Unresolved reference 'ExtensionType'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/internal/InternalDownloadSource.kt:35:20 Unresolved reference 'ExtensionType'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/internal/InternalDownloadSource.kt:164:5 'onInitialize' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/internal/InternalDownloadSource.kt:165:5 'onExtensionSelected' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/internal/InternalDownloadSource.kt:166:5 'getSettingItems' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/internal/InternalDownloadSource.kt:167:5 'setSettings' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/offline/OfflineExtension.kt:11:51 Unresolved reference 'ExtensionClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/offline/OfflineExtension.kt:26:50 Unresolved reference 'ExtensionType'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/offline/OfflineExtension.kt:65:5 Unresolved reference 'ExtensionClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/offline/OfflineExtension.kt:74:20 Unresolved reference 'ExtensionType'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:4:43 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:38:58 Unresolved reference 'AppException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:70:30 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:102:45 Unresolved reference 'id'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:112:45 Unresolved reference 'id'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:117:44 Unresolved reference 'id'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:124:20 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:136:30 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:139:61 Unresolved reference 'id'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:158:49 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:177:47 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:188:49 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:190:38 Unresolved reference 'id'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:208:30 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:269:30 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:272:39 Unresolved reference 'id'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:278:23 Type mismatch: inferred type is 'ERROR CLASS: Unresolved name: toAppException', but 'Throwable' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:278:26 Unresolved reference 'toAppException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:287:27 Type mismatch: inferred type is 'ERROR CLASS: Unresolved name: toAppException', but 'Throwable' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:287:30 Unresolved reference 'toAppException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:23:43 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:24:43 Unresolved reference 'MusicExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:27:51 Unresolved reference 'ExtensionClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:60:44 Unresolved reference 'MusicExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:89:13 Argument type mismatch: actual type is 'List<uninferred R (of fun <T, R> Iterable<T>.map)>', but '(Mutable)List<MediaItem>' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:89:24 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:89:24 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T, R> Iterable<T>.map(transform: (T) -> R): List<R>
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:89:28 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:90:13 Argument type mismatch: actual type is 'Nothing?', but 'MediaLibraryService.LibraryParams?' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:93:44 Unresolved reference 'it'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:129:39 Unresolved reference 'ExtensionClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:129:56 Argument type mismatch: actual type is 'Function1<uninferred C (of fun <C> <ERROR TYPE REF: Symbol not found for Extension>.getList), List<MediaItem>>', but 'Function1<uninferred C (of fun <C> <ERROR TYPE REF: Symbol not found for Extension>.getList), List<MediaItem>>' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:129:56 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:134:40 Unresolved reference 'ExtensionClient'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:134:57 Argument type mismatch: actual type is 'Function1<uninferred C (of fun <C> <ERROR TYPE REF: Symbol not found for Extension>.getList), List<MediaItem>>', but 'Function1<uninferred C (of fun <C> <ERROR TYPE REF: Symbol not found for Extension>.getList), List<MediaItem>>' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:134:57 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:181:17 Argument type mismatch: actual type is 'List<uninferred R (of fun <T, R> Iterable<T>.map)>', but '(Mutable)List<MediaItem>' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:181:28 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:181:28 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T, R> Iterable<T>.map(transform: (T) -> R): List<R>
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:181:34 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:182:48 Unresolved reference 'id'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:182:66 Unresolved reference 'name'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:184:17 Argument type mismatch: actual type is 'MediaLibraryService.LibraryParams', but 'MediaLibraryService.LibraryParams?' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:290:29 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:291:21 Unresolved reference 'id'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:291:26 Unresolved reference 'name'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:292:13 Unresolved reference 'instance'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:293:13 Unresolved reference 'metadata'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:303:40 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:306:26 Unresolved reference 'instance'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:306:43 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:407:48 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/AndroidAutoCallback.kt:413:13 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCallback.kt:68:37 Argument type mismatch: actual type is 'MutableStateFlow<uninferred T (of fun <T> MutableStateFlow)>', but 'StateFlow<List<ERROR CLASS: Symbol not found for MusicExtension>>' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCallback.kt:68:61 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCallback.kt:68:78 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:9:43 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:67:33 Unresolved reference 'metadata'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:117:24 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:155:60 Unresolved reference 'Extension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:155:76 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:159:40 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:159:40 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T> Iterable<T>.find(predicate: (T) -> Boolean): T?
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:159:45 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:159:50 Unresolved reference 'id'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedLoadingAdapter.kt:12:58 Unresolved reference 'AppException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedLoadingAdapter.kt:28:48 Unresolved reference 'AppException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedLoadingAdapter.kt:81:37 Unresolved reference 'AppException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedLoadingAdapter.kt:109:24 Unresolved reference 'AppException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedLoadingAdapter.kt:137:65 Unresolved reference 'AppException'.
+
+> Task :app:compileDebugKotlin FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1m
+32 actionable tasks: 2 executed, 30 up-to-date
+Configuration cache entry reused.

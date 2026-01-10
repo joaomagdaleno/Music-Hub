@@ -5,7 +5,13 @@ on:
     branches: [ main ]
   workflow_dispatch: { }
 jobs:
+  quality_gate:
+    name: Quality Gate
+    uses: ./.github/workflows/quality-gate.yml
+    secrets: inherit
+
   build:
+    needs: quality_gate
     runs-on: ubuntu-latest
 
     steps:

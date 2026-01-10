@@ -7,6 +7,9 @@ room = "2.7.2"
 koinAndroid = "4.1.0"
 media3 = "1.8.0"
 coil = "3.3.0"
+jaudiotagger = "3.0.1"
+compose-bom = "2025.01.00"
+activity-compose = "1.10.0"
 
 [libraries]
 okhttp = { module = "com.squareup.okhttp3:okhttp", version = "5.1.0" }
@@ -54,6 +57,10 @@ coil = { module = "io.coil-kt.coil3:coil", version.ref = "coil" }
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+
+koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koinAndroid" }
+
 
 pikolo = { module = "com.github.madrapps:pikolo", version = "2.0.2" }
 fadingedgelayout = { module = "com.github.bosphere.android-fadingedgelayout:fadingedgelayout", version = "1.0.0" }
@@ -64,6 +71,17 @@ acsbendi-webview = { module = "com.github.acsbendi:Android-Request-Inspector-Web
 
 firebase-analytics = { module = "com.google.firebase:firebase-analytics", version = "23.0.0" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics", version = "20.0.1" }
+jaudiotagger = { module = "net.jthink:jaudiotagger", version.ref = "jaudiotagger" }
+
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity-compose" }
 
 [bundles]
 androidx = [
@@ -77,7 +95,7 @@ paging = ["paging-common", "paging-runtime"]
 room = ["room-runtime", "room-ktx"]
 koin = ["koin-androidx-startup", "koin-android", "koin-androidx-workmanager"]
 media3 = ["media3-exoplayer", "media3-session", "media3-ui", "media3-dash", "media3-hls"]
-coil = ["coil", "coil-gif", "coil-svg", "coil-network-okhttp"]
+coil = ["coil", "coil-gif", "coil-svg", "coil-network-okhttp", "coil-compose"]
 kotlinx = ["kotlinx-serialization-json", "kotlinx-coroutines-core"]
 firebase = ["firebase-analytics", "firebase-crashlytics"]
 
@@ -90,3 +108,4 @@ kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", vers
 ksp = { id = "com.google.devtools.ksp", version = "2.2.10-2.0.2" }
 gms = { id = "com.google.gms.google-services", version = "4.4.3" }
 crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.6" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

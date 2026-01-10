@@ -1,19 +1,15 @@
 package com.joaomagdaleno.music_hub.di
 
+import com.joaomagdaleno.music_hub.data.providers.InternalDownloadProvider
+
 import com.joaomagdaleno.music_hub.download.DownloadWorker
 import com.joaomagdaleno.music_hub.download.Downloader
 import com.joaomagdaleno.music_hub.download.db.DownloadDatabase
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
 import com.joaomagdaleno.music_hub.playback.PlayerService
 import com.joaomagdaleno.music_hub.playback.PlayerState
 import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
 import com.joaomagdaleno.music_hub.ui.download.DownloadViewModel
-import com.joaomagdaleno.music_hub.ui.extensions.ExtensionInfoViewModel
-import com.joaomagdaleno.music_hub.ui.extensions.ExtensionsViewModel
-import com.joaomagdaleno.music_hub.ui.extensions.add.AddViewModel
-import com.joaomagdaleno.music_hub.ui.extensions.login.LoginUserListViewModel
-import com.joaomagdaleno.music_hub.ui.extensions.login.LoginViewModel
 import com.joaomagdaleno.music_hub.ui.feed.FeedViewModel
 import com.joaomagdaleno.music_hub.ui.main.search.SearchViewModel
 import com.joaomagdaleno.music_hub.ui.media.MediaViewModel
@@ -23,9 +19,12 @@ import com.joaomagdaleno.music_hub.ui.player.more.lyrics.LyricsViewModel
 import com.joaomagdaleno.music_hub.ui.playlist.create.CreatePlaylistViewModel
 import com.joaomagdaleno.music_hub.ui.playlist.delete.DeletePlaylistViewModel
 import com.joaomagdaleno.music_hub.ui.playlist.edit.EditPlaylistViewModel
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.data.repository.MusicRepository
 import com.joaomagdaleno.music_hub.ui.playlist.save.SaveToPlaylistViewModel
 import com.joaomagdaleno.music_hub.utils.ContextUtils.getSettings
 import org.koin.android.ext.koin.androidApplication
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.androidx.workmanager.dsl.workerOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -36,22 +35,26 @@ object DI {
     private val baseModule = module {
         single { androidApplication().getSettings() }
         singleOf(::App)
+        single { com.joaomagdaleno.music_hub.data.providers.LocalSource(androidApplication()) }
+        single { InternalDownloadProvider(androidApplication()) }
+        singleOf(::MusicRepository)
+        single { com.joaomagdaleno.music_hub.data.db.MusicDatabase.create(androidApplication()) }
     }
 
-    private val extensionModule = module {
+    private val coreModule = module {
         includes(baseModule)
-        singleOf(::ExtensionLoader)
+        // SourceLoader removed - now using MusicRepository directly
     }
 
     private val downloadModule = module {
-        includes(extensionModule)
+        includes(coreModule)
         singleOf(DownloadDatabase::create)
         singleOf(::Downloader)
         workerOf(::DownloadWorker)
     }
 
     private val playerModule = module {
-        includes(extensionModule)
+        includes(coreModule)
         singleOf(PlayerService::getCache)
         single { PlayerState() }
     }
@@ -64,15 +67,12 @@ object DI {
         viewModelOf(::LyricsViewModel)
         viewModelOf(::TrackInfoViewModel)
 
-        viewModelOf(::ExtensionsViewModel)
-        viewModelOf(::ExtensionInfoViewModel)
-        viewModelOf(::LoginUserListViewModel)
-        viewModelOf(::AddViewModel)
-        viewModelOf(::LoginViewModel)
 
         viewModelOf(::FeedViewModel)
         viewModelOf(::SearchViewModel)
-        viewModelOf(::MediaViewModel)
+        viewModel { (loadFeeds: Boolean, origin: String, item: EchoMediaItem, loaded: Boolean) ->
+            MediaViewModel(get(), get(), get(), loadFeeds, origin, item, loaded)
+        }
 
         viewModelOf(::CreatePlaylistViewModel)
         viewModelOf(::DeletePlaylistViewModel)
@@ -84,7 +84,7 @@ object DI {
 
     val appModule = module {
         includes(baseModule)
-        includes(extensionModule)
+        includes(coreModule)
         includes(playerModule)
         includes(downloadModule)
         includes(uiModules)

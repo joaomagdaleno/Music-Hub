@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="required_extensions_missing_x">Extensões necessárias ausentes: %1$s</string>
     <string name="logout_and_login">Sair e Iniciar Sessão</string>
     <string name="audio_selection">Seleção de áudio</string>
     <string name="search">Pesquisar</string>
     <string name="stop_player_summary">Pare o jogador, quando o aplicativo for removido de recentes</string>
-    <string name="invalid_extension_list">Lista de extensões inválidas</string>
     <string name="no_user_found">Nenhum usuário encontrado</string>
-    <string name="installation_type_summary">A instalação do aplicativo permitirá que os seguintes links sejam abertos no Echo:</string>
     <string name="sleep_timer">Temporizador de sono</string>
-    <string name="extension_uninstalled_successfully">Extensão desinstalada com êxito.</string>
     <string name="auto_start_radio_summary">Adicione automaticamente músicas relacionadas da faixa na lista de reprodução, para ter uma fila infinita</string>
     <string name="explicit">Explícito</string>
     <string name="read_storage">Armazenamento de leitura</string>
@@ -22,7 +18,6 @@
     <string name="webview">Visualização da Web</string>
     <string name="tabs">Separadores</string>
     <string name="subtitles">Legendas</string>
-    <string name="extension_installed_successfully">Extensão instalada com êxito.</string>
     <string name="duration_filter_summary">Filtrar arquivos de áudio com duração (em segundos) menor que o valor</string>
     <string name="like">Gostar</string>
     <string name="follow">Seguir</string>
@@ -49,7 +44,7 @@
     <string name="blacklist_folder_keywords_summary">Palavras-chave para pastas da lista negra. Use vírgula para separador</string>
     <string name="saved">Guardado</string>
     <string name="show_tabs">Mostrar separadores</string>
-    <string name="unified_liked_playlist_summary">Suas faixas curtidas de várias extensões</string>
+    <string name="internal_liked_playlist_summary">Suas faixas curtidas de várias provedores</string>
     <string name="n_items">%1$d Itens</string>
     <string name="playlist_liked">Gostei</string>
     <string name="playlist_liked_desc">As suas faixas preferidas</string>
@@ -59,20 +54,14 @@
     <string name="repeat_off">Repetir apagado</string>
     <string name="repeat_all">Repetir tudo</string>
     <string name="more">Saber mais</string>
-    <string name="extension">Extensão</string>
     <string name="downloading_x">Baixando %1$s</string>
-    <string name="cancel_all">Cancelar tudo</string>
     <string name="downloads">Transferências</string>
     <string name="downloaded_x">Baixado %1$s</string>
     <string name="view">Visão</string>
-    <string name="extension_out_of_date">Desatualizado</string>
     <string name="no_internet">Sem Internet</string>
-    <string name="error_loading_extension_from_x">Erro ao carregar a extensão de %1$s</string>
-    <string name="extension_x_not_found">Extensão %1$s não encontrada</string>
-    <string name="x_is_not_supported_in_x">%1$s não é suportado em %2$s</string>
     <string name="error_x">Erro: %1$s</string>
     <string name="str_copy">Copiar</string>
-    <string name="extensions">Extensões</string>
+    <string name="data_sources">Data Sources</string>
     <string name="choose_a_color">Escolha uma cor</string>
     <string name="random">Aleatório</string>
     <string name="add">Adicionar</string>
@@ -105,17 +94,11 @@
     <string name="install">Instalar</string>
     <string name="app">Aplicação</string>
     <string name="file">Ficheiro</string>
-    <string name="installation_type">Tipo de Instalação</string>
-    <string name="installation_type_warning">Não disponível se você instalar a extensão como um arquivo.</string>
     <string name="could_not_find_the_file">Não foi possível encontrar o ficheiro.</string>
-    <string name="extension_installer">Instalador de extensões</string>
     <string name="allow_opening_links">Permitir a abertura de links</string>
     <string name="open_links_instruction">Para permitir a abertura desses links, você precisa:\n- Role para baixo e clique em \"Abrir por padrão\"\n- Clique em \"+ Adicionar Link\"</string>
     <string name="downloading_update_for_x">Download da atualização para %1$s</string>
-    <string name="extension_updated_successfully">%1$s atualizado com êxito</string>
     <string name="link">Ligação</string>
-    <string name="extension_installed">%1$s (Instalado)</string>
-    <string name="add_extensions">Adicionar extensões</string>
     <string name="ui">Interface do usuário</string>
     <string name="theme">Tema</string>
     <string name="custom_theme_color">Cor do tema personalizada</string>
@@ -139,11 +122,8 @@
     <string name="tracker">Rastreador</string>
     <string name="lyrics">Letras</string>
     <string name="misc">Disposições diversas</string>
-    <string name="x_extensions">Extensões %1$s</string>
     <string name="enabled">Ativado</string>
     <string name="select_x_account">Selecione a conta %1$s</string>
-    <string name="add_extension">Adicionar extensão</string>
-    <string name="error_updating_extension">Erro ao atualizar</string>
     <string name="logout">Sair</string>
     <string name="switch_account">Mudar de conta</string>
     <string name="incognito">Incógnito</string>
@@ -239,7 +219,6 @@
     <string name="adding_x">Adicionando %1$s</string>
     <string name="moving_x">Movendo %1$s</string>
     <string name="removing_x">Removendo %1$s</string>
-    <string name="no_download_extension">Nenhuma extensão de download encontrada, use o código \"echodown\" para obtê-lo.</string>
     <string name="nothing_to_download_in_x">Nada para baixar em %1$s</string>
     <string name="download_started">Download iniciado</string>
     <string name="merging_x">Mesclando %1$s</string>
@@ -257,7 +236,7 @@
     <string name="more_by_x">Mais por %1$s</string>
     <string name="write_storage">Armazenamento de gravação</string>
     <string name="blacklist_folder_keywords">Palavras-chave da pasta da lista negra</string>
-    <string name="show_tab_summary">Mostrar separadores das extensões como categorias</string>
+    <string name="show_tab_summary">Mostrar separadores das provedores como categorias</string>
     <string name="remove">Remover</string>
     <string name="x_login_required">%1$s login necessário</string>
     <string name="blacklist_folders_summary">Pastas a excluir da biblioteca</string>
@@ -275,7 +254,6 @@
     <string name="theme_summary">Quer ser cego?</string>
     <string name="sources">Fontes</string>
     <string name="adding_x_to_next">Adicionar %1$s ao próximo</string>
-    <string name="x_extension">Extensão %1$s</string>
     <string name="sleep_timer_set_for">Temporizador de suspensão definido para %1$s</string>
     <string name="search_x">Pesquisar %1$s</string>
     <string name="sort_and_filter">Ordenar e filtrar</string>
@@ -297,11 +275,10 @@
         <item quantity="many">%1$d Ítens</item>
         <item quantity="other"/>
     </plurals>
-    <string name="x_specific_quality_summary">Qualide de stream específica, irá substituir a qualidade de stream padrão</string>
     <string name="unmetered_stream_quality">Qualidade de stream não medida</string>
     <string name="select_language">Selecionar Linguagem</string>
     <string name="check_for_updates">Verificar por atualizações</string>
-    <string name="check_for_updates_summary">Olhe por novas atualizações para o app e para as extensões, quando você abrir o app.</string>
+    <string name="check_for_updates_summary">Olhe por novas atualizações para o app e para as provedores, quando você abrir o app.</string>
     <string name="checking_for_updates">Checando por atualizações</string>
     <string name="back_animations">Animações de trás</string>
     <string name="back_animations_summary">Pode causar um bug visual por causa do Android, mas você pode abrir os recentes só para resolver.</string>

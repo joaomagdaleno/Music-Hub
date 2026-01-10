@@ -23,13 +23,6 @@ import androidx.media3.session.SessionResult.RESULT_SUCCESS
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.Extension
-import com.joaomagdaleno.music_hub.common.clients.AlbumClient
-import com.joaomagdaleno.music_hub.common.clients.ArtistClient
-import com.joaomagdaleno.music_hub.common.clients.LikeClient
-import com.joaomagdaleno.music_hub.common.clients.PlaylistClient
-import com.joaomagdaleno.music_hub.common.clients.RadioClient
-import com.joaomagdaleno.music_hub.common.clients.TrackClient
 import com.joaomagdaleno.music_hub.common.helpers.PagedData
 import com.joaomagdaleno.music_hub.common.models.Album
 import com.joaomagdaleno.music_hub.common.models.Artist
@@ -41,13 +34,8 @@ import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.download.Downloader
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.get
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getAs
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtension
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtensionOrThrow
-import com.joaomagdaleno.music_hub.extensions.MediaState
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.extensionId
+import com.joaomagdaleno.music_hub.common.models.MediaState
+import com.joaomagdaleno.music_hub.playback.MediaItemUtils.origin
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.track
 import com.joaomagdaleno.music_hub.playback.ResumptionUtils.recoverPlaylist
 import com.joaomagdaleno.music_hub.playback.ResumptionUtils.recoverRepeat
@@ -74,10 +62,10 @@ class PlayerCallback(
     override val app: App,
     override val scope: CoroutineScope,
     private val throwableFlow: MutableSharedFlow<Throwable>,
-    private val extensions: ExtensionLoader,
+    private val repository: com.joaomagdaleno.music_hub.data.repository.MusicRepository,
     private val radioFlow: MutableStateFlow<PlayerState.Radio>,
     override val downloadFlow: StateFlow<List<Downloader.Info>>,
-) : AndroidAutoCallback(app, scope, extensions.music, downloadFlow) {
+) : AndroidAutoCallback(app, scope, kotlinx.coroutines.flow.MutableStateFlow(emptyList()), downloadFlow) {
 
     override fun onConnect(
         session: MediaSession, controller: MediaSession.ControllerInfo,
@@ -170,74 +158,60 @@ class PlayerCallback(
     @OptIn(UnstableApi::class)
     private fun radio(player: Player, args: Bundle) = scope.future {
         val error = SessionResult(SessionError.ERROR_UNKNOWN)
-        val extId = args.getString("extId") ?: return@future error
+        val origin = args.getString("origin") ?: return@future error
         val item = args.getSerialized<EchoMediaItem>("item")?.getOrNull() ?: return@future error
-        val itemLoaded = args.getBoolean("loaded", false)
-        val extension = extensions.music.getExtension(extId) ?: return@future error
-        val newItem = if (itemLoaded) item else loadItem(extension, item)
+        // Use repository for radio instead of sources
+        val tracks = when (item) {
+            is Track -> repository.getRadio(item.id)
+            else -> emptyList()
+        }
+        if (tracks.isEmpty()) return@future error
         radioFlow.value = PlayerState.Radio.Loading
-        val loaded = PlayerRadio.start(
-            throwableFlow, extension, newItem, null
-        )
-        if (loaded == null) return@future error
+        val mediaItems = tracks.map { track ->
+            MediaItemUtils.build(
+                app, downloadFlow.value, MediaState.Unloaded("internal", track), item
+            )
+        }
         player.with {
             clearMediaItems()
             shuffleModeEnabled = false
+            setMediaItems(mediaItems)
+            prepare()
+            play()
         }
-        PlayerRadio.play(player, downloadFlow, app, radioFlow, loaded)
-        player.with { play() }
+        radioFlow.value = PlayerRadio.start(repository, item) ?: PlayerState.Radio.Empty
         SessionResult(RESULT_SUCCESS)
     }
 
-    private suspend fun loadItem(
-        extension: Extension<*>, item: EchoMediaItem,
-    ) = when (item) {
-        is Track -> extension.getAs<TrackClient, EchoMediaItem> { loadTrack(item, false) }
-        is Album -> extension.getAs<AlbumClient, EchoMediaItem> { loadAlbum(item) }
-        is Playlist -> extension.getAs<PlaylistClient, EchoMediaItem> { loadPlaylist(item) }
-        is Artist -> extension.getAs<ArtistClient, EchoMediaItem> { loadArtist(item) }
-        is Radio -> throw IllegalStateException()
-    }.getOrThrow()
-
-    private suspend fun listTracks(
-        extension: Extension<*>, item: EchoMediaItem, loaded: Boolean,
-    ) = when (item) {
-        is Album -> extension.getAs<AlbumClient, PagedData<Track>> {
-            val album = if (!loaded) loadAlbum(item) else item
-            loadTracks(album)?.pagedDataOfFirst()
-                ?: PagedData.empty()
-        }
-
-        is Playlist -> extension.getAs<PlaylistClient, PagedData<Track>> {
-            val playlist = if (!loaded) loadPlaylist(item) else item
-            loadTracks(playlist).pagedDataOfFirst()
-        }
-
-        is Radio -> extension.getAs<RadioClient, PagedData<Track>> {
-            val radio = if (!loaded) loadRadio(item) else item
-            loadTracks(radio).pagedDataOfFirst()
-        }
-
-        is Artist -> extension.getAs<ArtistClient, PagedData<Track>> {
-            val artist = if (!loaded) loadArtist(item) else item
-            loadFeed(artist).pagedDataOfFirst().toTracks()
-        }
-
-        is Track -> Result.success(PagedData.Single { listOf(item) })
+    // Removed source-based loadItem - use repository instead
+    private suspend fun loadItem(item: EchoMediaItem): EchoMediaItem = when (item) {
+        is Track -> repository.getTrack(item.id) ?: item
+        is Album -> repository.getAlbum(item.id)
+        is Playlist -> repository.getPlaylist(item.id) ?: item
+        is Artist -> repository.getArtist(item.id)
+        is Radio -> item
     }
 
+    // Removed source-based listTracks - use repository instead
+    private suspend fun listTracks(item: EchoMediaItem): List<Track> = when (item) {
+        is Album -> repository.getAlbumTracks(item.id)
+        is Playlist -> repository.getPlaylistTracks(item.id)
+        is Artist -> repository.getArtistTracks(item.id)
+        is Track -> listOf(item)
+        is Radio -> repository.getRadio(item.id)
+    }
 
     private fun playItem(player: Player, args: Bundle) = scope.future {
         val error = SessionResult(SessionError.ERROR_UNKNOWN)
-        val extId = args.getString("extId") ?: return@future error
+        val origin = args.getString("origin") ?: "internal"
         val item = args.getSerialized<EchoMediaItem>("item")?.getOrNull() ?: return@future error
         val loaded = args.getBoolean("loaded", false)
         val shuffle = args.getBoolean("shuffle", false)
-        val extension = extensions.music.getExtension(extId) ?: return@future error
+        
         when (item) {
             is Track -> {
                 val mediaItem = MediaItemUtils.build(
-                    app, downloadFlow.value, MediaState.Unloaded(extId, item), null
+                    app, downloadFlow.value, MediaState.Unloaded(origin, item), null
                 )
                 player.with {
                     setMediaItem(mediaItem)
@@ -248,35 +222,14 @@ class PlayerCallback(
             }
 
             else -> {
-                val tracks = listTracks(extension, item, loaded).getOrElse {
-                    throwableFlow.emit(it)
-                    return@future error
-                }
-
-                val result = if (shuffle) extension.get { tracks.loadAll() }
-                else runCatching {
-                    val (list, continuation) = extension.get { tracks.loadPage(null) }.getOrThrow()
-                    if (continuation != null) scope.launch {
-                        val all = extension.get { tracks.loadAll() }.getOrElse {
-                            throwableFlow.emit(it)
-                            return@launch
-                        }.drop(list.size).map {
-                            MediaItemUtils.build(
-                                app, downloadFlow.value, MediaState.Unloaded(extId, it), item
-                            )
-                        }
-                        player.with { addMediaItems(list.size, all) }
-                    }
-                    list
-                }
-                val list = result.getOrElse {
-                    throwableFlow.emit(it)
-                    return@future error
-                }
+                val trackList = listTracks(item)
+                if (trackList.isEmpty()) return@future error
+                
+                val list = if (shuffle) trackList.shuffled() else trackList
                 player.with {
                     setMediaItems(list.map {
                         MediaItemUtils.build(
-                            app, downloadFlow.value, MediaState.Unloaded(extId, it), item
+                            app, downloadFlow.value, MediaState.Unloaded(origin, it), item
                         )
                     })
                     shuffleModeEnabled = shuffle
@@ -308,23 +261,16 @@ class PlayerCallback(
 
     private fun addToQueue(player: Player, args: Bundle) = scope.future {
         val error = SessionResult(SessionError.ERROR_UNKNOWN)
-        val extId = args.getString("extId") ?: return@future error
+        val origin = args.getString("origin") ?: "internal"
         val item = args.getSerialized<EchoMediaItem>("item")?.getOrNull() ?: return@future error
-        val loaded = args.getBoolean("loaded", false)
-        val extension = extensions.music.getExtension(extId) ?: return@future error
-        val tracks = listTracks(extension, item, loaded).getOrElse {
-            throwableFlow.emit(it)
-            return@future error
-        }.load().getOrElse {
-            throwableFlow.emit(it)
-            return@future error
-        }
+        
+        val tracks = listTracks(item)
         if (tracks.isEmpty()) return@future error
         val mediaItems = tracks.map { track ->
             MediaItemUtils.build(
                 app,
                 downloadFlow.value,
-                MediaState.Unloaded(extId, track),
+                MediaState.Unloaded(origin, track),
                 null
             )
         }
@@ -339,24 +285,17 @@ class PlayerCallback(
     private var nextJob: Job? = null
     private fun addToNext(player: Player, args: Bundle) = scope.future {
         val error = SessionResult(SessionError.ERROR_UNKNOWN)
-        val extId = args.getString("extId") ?: return@future error
+        val origin = args.getString("origin") ?: "internal"
         val item = args.getSerialized<EchoMediaItem>("item")?.getOrNull() ?: return@future error
-        val loaded = args.getBoolean("loaded", false)
-        val extension = extensions.music.getExtension(extId) ?: return@future error
         nextJob?.cancel()
-        val tracks = listTracks(extension, item, loaded).getOrElse {
-            throwableFlow.emit(it)
-            return@future error
-        }.load().getOrElse {
-            throwableFlow.emit(it)
-            return@future error
-        }
+        
+        val tracks = listTracks(item)
         if (tracks.isEmpty()) return@future error
         val mediaItems = tracks.map { track ->
             MediaItemUtils.build(
                 app,
                 downloadFlow.value,
-                MediaState.Unloaded(extId, track),
+                MediaState.Unloaded(origin, track),
                 null
             )
         }
@@ -381,16 +320,13 @@ class PlayerCallback(
             val item = session.player.with { currentMediaItem }
                 ?: return@future SessionResult(SessionError.ERROR_UNKNOWN)
             val track = item.track
-            runCatching {
-                val extension = extensions.music.getExtensionOrThrow(item.extensionId)
-                extension.getAs<LikeClient, Unit> {
-                    likeItem(track, rating.isThumbsUp)
-                }
-            }.getOrElse {
-                throwableFlow.emit(PlayerException(item, it))
-                return@future SessionResult(SessionError.ERROR_UNKNOWN)
-            }
+
+            // Toggle like in database
             val liked = rating.isThumbsUp
+            if (liked != repository.isLiked(track)) {
+                repository.toggleLike(track)
+            }
+
             val newItem = item.run {
                 buildUpon().setMediaMetadata(
                     mediaMetadata.buildUpon().setUserRating(ThumbRating(liked)).build()

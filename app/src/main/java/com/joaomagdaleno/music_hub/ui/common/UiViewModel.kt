@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup.MarginLayoutParams
 import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
-import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -28,7 +27,6 @@ import com.google.android.material.navigation.NavigationBarView
 import com.google.android.material.navigationrail.NavigationRailView
 import com.joaomagdaleno.music_hub.MainActivity
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
 import com.joaomagdaleno.music_hub.playback.PlayerState
 import com.joaomagdaleno.music_hub.ui.main.MainFragment
 import com.joaomagdaleno.music_hub.ui.player.PlayerColors
@@ -37,7 +35,6 @@ import com.joaomagdaleno.music_hub.utils.CacheUtils.saveToCache
 import com.joaomagdaleno.music_hub.utils.ContextUtils.emit
 import com.joaomagdaleno.music_hub.utils.ContextUtils.getSettings
 import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
-import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadDrawable
 import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.animateTranslation
 import com.joaomagdaleno.music_hub.utils.ui.GradientDrawable
 import com.joaomagdaleno.music_hub.utils.ui.UiUtils.dpToPx
@@ -47,9 +44,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted.Companion.Lazily
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -59,7 +56,6 @@ import kotlin.math.min
 
 class UiViewModel(
     context: Context,
-    extensionLoader: ExtensionLoader,
     private val playerState: PlayerState
 ) : ViewModel() {
 
@@ -92,10 +88,15 @@ class UiViewModel(
     )
 
     val currentNavBackground = MutableStateFlow<Drawable?>(null)
-    private val extensionColor = extensionLoader.current.transform { extension ->
-        emit(null)
-        val drawable = extension?.metadata?.icon?.loadDrawable(context) ?: return@transform
-        emit(PlayerColors.getDominantColor(drawable.toBitmap()).toDrawable())
+    
+    private val sourceColor = navigation.map { nav ->
+        val colorAttr = when (nav) {
+            1 -> R.attr.navSearchColor
+            2 -> R.attr.navLibraryColor
+            else -> R.attr.navHomeColor
+        }
+        val color = runCatching { MaterialColors.getColor(context, colorAttr, 0) }.getOrNull()
+        color?.toDrawable()
     }
 
     private val navViewInsets = MutableStateFlow(Insets())
@@ -212,7 +213,7 @@ class UiViewModel(
     val playerDrawable = MutableStateFlow<Drawable?>(null)
     val playerColors = MutableStateFlow<PlayerColors?>(null)
 
-    val mainBgDrawable = playerDrawable.combine(extensionColor) { a, b -> a ?: b }
+    val mainBgDrawable = playerDrawable.combine(sourceColor) { a, b -> a ?: b }
 
     fun changeBgVisible(show: Boolean) {
         playerBgVisible.value = show
@@ -220,22 +221,93 @@ class UiViewModel(
             changeMoreState(STATE_COLLAPSED)
     }
 
+    // App Update Logic
+    val installFileFlow = MutableSharedFlow<File>()
+    val installedFlow = MutableSharedFlow<Pair<File, Result<Unit>>>()
+
+    private val updateTime = 1000 * 60 * 60 * 2L // Check every 2hrs
+
+    private fun shouldCheckForUpdates(context: Context): Boolean {
+        val check = context.getSettings().getBoolean("check_for_updates", true)
+        if (!check) return false
+        val lastUpdateCheck = context.getFromCache<Long>("last_update_check") ?: 0
+        return System.currentTimeMillis() - lastUpdateCheck > updateTime
+    }
+
+    private suspend fun message(app: App, msg: String) {
+        app.messageFlow.emit(Message(msg))
+    }
+
+    private suspend fun awaitInstallation(file: File): Result<Unit> {
+        installFileFlow.emit(file)
+        return installedFlow.first { it.first == file }.second
+    }
+
+    fun checkForUpdates(activity: androidx.fragment.app.FragmentActivity, force: Boolean = false) = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+        val app = activity.applicationContext as App
+        if (!force && !shouldCheckForUpdates(activity)) return@launch
+
+        activity.saveToCache("last_update_check", System.currentTimeMillis())
+        activity.cleanupTempApks()
+
+        if (force) message(app, activity.getString(R.string.checking_for_updates))
+
+        runCatching {
+            val appApk = com.joaomagdaleno.music_hub.utils.AppUpdater.updateApp(app)
+            if (appApk != null) {
+                activity.saveToCache("last_update_check", 0)
+                awaitInstallation(appApk).getOrThrow()
+            } else {
+                 if (force) message(app, activity.getString(R.string.no_update_available_for_x, activity.getString(R.string.app_name)))
+            }
+        }.getOrElse {
+            if (force) app.throwFlow.emit(it)
+        }
+    }
+
     companion object {
+        fun androidx.fragment.app.FragmentActivity.configureAppUpdater() {
+            val viewModel by org.koin.androidx.viewmodel.ext.android.viewModel<UiViewModel>()
+            var currentFile: File? = null
+            
+            observe(viewModel.installFileFlow) {
+                currentFile = it
+                viewModel.installedFlow.emit(it to runCatching { 
+                    com.joaomagdaleno.music_hub.utils.InstallationUtils.installApp(this, it) 
+                })
+            }
+
+            lifecycle.addObserver(object : androidx.lifecycle.DefaultLifecycleObserver {
+                 override fun onDestroy(owner: androidx.lifecycle.LifecycleOwner) {
+                     val file = currentFile ?: return
+                     viewModel.run {
+                         viewModelScope.launch {
+                             installedFlow.emit(
+                                 file to Result.failure(kotlinx.coroutines.CancellationException())
+                             )
+                         }
+                     }
+                 }
+            })
+            
+            viewModel.checkForUpdates(this, false)
+        }
+
         const val BACKGROUND_GRADIENT = "bg_gradient"
         fun Fragment.applyGradient(view: View, drawable: Drawable?) {
             val settings = requireContext().getSettings()
             val isGradient = settings.getBoolean(BACKGROUND_GRADIENT, true)
-            val drawable = if (isGradient) {
+            val colorDrawable = if (isGradient) {
                 drawable ?: MaterialColors.getColor(view, androidx.appcompat.R.attr.colorPrimary)
                     .toDrawable()
             } else null
-            view.background = GradientDrawable.createBlurred(view, drawable)
+            view.background = GradientDrawable.createBlurred(view, colorDrawable)
         }
 
         fun Fragment.applyInsets(vararg flows: Flow<*>, block: UiViewModel.(Insets) -> Unit) {
             val uiViewModel by activityViewModel<UiViewModel>()
-            val flows = listOf(uiViewModel.combined) + flows
-            observe(flows.merge()) { uiViewModel.block(uiViewModel.combined.value) }
+            val flowsList = listOf(uiViewModel.combined) + flows
+            observe(flowsList.merge()) { uiViewModel.block(uiViewModel.combined.value) }
         }
 
         fun Fragment.applyInsetsWithChild(

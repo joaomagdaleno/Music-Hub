@@ -6,6 +6,7 @@ plugins {
 
     alias(libs.plugins.gms) apply false
     alias(libs.plugins.crashlytics) apply false
+    alias(libs.plugins.compose.compiler)
 }
 
 val hasGoogleServices = file("google-services.json").exists()
@@ -25,12 +26,28 @@ android {
         versionName = "v${version}_$gitHash($gitCount)"
     }
 
+    signingConfigs {
+        create("release") {
+            val path = System.getenv("KEYSTORE_PATH")
+            if (path != null) {
+                storeFile = file(path)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (signingConfigs.getByName("release").storeFile != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
             )
         }
         create("nightly") {
@@ -40,12 +57,16 @@ android {
         }
         create("stable") {
             initWith(getByName("release"))
+            if (signingConfigs.getByName("release").storeFile != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
     buildFeatures {
         buildConfig = true
         viewBinding = true
+        compose = true
     }
 
     androidResources {
@@ -64,8 +85,6 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":common"))
-    implementation(libs.kotlin.reflect)
     implementation(libs.bundles.androidx)
     implementation(libs.material)
     implementation(libs.bundles.paging)
@@ -73,6 +92,8 @@ dependencies {
     implementation(libs.bundles.room)
     ksp(libs.room.compiler)
     implementation(libs.bundles.koin)
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.bundles.kotlinx)
     implementation(libs.bundles.media3)
     implementation(libs.bundles.coil)
 
@@ -82,6 +103,17 @@ dependencies {
     implementation(libs.kenburnsview)
     implementation(libs.nestedscrollwebview)
     implementation(libs.acsbendi.webview)
+    implementation(libs.jaudiotagger)
+
+    // Jetpack Compose
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.activity.compose)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
 
     if (!hasGoogleServices) return@dependencies
     implementation(libs.bundles.firebase)

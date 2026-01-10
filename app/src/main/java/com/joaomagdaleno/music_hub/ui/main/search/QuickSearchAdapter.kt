@@ -11,13 +11,13 @@ class QuickSearchAdapter(
     val listener: Listener,
 ) : ScrollAnimListAdapter<QuickSearchAdapter.Item, QuickSearchViewHolder>(DiffCallback) {
     data class Item(
-        val extensionId: String,
+        val origin: String,
         val actual: QuickSearchItem,
     )
 
     object DiffCallback : DiffUtil.ItemCallback<Item>() {
         override fun areItemsTheSame(oldItem: Item, newItem: Item): Boolean {
-            if (oldItem.extensionId != newItem.extensionId) return false
+            if (oldItem.origin != newItem.origin) return false
             return oldItem.actual.sameAs(newItem.actual)
         }
 

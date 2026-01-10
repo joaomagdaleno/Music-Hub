@@ -15,20 +15,16 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.session.MediaController
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.clients.LikeClient
 import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
 import com.joaomagdaleno.music_hub.common.models.Message
 import com.joaomagdaleno.music_hub.common.models.Streamable
 import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.download.Downloader
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtension
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.isClient
-import com.joaomagdaleno.music_hub.extensions.MediaState
+import com.joaomagdaleno.music_hub.common.models.MediaState
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.serverWithDownloads
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.sourceIndex
+import com.joaomagdaleno.music_hub.playback.MediaItemUtils.streamIndex
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.track
 import com.joaomagdaleno.music_hub.playback.PlayerCommands.addToNextCommand
 import com.joaomagdaleno.music_hub.playback.PlayerCommands.addToQueueCommand
@@ -57,7 +53,7 @@ class PlayerViewModel(
     val playerState: PlayerState,
     val settings: SharedPreferences,
     val cache: SimpleCache,
-    val extensions: ExtensionLoader,
+    val repository: com.joaomagdaleno.music_hub.data.repository.MusicRepository,
     downloader: Downloader,
 ) : ViewModel() {
     private val downloadFlow = downloader.flow
@@ -145,9 +141,7 @@ class PlayerViewModel(
         withBrowser { it.repeatMode = repeatMode }
     }
 
-    suspend fun isLikeClient(extensionId: String): Boolean = withContext(Dispatchers.IO) {
-        extensions.music.getExtension(extensionId)?.isClient<LikeClient>() ?: false
-    }
+    suspend fun isLikeClient(origin: String): Boolean = true
 
     private fun createException(throwable: Throwable) {
         viewModelScope.launch { app.throwFlow.emit(throwable) }
@@ -204,7 +198,7 @@ class PlayerViewModel(
 
     fun changeCurrentSource(index: Int) {
         val item = playerState.current.value?.mediaItem ?: return
-        changeCurrent(MediaItemUtils.buildSource(item, index))
+        changeCurrent(MediaItemUtils.buildStream(item, index))
     }
 
     fun setQueue(id: String, list: List<Track>, index: Int, context: EchoMediaItem?) {
@@ -228,7 +222,7 @@ class PlayerViewModel(
         )
         withBrowser {
             it.sendCustomCommand(radioCommand, Bundle().apply {
-                putString("extId", id)
+                putString("origin", id)
                 putSerialized("item", item)
                 putBoolean("loaded", loaded)
             })
@@ -241,7 +235,7 @@ class PlayerViewModel(
         )
         withBrowser {
             it.sendCustomCommand(playCommand, Bundle().apply {
-                putString("extId", id)
+                putString("origin", id)
                 putSerialized("item", item)
                 putBoolean("loaded", loaded)
                 putBoolean("shuffle", false)
@@ -255,7 +249,7 @@ class PlayerViewModel(
         )
         withBrowser {
             it.sendCustomCommand(playCommand, Bundle().apply {
-                putString("extId", id)
+                putString("origin", id)
                 putSerialized("item", item)
                 putBoolean("loaded", loaded)
                 putBoolean("shuffle", true)
@@ -270,7 +264,7 @@ class PlayerViewModel(
         )
         withBrowser {
             it.sendCustomCommand(addToQueueCommand, Bundle().apply {
-                putString("extId", id)
+                putString("origin", id)
                 putSerialized("item", item)
                 putBoolean("loaded", loaded)
             })
@@ -283,7 +277,7 @@ class PlayerViewModel(
         )
         withBrowser {
             it.sendCustomCommand(addToNextCommand, Bundle().apply {
-                putString("extId", id)
+                putString("origin", id)
                 putSerialized("item", item)
                 putBoolean("loaded", loaded)
             })
@@ -305,7 +299,7 @@ class PlayerViewModel(
     val serverAndTracks = tracksFlow.combine(playerState.serverChanged) { tracks, _ -> tracks }
         .combine(playerState.current) { tracks, current ->
             val server = playerState.servers[current?.mediaItem?.mediaId]?.getOrNull()
-            val index = current?.mediaItem?.sourceIndex
+            val index = current?.mediaItem?.streamIndex
             Triple(tracks, server, index)
         }.stateIn(viewModelScope, SharingStarted.Lazily, Triple(null, null, null))
 

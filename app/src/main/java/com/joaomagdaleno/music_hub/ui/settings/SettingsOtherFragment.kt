@@ -7,7 +7,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.preference.PreferenceFragmentCompat
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.common.models.ImageHolder.Companion.toResourceImageHolder
-import com.joaomagdaleno.music_hub.ui.extensions.ExtensionsViewModel
 import com.joaomagdaleno.music_hub.utils.ContextUtils.SETTINGS_NAME
 import com.joaomagdaleno.music_hub.utils.PermsUtils.registerActivityResultLauncher
 import com.joaomagdaleno.music_hub.utils.exportSettings
@@ -35,19 +34,7 @@ class SettingsOtherFragment : BaseSettingsFragment() {
             val screen = preferenceManager.createPreferenceScreen(context)
             preferenceScreen = screen
 
-            SwitchLongClickPreference(context).apply {
-                title = getString(R.string.check_for_updates)
-                summary = getString(R.string.check_for_updates_summary)
-                key = "check_for_updates"
-                layoutResource = R.layout.preference_switch
-                isIconSpaceReserved = false
-                setDefaultValue(true)
-                screen.addPreference(this)
-                setOnLongClickListener {
-                    val viewModel by activityViewModel<ExtensionsViewModel>()
-                    viewModel.update(requireActivity(), true)
-                }
-            }
+
 
             TransitionPreference(context).apply {
                 key = "export"

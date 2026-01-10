@@ -22,13 +22,12 @@ import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
 import com.joaomagdaleno.music_hub.common.models.Streamable
 import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.download.Downloader
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.backgroundIndex
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.extensionId
+import com.joaomagdaleno.music_hub.playback.MediaItemUtils.origin
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.retries
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.serverIndex
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.sourceIndex
+import com.joaomagdaleno.music_hub.playback.MediaItemUtils.streamIndex
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.subtitleIndex
 import com.joaomagdaleno.music_hub.playback.PlayerService.Companion.select
 import com.joaomagdaleno.music_hub.playback.PlayerState
@@ -56,7 +55,7 @@ class StreamableMediaSource(
         super.maybeThrowSourceInfoRefreshError()
     }
 
-    fun getFactory(source: Streamable.Source) = if (source.isLive) factories else cacheFactories
+    fun getFactory(stream: Streamable.Stream) = if (stream.isLive) factories else cacheFactories
 
     private lateinit var actualSource: MediaSource
     override fun prepareSourceInternal(mediaTransferListener: TransferListener?) {
@@ -70,26 +69,26 @@ class StreamableMediaSource(
             val server = serv.getOrNull()
             state.servers[new.mediaId] = serv
             state.serverChanged.emit(Unit)
-            val sources = server?.sources
-            actualSource = when (sources?.size) {
+            val streams = server?.streams
+            actualSource = when (streams?.size) {
                 0, null -> factories.create(new, -1, null)
                 1 -> {
-                    val source = sources.first()
-                    getFactory(source).create(new, 0, source)
+                    val stream = streams.first()
+                    getFactory(stream).create(new, 0, stream)
                 }
 
                 else -> {
                     if (server.merged) MergingMediaSource(
-                        *sources.mapIndexed { index, source ->
-                            getFactory(source).create(new, index, source)
+                        *streams.mapIndexed { index, stream ->
+                            getFactory(stream).create(new, index, stream)
                         }.toTypedArray()
                     ) else {
-                        val index = mediaItem.sourceIndex
-                        val source = sources.getOrNull(index)
-                            ?: sources.select(app, new.extensionId) { it.quality }
-                        val newIndex = sources.indexOf(source)
-                        new = MediaItemUtils.buildSource(new, newIndex)
-                        getFactory(source).create(new, newIndex, source)
+                        val index = mediaItem.streamIndex
+                        val stream = streams.getOrNull(index)
+                            ?: select(app, new.origin, streams) { it.quality }
+                        val newIndex = streams.indexOf(stream)
+                        new = MediaItemUtils.buildStream(new, newIndex)
+                        getFactory(stream!!).create(new, newIndex, stream)
                     }
                 }
             }
@@ -124,7 +123,7 @@ class StreamableMediaSource(
         this.mediaItem.apply {
             if (retries != mediaItem.retries) return@run false
             if (serverIndex != mediaItem.serverIndex) return@run false
-            if (this.sourceIndex != mediaItem.sourceIndex) return@run false
+            if (this.streamIndex != mediaItem.streamIndex) return@run false
             if (backgroundIndex != mediaItem.backgroundIndex) return@run false
             if (subtitleIndex != mediaItem.subtitleIndex) return@run false
         }
@@ -142,14 +141,14 @@ class StreamableMediaSource(
         val hls: Lazy<MediaSource.Factory>,
         val default: Lazy<MediaSource.Factory>,
     ) {
-        fun create(mediaItem: MediaItem, index: Int, source: Streamable.Source?): MediaSource {
-            val type = (source as? Streamable.Source.Http)?.type
-            val factory = when (type) {
-                Streamable.SourceType.DASH -> dash
-                Streamable.SourceType.HLS -> hls
-                Streamable.SourceType.Progressive, null -> default
+        fun create(mediaItem: MediaItem, index: Int, stream: Streamable.Stream?): MediaSource {
+            val format = (stream as? Streamable.Stream.Http)?.format
+            val factory = when (format) {
+                Streamable.StreamFormat.DASH -> dash
+                Streamable.StreamFormat.HLS -> hls
+                Streamable.StreamFormat.Progressive, null -> default
             }
-            val new = MediaItemUtils.buildForSource(mediaItem, index, source)
+            val new = MediaItemUtils.buildForStream(mediaItem, index, stream)
             return factory.value.createMediaSource(new)
         }
     }
@@ -158,13 +157,13 @@ class StreamableMediaSource(
         private val app: App,
         private val scope: CoroutineScope,
         private val state: PlayerState,
-        extensions: ExtensionLoader,
+        val repository: com.joaomagdaleno.music_hub.data.repository.MusicRepository,
         cache: SimpleCache,
         downloadFlow: StateFlow<List<Downloader.Info>>,
         private val changeFlow: MutableSharedFlow<Pair<MediaItem, MediaItem>>,
     ) : MediaSource.Factory {
 
-        private val loader = StreamableLoader(app, extensions.music, downloadFlow)
+        private val loader = StreamableLoader(app, repository, downloadFlow)
 
         val dataSourceFactory = StreamableDataSource.Factory(app.context)
         val streamableResolver = StreamableResolver(app.context, state.servers)

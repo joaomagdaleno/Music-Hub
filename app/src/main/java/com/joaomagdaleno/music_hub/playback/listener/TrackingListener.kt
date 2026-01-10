@@ -5,15 +5,10 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import com.joaomagdaleno.music_hub.common.Extension
-import com.joaomagdaleno.music_hub.common.clients.TrackerClient
-import com.joaomagdaleno.music_hub.common.clients.TrackerMarkClient
 import com.joaomagdaleno.music_hub.common.models.TrackDetails
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtension
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.runIf
+import com.joaomagdaleno.music_hub.data.repository.MusicRepository
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.context
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.extensionId
+import com.joaomagdaleno.music_hub.playback.MediaItemUtils.origin
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.track
 import com.joaomagdaleno.music_hub.playback.PlayerState
 import com.joaomagdaleno.music_hub.utils.PauseTimer
@@ -32,16 +27,19 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 @UnstableApi
+@UnstableApi
 class TrackingListener(
+    // We pass context for SharedPreferences access (ResumptionUtils)
+    private val context: android.content.Context,
     private val player: Player,
     private val scope: CoroutineScope,
-    extensions: ExtensionLoader,
+    private val repository: MusicRepository,
     private val currentFlow: MutableStateFlow<PlayerState.Current?>,
     private val throwableFlow: MutableSharedFlow<Throwable>
 ) : Player.Listener {
 
-    private val musicList = extensions.music
-    private val trackerList = extensions.tracker
+    // In monolithic mode, trackers are stubbed
+    // TODO: Implement local history tracking via repository
 
     private var current: MediaItem? = null
     private var previousId: String? = null
@@ -49,51 +47,42 @@ class TrackingListener(
     private suspend fun getDetails() = withContext(Dispatchers.Main) {
         current?.let { curr ->
             val (pos, total) = player.currentPosition to player.duration.takeIf { it != C.TIME_UNSET }
-            TrackDetails(curr.extensionId, curr.track, curr.context, pos, total)
+            TrackDetails(curr.origin, curr.track, curr.context, pos, total)
         }
     }
 
     private fun trackMedia(
-        block: suspend TrackerClient.(extension: Extension<*>, details: TrackDetails?) -> Unit
+        block: suspend (details: TrackDetails?) -> Unit
     ) {
         scope.launch {
             val details = getDetails()
-            val prevExtension = previousId?.takeIf { details?.extensionId != it }
-                ?.let { musicList.getExtension(it) }
-            val extension = musicList.getExtension(details?.extensionId)
-            val trackers = trackerList.value.filter { it.isEnabled }
-            prevExtension?.runIf<TrackerClient>(throwableFlow) { block(prevExtension, null) }
-            extension?.runIf<TrackerClient>(throwableFlow) { block(extension, details) }
-            trackers.forEach {
-                launch { it.runIf<TrackerClient>(throwableFlow) { block(it, details) } }
-            }
+            // In monolithic mode, just call the block with details
+            // Tracker sources are no longer used
+            block(details)
         }
     }
 
     private val mutex = Mutex()
     private val timers = mutableMapOf<String, PauseTimer>()
     private fun onTrackChanged(mediaItem: MediaItem?) {
-        previousId = current?.extensionId
+        previousId = current?.origin
         current = mediaItem
+
+        // Save Queue and Index on track change
+        scope.launch {
+            ResumptionUtils.saveQueue(context, player)
+        }
+
         scope.launch {
             mutex.withLock {
                 timers.forEach { (_, timer) -> timer.pause() }
                 timers.clear()
             }
-            trackMedia { extension, details ->
-                onTrackChanged(details)
+            trackMedia { details ->
+                // Stubbed: onTrackChanged for local history
+                // TODO: Save to local history via repository
                 details ?: return@trackMedia
-                val duration = (this as? TrackerMarkClient)?.getMarkAsPlayedDuration(details)
-                    ?: return@trackMedia
-                mutex.withLock {
-                    timers[extension.id] = PauseTimer(scope, duration) {
-                        scope.launch {
-                            extension.runIf<TrackerMarkClient>(throwableFlow) {
-                                onMarkAsPlayed(details)
-                            }
-                        }
-                    }
-                }
+                // Mark as played timer stubbed
             }
         }
     }
@@ -107,6 +96,11 @@ class TrackingListener(
     override fun onPositionDiscontinuity(
         oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int
     ) {
+        // Save current position on discontinuity (seek, etc)
+        scope.launch {
+            ResumptionUtils.saveCurrentPos(context, newPosition.positionMs)
+        }
+
         scope.launch {
             val isPlaying = withContext(Dispatchers.Main) { player.isPlaying }
             playState.value = getDetails() to isPlaying
@@ -141,8 +135,9 @@ class TrackingListener(
                         else timer.pause()
                     }
                 }
-                trackMedia { _, details ->
-                    onPlayingStateChanged(details, isPlaying)
+                trackMedia { details ->
+                    // Stubbed: onPlayingStateChanged for local history
+                    // TODO: Update play state in local history
                 }
             }
         }

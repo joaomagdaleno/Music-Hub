@@ -6,16 +6,12 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.google.android.material.transition.MaterialSharedAxis
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.clients.LibraryFeedClient
-import com.joaomagdaleno.music_hub.common.clients.PlaylistEditClient
 import com.joaomagdaleno.music_hub.common.models.Feed
 import com.joaomagdaleno.music_hub.common.models.Message
 import com.joaomagdaleno.music_hub.common.models.Playlist
 import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.common.models.Feed.Companion.toFeed
 import com.joaomagdaleno.music_hub.databinding.FragmentLibraryBinding
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getAs
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.isClient
-import com.joaomagdaleno.music_hub.extensions.cache.Cached
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
 import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler.Companion.createSnack
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
@@ -41,17 +37,9 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
     private val feedData by lazy {
         val vm by viewModel<FeedViewModel>()
         val id = "library"
-        vm.getFeedData(id, cached = {
-            val curr = current.value!!
-            val feed = Cached.getFeedShelf(app, curr.id, id).getOrThrow()
-            FeedData.State(curr.id, null, feed)
-        }) {
-            val curr = current.value!!
-            val feed = Cached.savingFeed(
-                app, curr, id,
-                curr.getAs<LibraryFeedClient, Feed<Shelf>> { loadLibraryFeed() }.getOrThrow()
-            )
-            FeedData.State(curr.id, null, feed)
+        vm.getFeedData(id, cached = { null }) {
+            val feed = this.getLibraryFeed().toFeed()
+            FeedData.State("internal", null, feed)
         }
     }
 
@@ -91,7 +79,7 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         }
 
         observe(feedData.current) {
-            binding.createPlaylist.isVisible = it?.isClient<PlaylistEditClient>() ?: false
+            binding.createPlaylist.isVisible = true // Always allow playlist creation in internal
         }
         val parent = requireParentFragment()
         binding.createPlaylist.setOnClickListener {
@@ -99,13 +87,13 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         }
 
         parent.parentFragmentManager.setFragmentResultListener("createPlaylist", this) { _, data ->
-            val extensionId = data.getString("extensionId")
+            val origin = data.getString("origin")
             val playlist = data.getSerialized<Playlist>("playlist")?.getOrNull()
-            if (extensionId != null && playlist != null) createSnack(
+            if (origin != null && playlist != null) createSnack(
                 Message(
                     getString(R.string.x_created, playlist.title),
                     Message.Action(getString(R.string.view)) {
-                        listener.onMediaClicked(null, extensionId, playlist, null)
+                        listener.onMediaClicked(null, origin, playlist, null)
                     }
                 )
             )

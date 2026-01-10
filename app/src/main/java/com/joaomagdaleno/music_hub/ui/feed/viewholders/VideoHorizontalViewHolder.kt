@@ -31,22 +31,22 @@ class VideoHorizontalViewHolder(
         binding.root.setOnClickListener {
             val track = feed?.item
             if (track?.isPlayable != Track.Playable.Yes) {
-                listener.onMediaClicked(it, feed?.extensionId, track, feed?.context)
+                listener.onMediaClicked(it, feed?.origin, track, feed?.context)
                 return@setOnClickListener
             }
             val (tracks, pos) = getAllTracks(feed!!)
-            listener.onTracksClicked(it, feed?.extensionId, feed?.context, tracks, pos)
+            listener.onTracksClicked(it, feed?.origin, feed?.context, tracks, pos)
         }
         binding.root.setOnLongClickListener {
             listener.onMediaLongClicked(
-                it, feed?.extensionId, feed?.item,
+                it, feed?.origin, feed?.item,
                 feed?.context, feed?.tabId, bindingAdapterPosition
             )
             true
         }
         binding.more.setOnClickListener {
             listener.onMediaLongClicked(
-                it, feed?.extensionId, feed?.item,
+                it, feed?.origin, feed?.item,
                 feed?.context, feed?.tabId, bindingAdapterPosition
             )
         }

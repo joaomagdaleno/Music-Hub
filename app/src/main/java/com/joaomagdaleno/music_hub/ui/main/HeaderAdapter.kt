@@ -8,39 +8,26 @@ import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import com.google.android.material.color.MaterialColors
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.Extension
-import com.joaomagdaleno.music_hub.common.MusicExtension
-import com.joaomagdaleno.music_hub.common.models.ExtensionType
 import com.joaomagdaleno.music_hub.common.models.ImageHolder
-import com.joaomagdaleno.music_hub.common.models.User
 import com.joaomagdaleno.music_hub.databinding.ItemMainHeaderBinding
-import com.joaomagdaleno.music_hub.extensions.db.models.UserEntity.Companion.toEntity
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
-import com.joaomagdaleno.music_hub.ui.extensions.list.ExtensionsListBottomSheet
-import com.joaomagdaleno.music_hub.ui.extensions.login.LoginUserListViewModel
 import com.joaomagdaleno.music_hub.ui.settings.SettingsBottomSheet
-import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
 import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadAsCircle
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimRecyclerAdapter
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
-import org.koin.androidx.viewmodel.ext.android.activityViewModel
 
 class HeaderAdapter(
     private val fragment: Fragment,
 ) : ScrollAnimRecyclerAdapter<HeaderAdapter.ViewHolder>(), GridAdapter {
-    private val viewModel by fragment.activityViewModel<LoginUserListViewModel>()
 
     override val adapter = this
     override fun getSpanSize(position: Int, width: Int, count: Int) = count
     override fun getItemCount() = 1
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val holder = ViewHolder(parent)
         val binding = holder.binding
         val parentFragmentManager = fragment.parentFragmentManager
-        binding.extensionsCont.setOnClickListener {
-            ExtensionsListBottomSheet.newInstance(ExtensionType.MUSIC)
-                .show(parentFragmentManager, null)
-        }
 
         binding.accountsCont.setOnClickListener {
             SettingsBottomSheet().show(parentFragmentManager, null)
@@ -48,40 +35,13 @@ class HeaderAdapter(
         return holder
     }
 
-    private var extension: MusicExtension? = null
-        set(value) {
-            field = value
-            notifyItemChanged(0)
-        }
-
-    private var triple: Triple<Extension<*>?, Boolean, List<Pair<User, Boolean>>> =
-        Triple(null, false, emptyList())
-        set(value) {
-            field = value
-            notifyItemChanged(0)
-        }
-
     override fun onBindViewHolder(holder: ViewHolder, position: Int) = with(holder.binding) {
         super.onBindViewHolder(holder, position)
         val context = root.context
-        title.text = extension?.name ?: context.getString(R.string.app_name)
-        extensions.loadBigIcon(extension?.metadata?.icon, R.drawable.ic_extension_32dp)
-        extensionsCont.setLoopedLongClick(
-            viewModel.extensionLoader.music.value.filter { it.isEnabled },
-            { viewModel.extensionLoader.current.value }
-        ) {
-            viewModel.extensionLoader.setupMusicExtension(it, true)
-        }
-
-        val (ext, isLoginClient, all) = triple
-        accounts.loadBigIcon(
-            viewModel.currentUser.value?.cover,
-            if (isLoginClient) R.drawable.ic_account_circle_32dp else R.drawable.ic_settings_outline_32dp
-        )
-        accountsCont.setLoopedLongClick(all, { all.find { it.second } }) {
-            ext ?: return@setLoopedLongClick
-            viewModel.setLoginUser(it.first.toEntity(ext.type, ext.id))
-        }
+        title.text = context.getString(R.string.app_name)
+        
+        // In monolithic mode, just show a generic settings/account icon
+        accounts.loadBigIcon(null, R.drawable.ic_settings_outline_32dp)
     }
 
     class ViewHolder(
@@ -91,34 +51,13 @@ class HeaderAdapter(
         ),
     ) : ScrollAnimViewHolder(binding.root)
 
-    init {
-        with(fragment) {
-
-            observe(viewModel.extensionLoader.current) {
-                viewModel.currentExtension.value = it
-                extension = it
-            }
-            observe(viewModel.allUsersWithClient) {
-                triple = it
-            }
-        }
-    }
-
     companion object {
         fun <T> View.setLoopedLongClick(
             list: List<T>,
             getCurrent: (View) -> T?,
             onSelect: (T) -> Unit,
         ) {
-            setOnLongClickListener {
-                val current = getCurrent(this)
-                val index = list.indexOf(current)
-                if (index == -1) return@setOnLongClickListener false
-                val next = list[(index + 1) % list.size]
-                if (next == current) return@setOnLongClickListener false
-                onSelect(next)
-                true
-            }
+            // Disabled in monolithic mode
         }
 
         fun ImageView.loadBigIcon(image: ImageHolder?, placeholder: Int) {

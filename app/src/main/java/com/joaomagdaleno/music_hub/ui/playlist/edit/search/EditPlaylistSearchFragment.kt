@@ -26,8 +26,8 @@ import com.joaomagdaleno.music_hub.utils.ui.UiUtils.dpToPx
 
 class EditPlaylistSearchFragment : Fragment() {
     companion object {
-        fun getBundle(extensionId: String) = Bundle().apply {
-            putString("extensionId", extensionId)
+        fun getBundle(origin: String) = Bundle().apply {
+            putString("origin", origin)
         }
     }
 
@@ -35,7 +35,7 @@ class EditPlaylistSearchFragment : Fragment() {
     private val viewModel by viewModels<EditPlaylistSearchViewModel>()
 
     private val args by lazy { requireArguments() }
-    private val extensionId by lazy { args.getString("extensionId")!! }
+    private val origin by lazy { args.getString("origin")!! }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -82,7 +82,7 @@ class EditPlaylistSearchFragment : Fragment() {
 
         val searchFragment = binding.playlistSearchContainer.getFragment<SearchFragment>()
         searchFragment.arguments = Bundle().apply {
-            putString("extensionId", extensionId)
+            putString("origin", origin)
             putString("feedListener", "playlist_search")
         }
         searchFragment.parentFragmentManager.addFragmentOnAttachListener { _, fragment ->

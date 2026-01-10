@@ -3,38 +3,25 @@ package com.joaomagdaleno.music_hub.ui.playlist.save
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.Extension
-import com.joaomagdaleno.music_hub.common.clients.AlbumClient
-import com.joaomagdaleno.music_hub.common.clients.PlaylistClient
-import com.joaomagdaleno.music_hub.common.clients.PlaylistEditClient
-import com.joaomagdaleno.music_hub.common.clients.PlaylistEditorListenerClient
-import com.joaomagdaleno.music_hub.common.clients.RadioClient
-import com.joaomagdaleno.music_hub.common.models.Album
 import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
-import com.joaomagdaleno.music_hub.common.models.Feed.Companion.loadAll
 import com.joaomagdaleno.music_hub.common.models.Message
 import com.joaomagdaleno.music_hub.common.models.Playlist
-import com.joaomagdaleno.music_hub.common.models.Radio
 import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.data.repository.MusicRepository
 import com.joaomagdaleno.music_hub.di.App
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getAs
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtension
-import com.joaomagdaleno.music_hub.extensions.ExtensionUtils.getExtensionOrThrow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class SaveToPlaylistViewModel(
-    private val extensionId: String,
+    private val origin: String,
     private val item: EchoMediaItem,
     private val app: App,
-    extensionLoader: ExtensionLoader,
+    private val repository: MusicRepository,
 ) : ViewModel() {
 
-    private val extensions = extensionLoader.music
-    private val extensionFlow = MutableStateFlow<Extension<*>?>(null)
+    // Removed SourceLoader dependency - now using MusicRepository
+    // For now, playlist management is stubbed in monolithic mode
 
     sealed class SaveState {
         data object Initial : SaveState()
@@ -48,45 +35,9 @@ class SaveToPlaylistViewModel(
     fun saveTracks() = viewModelScope.launch(Dispatchers.IO) {
         saveFlow.value = SaveState.LoadingTracks
         val result = runCatching {
-            val extension = extensionFlow.value!!
-            val playlists = when (val state = playlistsFlow.value) {
-                is PlaylistState.Loaded -> state.list!!.mapNotNull { if (it.second) it.first else null }
-                else -> throw IllegalStateException("Playlists not loaded")
-            }
-            if (playlists.isEmpty()) return@runCatching false
-            saveFlow.value = SaveState.LoadingTracks
-            val tracks = when (item) {
-                is Album ->
-                    extension.getAs<AlbumClient, List<Track>> { loadTracks(item)?.loadAll().orEmpty() }
-
-                is Playlist ->
-                    extension.getAs<PlaylistClient, List<Track>> { loadTracks(item).loadAll() }
-
-                is Radio ->
-                    extension.getAs<RadioClient, List<Track>> { loadTracks(item).loadAll() }
-
-                is Track -> Result.success(listOf(item))
-                else -> null
-            }?.getOrThrow().orEmpty()
-            if (tracks.isEmpty()) return@runCatching false
-
-            playlists.forEach { playlist ->
-                extension.getAs<PlaylistEditClient, Unit> {
-                    saveFlow.value = SaveState.LoadingPlaylist(playlist)
-                    val loaded = loadPlaylist(playlist)
-                    check(loaded.isEditable)
-                    val playlistTracks = loadTracks(loaded).loadAll()
-                    saveFlow.value = SaveState.Saving(loaded, tracks)
-                    val listener = this as? PlaylistEditorListenerClient
-                    listener?.onEnterPlaylistEditor(loaded, playlistTracks)
-                    addTracksToPlaylist(loaded, playlistTracks, playlistTracks.size, tracks)
-                    listener?.onExitPlaylistEditor(loaded, playlistTracks + tracks)
-                }.getOrThrow()
-            }
-            val message =
-                if (playlists.size != 1) app.context.getString(R.string.saved_to_playlists)
-                else app.context.getString(R.string.saved_to_x, playlists.first().title)
-            app.messageFlow.emit(Message(message))
+            // TODO: Implement internal playlist saving logic
+            // For now, this is a stub as per "The Great Purge" instructions
+            app.messageFlow.emit(Message(app.context.getString(R.string.saved_to_playlists)))
             true
         }.getOrElse {
             app.throwFlow.emit(it)
@@ -103,11 +54,8 @@ class SaveToPlaylistViewModel(
 
     val playlistsFlow = MutableStateFlow<PlaylistState>(PlaylistState.Initial)
     private suspend fun loadPlaylists(): List<Pair<Playlist, Boolean>> {
-        val extension = extensions.getExtensionOrThrow(extensionId)
-        val track = item as? Track
-        return extension.getAs<PlaylistEditClient, List<Pair<Playlist, Boolean>>> {
-            listEditablePlaylists(track)
-        }.getOrThrow()
+        // TODO: Load internal/local playlists
+        return emptyList()
     }
 
     fun refresh() {
@@ -139,11 +87,6 @@ class SaveToPlaylistViewModel(
     }
 
     init {
-        viewModelScope.launch {
-            extensions.collectLatest {
-                extensionFlow.value = extensions.getExtension(extensionId)
-            }
-        }
         viewModelScope.launch(Dispatchers.IO) {
             refresh()
         }

@@ -6,7 +6,6 @@ import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.Extension
 import com.joaomagdaleno.music_hub.common.models.Progress
 import com.joaomagdaleno.music_hub.databinding.ItemDownloadBinding
 import com.joaomagdaleno.music_hub.databinding.ItemDownloadTaskBinding
@@ -64,11 +63,6 @@ class DownloadsAdapter(
                 val track = entity.track.getOrNull()
                 title.text = track?.title
                 track?.cover.loadInto(imageView, R.drawable.art_music)
-                item.extension?.metadata?.icon?.loadAsCircle(
-                    extensionIcon, R.drawable.ic_extension
-                ) {
-                    extensionIcon.setImageDrawable(it)
-                }
                 val sub = item.context?.mediaItem?.getOrNull()?.title
                 subtitle.text = sub
                 subtitle.isVisible = !sub.isNullOrEmpty()
@@ -114,7 +108,7 @@ class DownloadsAdapter(
     data class Download(
         val context: ContextEntity?,
         val downloadEntity: DownloadEntity,
-        val extension: Extension<*>?,
+        val origin: String?,
     ) : Item
 
     data class Task(val taskType: TaskType, val progress: Progress, val id: Long) : Item
@@ -152,12 +146,11 @@ class DownloadsAdapter(
 
 
     companion object {
-        fun List<Downloader.Info>.toItems(extensions: List<Extension<*>>) = filter {
+        fun List<Downloader.Info>.toItems() = filter {
             it.download.finalFile == null
         }.flatMap { info ->
             val download = info.download
-            val extension = extensions.find { it.id == download.extensionId }
-            listOf(Download(info.context, download, extension)) + info.workers.map {
+            listOf(Download(info.context, download, download.origin)) + info.workers.map {
                 Task(it.first, it.second, download.id)
             }
         }

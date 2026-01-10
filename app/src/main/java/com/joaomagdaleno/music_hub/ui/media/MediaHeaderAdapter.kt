@@ -33,7 +33,7 @@ import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.databinding.ItemLineBinding
 import com.joaomagdaleno.music_hub.databinding.ItemMediaHeaderBinding
 import com.joaomagdaleno.music_hub.databinding.ItemShelfErrorBinding
-import com.joaomagdaleno.music_hub.extensions.MediaState
+import com.joaomagdaleno.music_hub.common.models.MediaState
 import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.getFinalTitle
 import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.getMessage
 import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
@@ -54,8 +54,8 @@ class MediaHeaderAdapter(
     interface Listener {
         fun onRetry(view: View)
         fun onError(view: View, error: Throwable?)
-        fun onDescriptionClicked(view: View, extensionId: String?, item: EchoMediaItem?)
-        fun openMediaItem(extensionId: String, item: EchoMediaItem)
+        fun onDescriptionClicked(view: View, origin: String?, item: EchoMediaItem?)
+        fun openMediaItem(origin: String, item: EchoMediaItem)
         fun onFollowClicked(view: View, follow: Boolean)
         fun onSavedClicked(view: View, saved: Boolean)
         fun onLikeClicked(view: View, liked: Boolean)
@@ -220,7 +220,7 @@ class MediaHeaderAdapter(
                 root.context.getString(R.string.x_followers, formatter.format(it))
             }
             val span =
-                root.context.getSpan(true, state.extensionId, state.item) { id, item ->
+                root.context.getSpan(true, state.origin, state.item) { id, item ->
                     clickEnabled = false
                     listener.openMediaItem(id, item)
                     description.post { clickEnabled = true }
@@ -235,7 +235,7 @@ class MediaHeaderAdapter(
                 description.setOnClickListener {
                     if (clickEnabled) listener.onDescriptionClicked(
                         it,
-                        state?.extensionId,
+                        state?.origin,
                         state?.item
                     )
                 }
@@ -290,7 +290,7 @@ class MediaHeaderAdapter(
         private const val DIVIDER = " • "
         fun Context.getSpan(
             compact: Boolean,
-            extensionId: String,
+            origin: String,
             item: EchoMediaItem,
             openMediaItem: (String, EchoMediaItem) -> Unit = { a, b -> },
         ): SpannableString = when (item) {
@@ -327,7 +327,7 @@ class MediaHeaderAdapter(
                     if (start != -1) {
                         val end = start + it.name.length
                         val clickableSpan = SimpleItemSpan(this) {
-                            openMediaItem(extensionId, it)
+                            openMediaItem(origin, it)
                         }
                         span.setSpan(
                             clickableSpan, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
@@ -419,8 +419,8 @@ class MediaHeaderAdapter(
                 requireActivity().getMessage(error, view).action?.handler?.invoke()
             }
 
-            override fun openMediaItem(extensionId: String, item: EchoMediaItem) {
-                openFragment<MediaFragment>(null, getBundle(extensionId, item, false))
+            override fun openMediaItem(origin: String, item: EchoMediaItem) {
+                openFragment<MediaFragment>(null, getBundle(origin, item, false))
             }
 
             override fun onFollowClicked(view: View, follow: Boolean) {
@@ -440,15 +440,15 @@ class MediaHeaderAdapter(
             }
 
             override fun onPlayClicked(view: View) {
-                val (extensionId, item, loaded) = viewModel.getItem() ?: return
+                val (origin, item, loaded) = viewModel.getItem() ?: return
                 val vm by activityViewModels<PlayerViewModel>()
-                vm.play(extensionId, item, loaded)
+                vm.play(origin, item, loaded)
             }
 
             override fun onRadioClicked(view: View) {
-                val (extensionId, item, loaded) = viewModel.getItem() ?: return
+                val (origin, item, loaded) = viewModel.getItem() ?: return
                 val vm by activityViewModels<PlayerViewModel>()
-                vm.radio(extensionId, item, loaded)
+                vm.radio(origin, item, loaded)
             }
 
             override fun onShareClicked(view: View) {
@@ -456,15 +456,15 @@ class MediaHeaderAdapter(
             }
 
             override fun onDescriptionClicked(
-                view: View, extensionId: String?, item: EchoMediaItem?,
+                view: View, origin: String?, item: EchoMediaItem?,
             ) {
                 item ?: return
-                extensionId ?: return
+                origin ?: return
                 val context = requireContext()
                 var dialog: AlertDialog? = null
                 val builder = MaterialAlertDialogBuilder(context)
                 builder.setTitle(item.title)
-                builder.setMessage(context.getSpan(false, extensionId, item) { m, n ->
+                builder.setMessage(context.getSpan(false, origin, item) { m, n ->
                     openMediaItem(m, n)
                     dialog?.dismiss()
                 })

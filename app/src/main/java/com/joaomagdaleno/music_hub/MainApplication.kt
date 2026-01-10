@@ -17,8 +17,8 @@ import coil3.disk.directory
 import coil3.memory.MemoryCache
 import coil3.request.allowHardware
 import coil3.request.crossfade
+import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.di.DI
-import com.joaomagdaleno.music_hub.extensions.ExtensionLoader
 import com.joaomagdaleno.music_hub.utils.AppShortcuts.configureAppShortcuts
 import com.joaomagdaleno.music_hub.utils.CoroutineUtils
 import org.koin.android.ext.android.inject
@@ -38,13 +38,20 @@ class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory
     }
 
     private val settings by inject<SharedPreferences>()
-    private val extensionLoader by inject<ExtensionLoader>()
+    private val app by inject<App>()
 
     override fun onCreate() {
         super.onCreate()
+        
+        // Initialize file-based logger FIRST
+        com.joaomagdaleno.music_hub.utils.FileLogger.init(this)
+        com.joaomagdaleno.music_hub.utils.FileLogger.log("MainApplication", "Application onCreate() started")
+        
         CoroutineUtils.setDebug()
         applyLocale(settings)
-        configureAppShortcuts(extensionLoader)
+        configureAppShortcuts(app)
+        
+        com.joaomagdaleno.music_hub.utils.FileLogger.log("MainApplication", "Application onCreate() complete")
     }
 
     override fun newImageLoader(context: PlatformContext): ImageLoader {

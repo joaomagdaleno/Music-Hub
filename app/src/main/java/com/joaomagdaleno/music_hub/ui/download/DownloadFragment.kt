@@ -7,12 +7,12 @@ import androidx.fragment.app.Fragment
 import androidx.paging.LoadState
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.common.models.Feed
+import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.databinding.FragmentDownloadBinding
-import com.joaomagdaleno.music_hub.extensions.builtin.unified.UnifiedExtension
-import com.joaomagdaleno.music_hub.extensions.builtin.unified.UnifiedExtension.Companion.getFeed
 import com.joaomagdaleno.music_hub.ui.common.ExceptionFragment
 import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils
 import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
+import com.joaomagdaleno.music_hub.common.helpers.PagedData
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyBackPressCallback
@@ -46,12 +46,16 @@ class DownloadFragment : Fragment(R.layout.fragment_download) {
 
     private val feedViewModel by viewModel<FeedViewModel>()
     private val feedData by lazy {
-        val flow = vm.downloader.unified.downloadFeed
+        val flow = vm.downloader.downloadFeed
         feedViewModel.getFeedData(
             "downloads", Feed.Buttons(), false, flow
         ) {
-            val feed = requireContext().getFeed(flow.value)
-            FeedData.State(UnifiedExtension.metadata.id, null, feed)
+            val list = flow.value
+            val shelf = Shelf.Lists.Items("downloads_list", getString(R.string.downloads), list)
+            val feed = Feed<Shelf>(tabs = emptyList()) {
+                Feed.Data(PagedData.Single { listOf(shelf) })
+            }
+            FeedData.State("internal", null, feed)
         }
     }
 
@@ -94,7 +98,7 @@ class DownloadFragment : Fragment(R.layout.fragment_download) {
             binding.fabCancel.isVisible = infos.any { it.download.finalFile == null }
             lineAdapter.loadState = if (infos.isNotEmpty()) LoadState.Loading
             else LoadState.NotLoading(false)
-            downloadsAdapter.submitList(infos.toItems(vm.extensions.music.value))
+            downloadsAdapter.submitList(infos.toItems())
         }
     }
 }

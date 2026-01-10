@@ -1,0 +1,93 @@
+Configuration on demand is an incubating feature.
+Calculating task graph as configuration cache cannot be reused because file '..\Music_hub\app\build.gradle.kts' has changed.
+> Task :common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :common:androidPreBuild UP-TO-DATE
+> Task :app:preReleaseBuild UP-TO-DATE
+> Task :common:preAndroidMainBuild UP-TO-DATE
+> Task :common:mergeAndroidMainJniLibFolders UP-TO-DATE
+> Task :common:compileAndroidMain UP-TO-DATE
+> Task :common:mergeAndroidMainNativeLibs NO-SOURCE
+> Task :common:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :common:copyAndroidMainJniLibsProjectOnly UP-TO-DATE
+> Task :common:processAndroidMainJavaRes UP-TO-DATE
+> Task :app:mergeReleaseJniLibFolders
+> Task :app:mergeReleaseNativeLibs NO-SOURCE
+> Task :app:stripReleaseDebugSymbols NO-SOURCE
+> Task :app:extractReleaseNativeSymbolTables NO-SOURCE
+> Task :app:mergeReleaseNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:dataBindingMergeDependencyArtifactsRelease
+> Task :common:createFullJarAndroidMain
+> Task :app:generateReleaseResValues FROM-CACHE
+> Task :app:extractReleaseSupportedLocales FROM-CACHE
+> Task :app:generateReleaseLocaleConfig FROM-CACHE
+> Task :app:generateReleaseResources FROM-CACHE
+> Task :common:generateAndroidMainEmptyResourceFiles UP-TO-DATE
+> Task :app:checkReleaseDuplicateClasses
+> Task :app:buildKotlinToolingMetadata
+> Task :app:generateReleaseBuildConfig
+> Task :common:writeAndroidMainAarMetadata UP-TO-DATE
+> Task :app:checkReleaseAarMetadata
+> Task :app:mapReleaseSourceSetPaths
+> Task :app:createReleaseCompatibleScreenManifests
+> Task :app:extractDeepLinksRelease FROM-CACHE
+> Task :common:processAndroidMainManifest UP-TO-DATE
+> Task :app:processReleaseMainManifest
+> Task :app:processReleaseManifest
+> Task :app:processReleaseManifestForPackage
+> Task :common:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :app:javaPreCompileRelease FROM-CACHE
+> Task :app:extractProguardFiles
+> Task :app:mergeReleaseStartupProfile UP-TO-DATE
+> Task :app:mergeReleaseShaders
+> Task :app:compileReleaseShaders NO-SOURCE
+> Task :app:generateReleaseAssets UP-TO-DATE
+> Task :app:mergeReleaseArtProfile
+> Task :app:mergeReleaseAssets
+> Task :app:compressReleaseAssets FROM-CACHE
+> Task :common:prepareLintJarForPublish UP-TO-DATE
+> Task :common:extractAndroidMainAnnotations FROM-CACHE
+> Task :common:mergeAndroidMainJavaResource
+> Task :app:extractReleaseVersionControlInfo
+> Task :common:syncAndroidMainLibJars
+> Task :common:bundleAndroidMainLocalLintAar
+> Task :app:writeReleaseAppMetadata
+> Task :app:writeReleaseSigningConfigVersions
+> Task :app:collectReleaseDependencies
+> Task :app:sdkReleaseDependencyData
+> Task :app:packageReleaseResources
+> Task :app:parseReleaseLocalResources FROM-CACHE
+> Task :app:mergeReleaseResources
+> Task :app:dataBindingGenBaseClassesRelease FROM-CACHE
+> Task :app:processReleaseResources
+> Task :app:kspReleaseKotlin
+> Task :app:compileReleaseKotlin
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/di/DI.kt:73:9 'fun <reified T : ViewModel> Module.viewModel(qualifier: Qualifier? = ..., noinline definition: Scope.(ParametersHolder) -> T): KoinDefinition<T>' is deprecated. Moved ViewModel DSL package. Remove old imports and use org.koin.core.module.dsl.*.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCommands.kt:27:37 'constructor(): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCommands.kt:30:14 'fun setIconResId(p0: Int): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCommands.kt:34:14 'fun setIconResId(p0: Int): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCommands.kt:40:37 'constructor(): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCommands.kt:44:18 'fun setIconResId(p0: Int): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCommands.kt:49:18 'fun setIconResId(p0: Int): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCommands.kt:54:18 'fun setIconResId(p0: Int): CommandButton.Builder' is deprecated. Deprecated in Java.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedFragment.kt:77:74 'fun onBackPressed(): Unit' is deprecated. This method has been deprecated in favor of using the
+      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.
+      The OnBackPressedDispatcher controls how back button events are dispatched
+      to one or more {@link OnBackPressedCallback} objects.
+w: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/settings/AudioEffectsFragment.kt:36:74 'fun onBackPressed(): Unit' is deprecated. This method has been deprecated in favor of using the
+      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.
+      The OnBackPressedDispatcher controls how back button events are dispatched
+      to one or more {@link OnBackPressedCallback} objects.
+
+> Task :app:processReleaseJavaRes
+> Task :app:mergeReleaseJavaResource
+> Task :app:compileReleaseJavaWithJavac
+> Task :app:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :app:generateReleaseLintVitalReportModel
+> Task :app:expandReleaseArtProfileWildcards
+
+> Task :app:minifyReleaseWithR8
+WARNING: C:\Users\joaom\.gradle\caches\9.0.0\transforms\0d9ef23fd95eabbf52894af2e3455399\transformed\shrink-rules\lib\META-INF\com.android.tools\r8\kotlinx-serialization-common.pro:5:12-27: R8: The type "<1>$*" is used in a field rule. The characters in this type are legal for the JVM, but unlikely to originate from a source language. Maybe this is not the rule you are looking for.
+
+> Task :app:lintVitalAnalyzeRelease

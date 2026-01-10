@@ -32,7 +32,7 @@ class CategoryViewHolder(
         binding.root.setOnClickListener {
             listener.openFeed(
                 it,
-                feed?.extensionId,
+                feed?.origin,
                 feed?.id,
                 feed?.shelf?.title,
                 feed?.shelf?.subtitle,

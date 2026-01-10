@@ -1,0 +1,202 @@
+Configuration on demand is an incubating feature.
+Reusing configuration cache.
+> Task :common:androidPreBuild UP-TO-DATE
+> Task :common:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :common:preAndroidMainBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :common:generateAndroidMainEmptyResourceFiles UP-TO-DATE
+> Task :app:extractDebugSupportedLocales UP-TO-DATE
+> Task :common:writeAndroidMainAarMetadata UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :common:processAndroidMainManifest UP-TO-DATE
+> Task :common:compileAndroidMain UP-TO-DATE
+> Task :common:bundleAndroidMainClassesToCompileJar UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:generateDebugLocaleConfig UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :common:bundleAndroidMainClassesToRuntimeJar UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :common:bundleLibRuntimeToDirAndroidMain UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :common:processAndroidMainJavaRes UP-TO-DATE
+> Task :app:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :common:mergeAndroidMainJniLibFolders UP-TO-DATE
+> Task :common:mergeAndroidMainNativeLibs NO-SOURCE
+> Task :common:copyAndroidMainJniLibsProjectOnly UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:mergeDebugNativeLibs NO-SOURCE
+> Task :app:stripDebugDebugSymbols NO-SOURCE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:kspDebugKotlin UP-TO-DATE
+
+> Task :app:compileDebugKotlin FAILED
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/sources/YoutubeSource.kt:53:5 'getTrack' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/sources/YoutubeSource.kt:71:5 'getRadio' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/data/sources/YoutubeSource.kt:80:5 'getPlaylistTracks' overrides nothing.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/tasks/DownloadingTask.kt:21:20 Unresolved reference 'withDownloadExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/tasks/DownloadingTask.kt:21:44 Unresolved reference 'download'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/tasks/MergingTask.kt:18:20 Unresolved reference 'withDownloadExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/tasks/MergingTask.kt:19:13 Unresolved reference 'merge'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/tasks/TaggingTask.kt:20:20 Unresolved reference 'withDownloadExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/download/tasks/TaggingTask.kt:21:13 Unresolved reference 'tag'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:24:63 Unresolved reference 'UnifiedExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:25:63 Unresolved reference 'UnifiedExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:26:63 Unresolved reference 'UnifiedExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:55:33 Unresolved reference 'extensionId'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:156:48 Unresolved reference 'extensionId'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:198:71 Unresolved reference 'extensionId'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:282:17 Argument type mismatch: actual type is 'String', but 'String' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:283:17 Argument type mismatch: actual type is 'String', but 'String' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:284:17 Argument type mismatch: actual type is 'Boolean', but 'Boolean' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:285:25 Argument type mismatch: actual type is 'ImageHolder?', but 'ImageHolder?' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:286:32 Argument type mismatch: actual type is 'Date?', but 'Date?' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:287:31 Argument type mismatch: actual type is 'String?', but 'String?' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:288:26 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:288:26 Argument type mismatch: actual type is 'Map<uninferred K (of fun <K, V> mapOf), uninferred V (of fun <K, V> mapOf)>', but 'Map<String, String>' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:289:21 Unresolved reference 'EXTENSION_ID'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:289:21 Argument type mismatch: actual type is 'Pair<uninferred A (of fun <A, B> A.to), uninferred B (of fun <A, B> A.to)>', but 'Pair<uninferred K (of fun <K, V> mapOf), uninferred V (of fun <K, V> mapOf)>' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:289:34 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:289:37 Unresolved reference 'UNIFIED_ID'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:290:21 Argument type mismatch: actual type is 'Pair<String, String>', but 'Pair<uninferred K (of fun <K, V> mapOf), uninferred V (of fun <K, V> mapOf)>' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:291:21 Argument type mismatch: actual type is 'Pair<String, String>', but 'Pair<uninferred K (of fun <K, V> mapOf), uninferred V (of fun <K, V> mapOf)>' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:336:65 Unresolved reference 'extensionId'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/builtin/unified/UnifiedDatabase.kt:351:36 Unresolved reference 'extensionId'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:37:63 Unresolved reference 'UnifiedExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/extensions/cache/Cached.kt:139:34 Unresolved reference 'EXTENSION_ID'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCallback.kt:182:27 Assignment type mismatch: actual type is 'Unit', but 'PlayerState.Radio' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/PlayerCallback.kt:182:45 Classifier 'data class Loaded : PlayerState.Radio' does not have a companion object, so it cannot be used as an expression.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/listener/PlayerRadio.kt:50:55 Argument type mismatch: actual type is 'List<Track>', but 'EchoMediaItem' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/listener/PlayerRadio.kt:52:70 Unresolved reference 'Page'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/listener/PlayerRadio.kt:52:75 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableLoader.kt:86:28 Unresolved reference 'NetworkRequest'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:88:40 Cannot access 'fun <E> List<E>.select(app: App, settings: SharedPreferences, quality: (E) -> Int, default: String = ...): E?': it is private in 'com/joaomagdaleno/music_hub/playback/PlayerService.Companion'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:88:71 Unresolved reference 'it'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/playback/source/StreamableMediaSource.kt:91:36 Argument type mismatch: actual type is 'Streamable.Source?', but 'Streamable.Source' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadFragment.kt:55:27 Unresolved reference 'PagedData'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadFragment.kt:57:13 Type mismatch: inferred type is 'Feed<Any>', but 'Feed<Shelf>' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedFragment.kt:21:39 Unresolved reference 'extensions'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedFragment.kt:63:52 Unresolved reference 'toFeed'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedFragment.kt:72:17 Unresolved reference 'bind'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedLoadingAdapter.kt:15:61 Unresolved reference 'openLoginException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedLoadingAdapter.kt:139:39 Unresolved reference 'openLoginException'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedType.kt:7:63 Unresolved reference 'UnifiedExtension'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedType.kt:33:44 Unresolved reference 'EXTENSION_ID'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/main/HomeFragment.kt:38:38 Unresolved reference 'toFeed'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/main/LibraryFragment.kt:44:41 Unresolved reference 'toFeed'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/main/search/SearchFragment.kt:27:77 Unresolved reference 'saveInHistory'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/main/search/SearchFragment.kt:56:67 Unresolved reference 'toFeed'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/main/search/SearchFragment.kt:69:85 Unresolved reference 'search_results'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/main/search/SearchFragment.kt:70:42 Unresolved reference 'toFeed'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaDetailsFragment.kt:49:57 Unresolved reference 'getOrThrow'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaDetailsFragment.kt:50:58 Unresolved reference 'getOrThrow'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaDetailsFragment.kt:60:56 Unresolved reference 'getOrThrow'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaDetailsFragment.kt:61:56 Unresolved reference 'getOrThrow'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaViewModel.kt:43:58 No value passed for parameter 'isFollowed'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaViewModel.kt:43:58 No value passed for parameter 'followers'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaViewModel.kt:43:58 No value passed for parameter 'isSaved'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaViewModel.kt:43:58 No value passed for parameter 'isLiked'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaViewModel.kt:43:58 No value passed for parameter 'isHidden'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaViewModel.kt:43:58 No value passed for parameter 'showRadio'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/MediaViewModel.kt:43:58 No value passed for parameter 'showShare'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/media/more/MediaMoreBottomSheet.kt:107:29 Unresolved reference 'extensionFlow'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/info/TrackInfoViewModel.kt:43:83 No value passed for parameter 'isFollowed'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/info/TrackInfoViewModel.kt:43:83 No value passed for parameter 'followers'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/info/TrackInfoViewModel.kt:43:83 No value passed for parameter 'isSaved'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/info/TrackInfoViewModel.kt:43:83 No value passed for parameter 'isLiked'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/info/TrackInfoViewModel.kt:43:83 No value passed for parameter 'isHidden'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/info/TrackInfoViewModel.kt:43:83 No value passed for parameter 'showRadio'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/info/TrackInfoViewModel.kt:43:83 No value passed for parameter 'showShare'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsItemAdapter.kt:67:18 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsItemAdapter.kt:67:18 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsItemAdapter.kt:67:36 Unresolved reference 'tabsFlow'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsItemAdapter.kt:67:46 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsItemAdapter.kt:73:18 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsItemAdapter.kt:73:18 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsItemAdapter.kt:74:27 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsItemAdapter.kt:74:27 Not enough information to infer type argument for 'T2'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsItemAdapter.kt:74:27 Not enough information to infer type argument for 'R'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsItemAdapter.kt:74:45 Unresolved reference 'shouldShowEmpty'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsItemAdapter.kt:74:67 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsItemAdapter.kt:74:74 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsItemAdapter.kt:74:74 Not enough information to infer type argument for 'B'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsItemAdapter.kt:75:13 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsItemAdapter.kt:75:13 Function 'component1()' is ambiguous for this expression: 
+fun <T> Array<out T>.component1(): T
+fun ByteArray.component1(): Byte
+fun ShortArray.component1(): Short
+fun IntArray.component1(): Int
+fun LongArray.component1(): Long
+fun FloatArray.component1(): Float
+fun DoubleArray.component1(): Double
+fun BooleanArray.component1(): Boolean
+fun CharArray.component1(): Char
+fun <T> List<T>.component1(): T
+fun <K, V> Map.Entry<K, V>.component1(): K
+fun UIntArray.component1(): UInt
+fun ULongArray.component1(): ULong
+fun UByteArray.component1(): UByte
+fun UShortArray.component1(): UShort.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsItemAdapter.kt:75:13 Function 'component2()' is ambiguous for this expression: 
+fun <T> Array<out T>.component2(): T
+fun ByteArray.component2(): Byte
+fun ShortArray.component2(): Short
+fun IntArray.component2(): Int
+fun LongArray.component2(): Long
+fun FloatArray.component2(): Float
+fun DoubleArray.component2(): Double
+fun BooleanArray.component2(): Boolean
+fun CharArray.component2(): Char
+fun <T> List<T>.component2(): T
+fun <K, V> Map.Entry<K, V>.component2(): V
+fun UIntArray.component2(): UInt
+fun ULongArray.component2(): ULong
+fun UByteArray.component2(): UByte
+fun UShortArray.component2(): UShort.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsItemAdapter.kt:77:65 Function invocation 'append(...)' expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsViewModel.kt:27:41 Unresolved reference 'isLoaded'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/more/lyrics/LyricsViewModel.kt:28:30 Unresolved reference 'stateIn'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/settings/AudioEffectsFragment.kt:16:39 Unresolved reference 'extensions'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/settings/AudioEffectsFragment.kt:36:22 Argument type mismatch: actual type is 'AudioEffectsFragment', but 'SharedPreferences' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/settings/AudioEffectsFragment.kt:36:22 No value passed for parameter 'onEqualizerClicked'.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 18s
+42 actionable tasks: 1 executed, 41 up-to-date
+Configuration cache entry reused.
