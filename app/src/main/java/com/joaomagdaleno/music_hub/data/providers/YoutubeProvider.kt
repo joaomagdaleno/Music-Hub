@@ -59,7 +59,7 @@ class YoutubeSource : MusicSource {
                 artists = listOf(Artist(id = "youtube_channel:${result.uploaderUrl?.substringAfterLast("/")}", name = result.uploader ?: "Unknown")),
                 cover = result.thumbnail?.let { ImageHolder.NetworkRequestImageHolder(NetworkRequest(it), false) },
                 duration = result.duration,
-                sourceName = name,
+                origin = name,
                 originalUrl = "https://youtube.com/watch?v=$trackId"
             )
         } catch (e: Exception) {
@@ -91,7 +91,7 @@ class YoutubeSource : MusicSource {
         return Track(
             id = videoId,
             title = title ?: "Unknown",
-            sourceName = name,
+            origin = name,
             originalUrl = url,
             artists = listOf(Artist(id = "youtube_channel:${uploaderUrl?.substringAfterLast("/")}", name = uploaderName ?: "Unknown")),
             cover = thumbnail?.let { ImageHolder.NetworkRequestImageHolder(NetworkRequest(it), false) },

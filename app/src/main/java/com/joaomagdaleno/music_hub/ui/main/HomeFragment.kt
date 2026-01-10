@@ -1,78 +1,70 @@
 package com.joaomagdaleno.music_hub.ui.main
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
-import com.google.android.material.transition.MaterialSharedAxis
-import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.models.Feed
+import androidx.lifecycle.lifecycleScope
 import com.joaomagdaleno.music_hub.common.models.Feed.Buttons.Companion.EMPTY
-import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.common.models.Feed.Companion.toFeed
-import com.joaomagdaleno.music_hub.databinding.FragmentHomeBinding
-import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyBackPressCallback
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.configure
+import com.joaomagdaleno.music_hub.ui.compose.screens.HomeFeed
+import com.joaomagdaleno.music_hub.ui.compose.theme.MusicHubTheme
 import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getFeedAdapter
-import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getTouchHelper
 import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener.Companion.getFeedListener
 import com.joaomagdaleno.music_hub.ui.feed.FeedData
 import com.joaomagdaleno.music_hub.ui.feed.FeedViewModel
-import com.joaomagdaleno.music_hub.ui.main.MainFragment.Companion.applyInsets
 import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class HomeFragment : Fragment(R.layout.fragment_home) {
+class HomeFragment : Fragment() {
 
     private val feedData by lazy {
         val vm by viewModel<FeedViewModel>()
         val id = "home"
-        vm.getFeedData(id, EMPTY, cached = {
-            // Simplified caching: skip or use simple cache
-            // For now, returning null to force load
-            null
-        }) {
+        vm.getFeedData(id, EMPTY, cached = { null }) {
             val feed = getHomeFeed().toFeed()
             FeedData.State("internal", null, feed)
         }
     }
 
     private val listener by lazy { getFeedListener(requireParentFragment()) }
-    private val feedAdapter by lazy { getFeedAdapter(feedData, listener) }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        return ComposeView(requireContext()).apply {
+            setContent {
+                MusicHubTheme {
+                    HomeFeed(
+                        onItemClick = { item ->
+                            listener.onMediaClicked(null, "home", item, null)
+                        }
+                    )
+                }
+            }
+        }
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val binding = FragmentHomeBinding.bind(view)
-        setupTransition(view, false, MaterialSharedAxis.Y)
-        applyInsets(binding.recyclerView, binding.appBarOutline) {
-            binding.swipeRefresh.configure(it)
-        }
+        super.onViewCreated(view, savedInstanceState)
+        // Keep observation logic for background updates
         val uiViewModel by activityViewModel<UiViewModel>()
-        observe(uiViewModel.navigationReselected) {
-            if (it != 0) return@observe
-            // Removed source selection logic to keep a internal feel
-            binding.recyclerView.smoothScrollToPosition(0)
-        }
         observe(
             uiViewModel.navigation.combine(feedData.backgroundImageFlow) { a, b -> a to b }
         ) { (curr, bg) ->
             if (curr != 0) return@observe
             uiViewModel.currentNavBackground.value = bg
         }
-        applyBackPressCallback()
-        getTouchHelper(listener).attachToRecyclerView(binding.recyclerView)
-        configureGridLayout(
-            binding.recyclerView,
-            feedAdapter.withLoading(this, HeaderAdapter(this))
-        )
-        binding.swipeRefresh.run {
-            setOnRefreshListener { feedData.refresh() }
-            observe(feedData.isRefreshingFlow) {
-                isRefreshing = it
-            }
-        }
+        
+        // Note: Automatic scrolling to top on reselection is currently not implemented in Compose version
+        // We would need to expose the LazyListState to do that.
     }
 }

@@ -31,11 +31,13 @@ import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
 import kotlinx.coroutines.flow.combine
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.android.ext.android.inject
 
 class SearchFragment : Fragment(R.layout.fragment_search) {
 
     private val argId by lazy { arguments?.getString("origin") }
     private val searchViewModel by viewModel<SearchViewModel>()
+    private val repository: com.joaomagdaleno.music_hub.data.repository.MusicRepository by inject()
 
     private var origin = ""
 
@@ -57,10 +59,10 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                 FeedData.State("internal", null, emptyList<Shelf>().toFeed())
             } else {
                 searchViewModel.saveQuery(query) // Save history
-                val results = search(query)
+                val results = repository.search(query)
                 val tracks = if(results.isEmpty()) {
                      // Try loading as ID/Link
-                     listOfNotNull(getTrack(query))
+                     listOfNotNull(repository.getTrack(query))
                 } else results
                 
                 // search returns List<Track>. Convert to Shelf.

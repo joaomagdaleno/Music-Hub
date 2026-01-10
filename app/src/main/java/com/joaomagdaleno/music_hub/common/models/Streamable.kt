@@ -1,11 +1,11 @@
 package com.joaomagdaleno.music_hub.common.models
 
-import com.joaomagdaleno.music_hub.common.models.NetworkRequest.Companion.toGetRequest
 import com.joaomagdaleno.music_hub.common.models.Streamable.Media.Companion.toBackgroundMedia
 import com.joaomagdaleno.music_hub.common.models.Streamable.Media.Companion.toMedia
 import com.joaomagdaleno.music_hub.common.models.Streamable.Media.Companion.toServerMedia
 import com.joaomagdaleno.music_hub.common.models.Streamable.Media.Companion.toSubtitleMedia
-import com.joaomagdaleno.music_hub.common.models.Streamable.Source.Companion.toSource
+import com.joaomagdaleno.music_hub.common.models.NetworkRequest.Companion.toGetRequest
+import com.joaomagdaleno.music_hub.common.models.Streamable.Stream.Companion.toStream
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient

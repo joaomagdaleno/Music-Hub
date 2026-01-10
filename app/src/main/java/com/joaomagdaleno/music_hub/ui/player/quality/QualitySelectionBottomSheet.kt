@@ -90,7 +90,7 @@ class QualitySelectionBottomSheet : BottomSheetDialogFragment() {
         }
 
         observe(viewModel.serverAndTracks) { (tracks, server, index) ->
-            val list = if (server != null && !server.merged) server.sources else listOf()
+            val list = if (server != null && !server.merged) server.streams else listOf()
             binding.run {
                 applyChips(
                     list, streamableSource, streamableSourceGroup, index,

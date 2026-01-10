@@ -64,7 +64,7 @@ class Downloader(
             dao.insertDownloadEntity(
                 DownloadEntity(
                     0,
-                    it.track.sourceName.takeIf { s -> s != "UNKNOWN" } ?: it.origin,
+                    it.track.origin.takeIf { s -> s != "UNKNOWN" } ?: it.origin,
                     it.track.id,
                     contexts[it.context?.id],
                     it.sortOrder,
@@ -96,8 +96,8 @@ class Downloader(
         servers.getOrPut(trackId) {
             val track = download.track.getOrThrow()
             // Using download.origin as sourceName if unknown
-            val effectiveTrack = if (track.sourceName == "UNKNOWN" && download.origin.isNotBlank()) {
-                 track.copy(sourceName = download.origin)
+            val effectiveTrack = if (track.origin == "UNKNOWN" && download.origin.isNotBlank()) {
+                 track.copy(origin = download.origin)
             } else track
             
             val url = repository.getStreamUrl(effectiveTrack)

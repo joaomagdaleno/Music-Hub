@@ -42,14 +42,14 @@ class InternalDownloadProvider(
     suspend fun selectSources(
         context: DownloadContext,
         server: Streamable.Media.Server
-    ): List<Streamable.Source> {
-        return server.sources
+    ): List<Streamable.Stream> {
+        return server.streams
     }
 
     suspend fun download(
         progressFlow: MutableStateFlow<Progress>,
         context: DownloadContext,
-        source: Streamable.Source
+        source: Streamable.Stream
     ): File {
         val request = Request.Builder().url(source.id).build()
         val response = client.newCall(request).await()
@@ -125,8 +125,8 @@ class InternalDownloadProvider(
         )
         if (!publicDir.exists()) publicDir.mkdirs()
         
-        val source = if (file.source.isNotEmpty()) file.source else "mp3"
-        val fileName = "${track.title} - ${track.artists.firstOrNull()?.name}.$source"
+        val source = "mp3" // Default to mp3 as we don't track source extension on File object easily
+        val fileName = "${track.title} - ${track.artists.firstOrNull()?.name ?: "Unknown"}.$source"
             .replace(Regex("[\\\\/:*?\"<>|]"), "_")
             
         val finalFile = File(publicDir, fileName)

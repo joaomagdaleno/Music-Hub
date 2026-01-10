@@ -10,6 +10,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import com.joaomagdaleno.music_hub.common.helpers.ContinuationCallback.Companion.await
+import com.joaomagdaleno.music_hub.utils.FileLogger
+import java.util.concurrent.TimeUnit
 
 @Serializable
 data class PipedSearchResult(
@@ -42,27 +44,68 @@ data class PipedAudioStream(
     val bitrate: Int
 )
 
-class PipedApi(private val client: OkHttpClient = OkHttpClient()) {
-    private val baseUrl = "https://pipedapi.kavin.rocks"
+class PipedApi(
+    private val client: OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(10, TimeUnit.SECONDS)
+        .writeTimeout(10, TimeUnit.SECONDS)
+        .build()
+) {
+    // Multiple Piped instances for fallback
+    private val pipedInstances = listOf(
+        "https://pipedapi.kavin.rocks",
+        "https://pipedapi.adminforge.de",
+        "https://api.piped.yt",
+        "https://pipedapi.moomoo.me"
+    )
+    private var currentInstanceIndex = 0
+    private val baseUrl get() = pipedInstances[currentInstanceIndex]
+    
     private val json = Json { ignoreUnknownKeys = true }
 
+    private suspend fun <T> callWithFallback(
+        path: String,
+        queryParams: Map<String, String> = emptyMap(),
+        parser: (String) -> T?
+    ): T? {
+        for (i in pipedInstances.indices) {
+            val instance = pipedInstances[currentInstanceIndex]
+            val urlBuilder = "$instance/$path".toHttpUrlOrNull()?.newBuilder() ?: continue
+            queryParams.forEach { (name, value) -> urlBuilder.addQueryParameter(name, value) }
+            val url = urlBuilder.build()
+
+            try {
+                val request = Request.Builder().url(url).build()
+                val response = client.newCall(request).await()
+
+                if (response.isSuccessful) {
+                    val body = response.body?.string() ?: continue
+                    val result = parser(body)
+                    if (result != null) {
+                        FileLogger.log("PipedApi", "Success on $instance for $path")
+                        return result
+                    }
+                } else {
+                    FileLogger.log("PipedApi", "Failed on $instance for $path: ${response.code}")
+                }
+            } catch (e: Exception) {
+                FileLogger.log("PipedApi", "Error on $instance for $path: ${e.message}")
+            }
+            currentInstanceIndex = (currentInstanceIndex + 1) % pipedInstances.size
+        }
+        return null
+    }
+
     suspend fun search(query: String): List<PipedSearchResult> {
-        val url = "$baseUrl/search".toHttpUrlOrNull()?.newBuilder()
-            ?.addQueryParameter("q", query)
-            ?.addQueryParameter("filter", "music_songs")
-            ?.build() ?: return emptyList()
-
-        val request = Request.Builder().url(url).build()
-        val response = client.newCall(request).await()
-
-        if (!response.isSuccessful) return emptyList()
-
-        val responseBody = response.body?.string() ?: return emptyList()
-        return try {
-            val data = json.parseToJsonElement(responseBody)
-            when (data) {
-                is JsonObject -> {
-                    val items = data["items"]?.jsonArray ?: return emptyList()
+        FileLogger.log("PipedApi", "search() called with query='$query'")
+        return callWithFallback(
+            path = "search",
+            queryParams = mapOf("q" to query, "filter" to "music_songs")
+        ) { body ->
+            try {
+                val data = json.parseToJsonElement(body)
+                if (data is JsonObject) {
+                    val items = data["items"]?.jsonArray ?: return@callWithFallback null
                     items.mapNotNull { 
                         try {
                             json.decodeFromJsonElement(PipedSearchResult.serializer(), it)
@@ -70,27 +113,23 @@ class PipedApi(private val client: OkHttpClient = OkHttpClient()) {
                             null
                         }
                     }
-                }
-                else -> emptyList()
+                } else null
+            } catch (e: Exception) {
+                null
             }
-        } catch (e: Exception) {
-            emptyList()
-        }
+        } ?: emptyList()
     }
 
     suspend fun getStream(videoId: String): PipedStreamInfo? {
-        val url = "$baseUrl/streams/$videoId".toHttpUrlOrNull() ?: return null
-
-        val request = Request.Builder().url(url).build()
-        val response = client.newCall(request).await()
-
-        if (!response.isSuccessful) return null
-
-        val responseBody = response.body?.string() ?: return null
-        return try {
-            json.decodeFromString<PipedStreamInfo>(responseBody)
-        } catch (e: Exception) {
-            null
+        FileLogger.log("PipedApi", "getStream() called for $videoId")
+        return callWithFallback(
+            path = "streams/$videoId"
+        ) { body ->
+            try {
+                json.decodeFromString<PipedStreamInfo>(body)
+            } catch (e: Exception) {
+                null
+            }
         }
     }
 
@@ -99,75 +138,67 @@ class PipedApi(private val client: OkHttpClient = OkHttpClient()) {
     }
 
     suspend fun getChannelItems(channelId: String): List<PipedSearchResult> {
-        val url = "$baseUrl/channels/$channelId".toHttpUrlOrNull() ?: return emptyList()
-        val request = Request.Builder().url(url).build()
-        val response = client.newCall(request).await()
-
-        if (!response.isSuccessful) return emptyList()
-
-        val responseBody = response.body?.string() ?: return emptyList()
-        return try {
-            val data = json.parseToJsonElement(responseBody).jsonObject
-            val items = data["relatedStreams"]?.jsonArray ?: return emptyList()
-            items.mapNotNull {
-                try {
-                    json.decodeFromJsonElement(PipedSearchResult.serializer(), it)
-                } catch (e: Exception) {
-                    null
+        FileLogger.log("PipedApi", "getChannelItems for $channelId")
+        return callWithFallback(
+            path = "channels/$channelId"
+        ) { body ->
+            try {
+                val data = json.parseToJsonElement(body).jsonObject
+                val items = data["relatedStreams"]?.jsonArray ?: return@callWithFallback null
+                items.mapNotNull {
+                    try {
+                        json.decodeFromJsonElement(PipedSearchResult.serializer(), it)
+                    } catch (e: Exception) {
+                        null
+                    }
                 }
+            } catch (e: Exception) {
+                null
             }
-        } catch (e: Exception) {
-            emptyList()
-        }
+        } ?: emptyList()
     }
 
     suspend fun getPlaylistTracks(playlistId: String): List<PipedSearchResult> {
-        val url = "$baseUrl/playlists/$playlistId".toHttpUrlOrNull() ?: return emptyList()
-        val request = Request.Builder().url(url).build()
-        val response = client.newCall(request).await()
-
-        if (!response.isSuccessful) return emptyList()
-
-        val responseBody = response.body?.string() ?: return emptyList()
-        return try {
-            val data = json.parseToJsonElement(responseBody).jsonObject
-            val items = data["relatedStreams"]?.jsonArray ?: return emptyList()
-            items.mapNotNull {
-                try {
-                    json.decodeFromJsonElement(PipedSearchResult.serializer(), it)
-                } catch (e: Exception) {
-                    null
+        FileLogger.log("PipedApi", "getPlaylistTracks for $playlistId")
+        return callWithFallback(
+            path = "playlists/$playlistId"
+        ) { body ->
+            try {
+                val data = json.parseToJsonElement(body).jsonObject
+                val items = data["relatedStreams"]?.jsonArray ?: return@callWithFallback null
+                items.mapNotNull {
+                    try {
+                        json.decodeFromJsonElement(PipedSearchResult.serializer(), it)
+                    } catch (e: Exception) {
+                        null
+                    }
                 }
+            } catch (e: Exception) {
+                null
             }
-        } catch (e: Exception) {
-            emptyList()
-        }
+        } ?: emptyList()
     }
 
     suspend fun getPlaylistItems(playlistId: String): List<PipedSearchResult> = getPlaylistTracks(playlistId)
 
     suspend fun getTrending(region: String = "BR"): List<PipedSearchResult> {
-        val url = "$baseUrl/trending".toHttpUrlOrNull()?.newBuilder()
-            ?.addQueryParameter("region", region)
-            ?.build() ?: return emptyList()
-        
-        val request = Request.Builder().url(url).build()
-        val response = client.newCall(request).await()
-
-        if (!response.isSuccessful) return emptyList()
-
-        val responseBody = response.body?.string() ?: return emptyList()
-        return try {
-            val items = json.parseToJsonElement(responseBody).jsonArray
-            items.mapNotNull {
-                try {
-                    json.decodeFromJsonElement(PipedSearchResult.serializer(), it)
-                } catch (e: Exception) {
-                    null
+        FileLogger.log("PipedApi", "getTrending for $region")
+        return callWithFallback(
+            path = "trending",
+            queryParams = mapOf("region" to region)
+        ) { body ->
+            try {
+                val items = json.parseToJsonElement(body).jsonArray
+                items.mapNotNull {
+                    try {
+                        json.decodeFromJsonElement(PipedSearchResult.serializer(), it)
+                    } catch (e: Exception) {
+                        null
+                    }
                 }
+            } catch (e: Exception) {
+                null
             }
-        } catch (e: Exception) {
-            emptyList()
-        }
+        } ?: emptyList()
     }
 }

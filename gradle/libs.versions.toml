@@ -57,6 +57,10 @@ coil = { module = "io.coil-kt.coil3:coil", version.ref = "coil" }
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+
+koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koinAndroid" }
+
 
 pikolo = { module = "com.github.madrapps:pikolo", version = "2.0.2" }
 fadingedgelayout = { module = "com.github.bosphere.android-fadingedgelayout:fadingedgelayout", version = "1.0.0" }
@@ -91,7 +95,7 @@ paging = ["paging-common", "paging-runtime"]
 room = ["room-runtime", "room-ktx"]
 koin = ["koin-androidx-startup", "koin-android", "koin-androidx-workmanager"]
 media3 = ["media3-exoplayer", "media3-session", "media3-ui", "media3-dash", "media3-hls"]
-coil = ["coil", "coil-gif", "coil-svg", "coil-network-okhttp"]
+coil = ["coil", "coil-gif", "coil-svg", "coil-network-okhttp", "coil-compose"]
 kotlinx = ["kotlinx-serialization-json", "kotlinx-coroutines-core"]
 firebase = ["firebase-analytics", "firebase-crashlytics"]
 

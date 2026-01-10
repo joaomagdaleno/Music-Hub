@@ -42,9 +42,16 @@ class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory
 
     override fun onCreate() {
         super.onCreate()
+        
+        // Initialize file-based logger FIRST
+        com.joaomagdaleno.music_hub.utils.FileLogger.init(this)
+        com.joaomagdaleno.music_hub.utils.FileLogger.log("MainApplication", "Application onCreate() started")
+        
         CoroutineUtils.setDebug()
         applyLocale(settings)
         configureAppShortcuts(app)
+        
+        com.joaomagdaleno.music_hub.utils.FileLogger.log("MainApplication", "Application onCreate() complete")
     }
 
     override fun newImageLoader(context: PlatformContext): ImageLoader {

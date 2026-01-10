@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.lang.ref.WeakReference
+import com.joaomagdaleno.music_hub.utils.FileLogger
 
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 data class FeedData(
@@ -255,19 +256,32 @@ data class FeedData(
         selectedTabFlow.value = tab
     }
 
-    fun refresh() = scope.launch { refreshFlow.emit(Unit) }
+    fun refresh() = scope.launch { 
+        FileLogger.log("FeedData", "refresh() called for feedId=$feedId")
+        refreshFlow.emit(Unit) 
+    }
 
     init {
+        FileLogger.log("FeedData", "init start for feedId=$feedId")
         scope.launch(Dispatchers.IO) {
             listOfNotNull(current, refreshFlow, usersFlow, extraLoadFlow)
                 .merge().debounce(100L).collectLatest {
+                    FileLogger.log("FeedData", "collectLatest triggered for feedId=$feedId")
                     cachedState.value = null
                     loadedState.value = null
                     // Monolithic: Always load
+                    FileLogger.log("FeedData", "Loading cached for feedId=$feedId")
                     cachedState.value = runCatching { cached(repository) }
+                    FileLogger.log("FeedData", "Cached result: ${cachedState.value?.isSuccess} for feedId=$feedId")
+                    FileLogger.log("FeedData", "Loading fresh for feedId=$feedId")
                     loadedState.value = runCatching { load(repository) }
+                    FileLogger.log("FeedData", "Loaded result: ${loadedState.value?.isSuccess} for feedId=$feedId")
+                    loadedState.value?.exceptionOrNull()?.let { ex ->
+                        FileLogger.log("FeedData", "Load exception for feedId=$feedId: ${ex.message}", ex)
+                    }
                 }
         }
+
         scope.launch {
             stateFlow.collect { result ->
                 val feed = result.run { second?.getOrNull() ?: first?.getOrNull() }?.feed?.tabs

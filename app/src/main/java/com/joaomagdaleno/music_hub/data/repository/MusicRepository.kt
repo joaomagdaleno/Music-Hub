@@ -4,8 +4,8 @@ import com.joaomagdaleno.music_hub.common.models.Feed.Companion.pagedDataOfFirst
 import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.common.models.Streamable
 import com.joaomagdaleno.music_hub.common.models.Track
-import com.joaomagdaleno.music_hub.data.providers.LocalProvider
-import com.joaomagdaleno.music_hub.data.providers.YoutubeProvider
+import com.joaomagdaleno.music_hub.data.providers.LocalSource
+import com.joaomagdaleno.music_hub.data.providers.YoutubeSource
 import com.joaomagdaleno.music_hub.data.providers.LrcLibApi
 import com.joaomagdaleno.music_hub.data.providers.PipedApi
 import com.joaomagdaleno.music_hub.data.providers.SlavArtApi
@@ -18,63 +18,66 @@ import com.joaomagdaleno.music_hub.common.models.Album
 import com.joaomagdaleno.music_hub.common.models.Artist
 import com.joaomagdaleno.music_hub.common.models.Playlist
 import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.utils.FileLogger
+import kotlinx.coroutines.*
 
 class MusicRepository(
     private val app: com.joaomagdaleno.music_hub.di.App,
-    private val localProvider: LocalProvider,
+    private val localProvider: LocalSource,
     private val database: com.joaomagdaleno.music_hub.data.db.MusicDatabase,
 ) {
     private val piped = PipedApi()
     private val slavArt = SlavArtApi()
     private val lrcLib = LrcLibApi()
-    private val youtubeProvider = YoutubeProvider() // Integrated provider
+    private val youtubeProvider = YoutubeSource() // Integrated provider
 
-    suspend fun search(query: String): List<Track> {
+    suspend fun search(query: String): List<Track> = withContext(Dispatchers.IO) {
+        FileLogger.log("MusicRepository", "search() called with query='$query'")
         val results = mutableListOf<Track>()
         
         // 1. Local Search
         try {
             results.addAll(localProvider.search(query))
-        } catch (e: Exception) { e.printStackTrace() }
+        } catch (e: Exception) { 
+            FileLogger.log("MusicRepository", "Local search failed: ${e.message}")
+        }
 
-        // 2. Remote Search (SlavArt + YouTube)
-        try {
-             // SlavArt
-             val slavArtResults = slavArt.search(query).map { result ->
-                Track(
-                    id = result.id,
-                    title = result.title,
-                    origin = "SLAVART",
-                    album = result.album?.let { Album(id = "slavart_album:${result.id}", title = it, artists = listOf()) },
-                    artists = listOf(Artist(id = "slavart_artist:${result.artist}", name = result.artist)),
-                    cover = result.thumbnail?.let { ImageHolder.NetworkRequestImageHolder(NetworkRequest(it), false) },
-                    isPlayable = Track.Playable.Yes,
-                    duration = result.duration?.toLong()?.times(1000),
-                    extras = mapOf("media_url" to result.url, "quality" to (result.quality ?: "FLAC"))
-                )
-             }
-             results.addAll(slavArtResults)
-
-             // YouTube (Piped)
-             if (slavArtResults.isEmpty()) {
-                  val pipedResults = piped.search(query).map { res ->
-                    val videoId = res.url.substringAfter("v=", "")
+        // 2. Remote Search (SlavArt + YouTube) - Parallel
+        val slavArtDef = async {
+            try {
+                slavArt.search(query).map { result ->
                     Track(
-                        id = videoId,
-                        title = res.title ?: "Unknown",
-                        origin = "YOUTUBE",
-                        artists = listOf(Artist(id = res.uploaderUrl?.substringAfterLast("/")?.let { "youtube_channel:$it" } ?: "unknown", name = res.uploaderName ?: "Unknown")),
-                        cover = res.thumbnail?.let { ImageHolder.NetworkRequestImageHolder(NetworkRequest(it), false) },
-                        duration = res.duration?.times(1000),
+                        id = result.id,
+                        title = result.title,
+                        origin = "SLAVART",
+                        album = result.album?.let { Album(id = "slavart_album:${result.id}", title = it, artists = listOf()) },
+                        artists = listOf(Artist(id = "slavart_artist:${result.artist}", name = result.artist)),
+                        cover = result.thumbnail?.let { ImageHolder.NetworkRequestImageHolder(NetworkRequest(it), false) },
                         isPlayable = Track.Playable.Yes,
-                        extras = mapOf("video_id" to videoId)
+                        duration = result.duration?.toLong()?.times(1000),
+                        extras = mapOf("media_url" to result.url, "quality" to (result.quality ?: "FLAC"))
                     )
-                  }
-                  results.addAll(pipedResults)
-             }
-        } catch (e: Exception) { e.printStackTrace() }
+                }
+            } catch (e: Exception) {
+                FileLogger.log("MusicRepository", "SlavArt search failed: ${e.message}")
+                emptyList<Track>()
+            }
+        }
 
-        return results
+        val youtubeDef = async {
+            try {
+                youtubeProvider.search(query)
+            } catch (e: Exception) {
+                FileLogger.log("MusicRepository", "YouTube search failed: ${e.message}")
+                emptyList<Track>()
+            }
+        }
+
+        results.addAll(slavArtDef.await())
+        results.addAll(youtubeDef.await())
+
+        FileLogger.log("MusicRepository", "search() complete, total results: ${results.size}")
+        results
     }
 
     private val streamCache = mutableMapOf<String, String>()
@@ -113,85 +116,151 @@ class MusicRepository(
     }
 
     suspend fun getHomeFeed(): List<Shelf> {
+        FileLogger.log("MusicRepository", "getHomeFeed start")
         // Combined Internal Home Feed
         val shelves = mutableListOf<Shelf>()
         
+        // 0. Local Tracks (Instant)
+        FileLogger.log("MusicRepository", "getHomeFeed: Loading local tracks fallback")
+        val local = getLibraryFeed()
+        if (local.isNotEmpty()) {
+            shelves.addAll(local)
+        }
+
         // Trending from YouTube
         try {
-            val trending = piped.getTrending("BR").take(10).map { res ->
-                val videoId = res.url.substringAfter("v=", "")
-                Track(
-                    id = videoId,
-                    title = res.title ?: "Unknown",
-                    origin = "YOUTUBE",
-                    artists = listOf(Artist(id = res.uploaderUrl?.substringAfterLast("/")?.let { "youtube_channel:$it" } ?: "unknown", name = res.uploaderName ?: "Unknown")),
-                    cover = res.thumbnail?.let { ImageHolder.NetworkRequestImageHolder(NetworkRequest(it), false) },
-                    duration = res.duration?.times(1000),
-                    isPlayable = Track.Playable.Yes,
-                    extras = mapOf("video_id" to videoId)
-                )
+            FileLogger.log("MusicRepository", "getHomeFeed: Fetching Piped Trending")
+            kotlinx.coroutines.withTimeout(5000L) {
+                val trending = piped.getTrending("BR").take(10).map { res ->
+                    val videoId = res.url.substringAfter("v=", "")
+                    Track(
+                        id = videoId,
+                        title = res.title ?: "Unknown",
+                        origin = "YOUTUBE",
+                        artists = listOf(Artist(id = res.uploaderUrl?.substringAfterLast("/")?.let { "youtube_channel:$it" } ?: "unknown", name = res.uploaderName ?: "Unknown")),
+                        cover = res.thumbnail?.let { ImageHolder.NetworkRequestImageHolder(NetworkRequest(it), false) },
+                        duration = res.duration?.times(1000),
+                        isPlayable = Track.Playable.Yes,
+                        extras = mapOf("video_id" to videoId)
+                    )
+                }
+                if (trending.isNotEmpty()) {
+                    FileLogger.log("MusicRepository", "getHomeFeed: Piped Trending success, count: ${trending.size}")
+                    shelves.add(Shelf.Lists.Tracks("trending", "Trending Now", trending, type = Shelf.Lists.Type.Grid))
+                }
             }
-            if (trending.isNotEmpty()) {
-                shelves.add(Shelf.Lists.Tracks("trending", "Trending Now", trending, type = Shelf.Lists.Type.Grid))
-            }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            FileLogger.log("MusicRepository", "getHomeFeed: Piped Trending fork failed: ${e.message}", e)
+        }
 
         // Discovery from SlavArt
         try {
-             val discovery = slavArt.search("top 2024").take(10).map { result ->
-                Track(
-                    id = result.id,
-                    title = result.title,
-                    origin = "SLAVART",
-                    album = result.album?.let { Album(id = "slavart_album:${result.id}", title = it, artists = listOf()) },
-                    artists = listOf(Artist(id = "slavart_artist:${result.artist}", name = result.artist)),
-                    cover = result.thumbnail?.let { ImageHolder.NetworkRequestImageHolder(NetworkRequest(it), false) },
-                    isPlayable = Track.Playable.Yes,
-                    duration = result.duration?.toLong()?.times(1000),
-                    extras = mapOf("media_url" to result.url)
-                )
-             }
-             if (discovery.isNotEmpty()) {
-                shelves.add(Shelf.Lists.Tracks("discovery", "High Quality Picks", discovery, type = Shelf.Lists.Type.Grid))
+            FileLogger.log("MusicRepository", "getHomeFeed: Fetching SlavArt Discovery")
+            kotlinx.coroutines.withTimeout(5000L) {
+                val discovery = slavArt.search("top 2024").take(10).map { result ->
+                    Track(
+                        id = result.id,
+                        title = result.title,
+                        origin = "SLAVART",
+                        album = result.album?.let { Album(id = "slavart_album:${result.id}", title = it, artists = listOf()) },
+                        artists = listOf(Artist(id = "slavart_artist:${result.artist}", name = result.artist)),
+                        cover = result.thumbnail?.let { ImageHolder.NetworkRequestImageHolder(NetworkRequest(it), false) },
+                        isPlayable = Track.Playable.Yes,
+                        duration = result.duration?.toLong()?.times(1000),
+                        extras = mapOf("media_url" to result.url)
+                    )
+                }
+                if (discovery.isNotEmpty()) {
+                    FileLogger.log("MusicRepository", "getHomeFeed: SlavArt Discovery success, count: ${discovery.size}")
+                    shelves.add(Shelf.Lists.Tracks("discovery", "High Quality Picks", discovery, type = Shelf.Lists.Type.Grid))
+                }
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            FileLogger.log("MusicRepository", "getHomeFeed: SlavArt Discovery failed: ${e.message}", e)
+        }
 
+        FileLogger.log("MusicRepository", "getHomeFeed complete, total shelves: ${shelves.size}")
         return shelves
     }
 
     suspend fun getAlbumTracks(albumId: String): List<Track> {
-         if (albumId.startsWith("slavart_album:")) {
-             val realId = albumId.removePrefix("slavart_album:")
-             return slavArt.getAlbumTracks(realId).map { result ->
-                 Track(
-                    id = result.id,
-                    title = result.title,
-                    origin = "SLAVART",
-                    artists = listOf(Artist(id = "slavart_artist:${result.artist}", name = result.artist)),
-                    cover = result.thumbnail?.let { ImageHolder.NetworkRequestImageHolder(NetworkRequest(it), false) },
-                    isPlayable = Track.Playable.Yes,
-                    duration = result.duration?.toLong()?.times(1000),
-                    extras = mapOf("media_url" to result.url)
-                )
-             }
-         }
-        return emptyList()
+        FileLogger.log("MusicRepository", "getAlbumTracks: $albumId")
+        return when {
+            albumId.startsWith("slavart_album:") -> {
+                val realId = albumId.removePrefix("slavart_album:")
+                slavArt.getAlbumTracks(realId).map { result ->
+                    Track(
+                        id = result.id,
+                        title = result.title,
+                        origin = "SLAVART",
+                        artists = listOf(Artist(id = "slavart_artist:${result.artist}", name = result.artist)),
+                        cover = result.thumbnail?.let { ImageHolder.NetworkRequestImageHolder(NetworkRequest(it), false) },
+                        isPlayable = Track.Playable.Yes,
+                        duration = result.duration?.toLong()?.times(1000),
+                        extras = mapOf("media_url" to result.url)
+                    )
+                }
+            }
+            albumId.startsWith("youtube_playlist:") -> {
+                youtubeProvider.getAlbumTracks(albumId)
+            }
+            else -> emptyList()
+        }
     }
 
     suspend fun getArtistTracks(artistId: String): List<Track> {
-        return emptyList()
+        FileLogger.log("MusicRepository", "getArtistTracks: $artistId")
+        return when {
+            artistId.startsWith("youtube_channel:") -> {
+                youtubeProvider.getArtistTracks(artistId)
+            }
+            else -> emptyList()
+        }
+    }
+
+    suspend fun getTrack(id: String): Track? {
+        FileLogger.log("MusicRepository", "getTrack: $id")
+        return youtubeProvider.getTrack(id)
     }
 
     suspend fun getArtistAlbums(artistId: String): List<com.joaomagdaleno.music_hub.common.models.Album> {
+        FileLogger.log("MusicRepository", "getArtistAlbums: $artistId")
+        if (artistId.startsWith("youtube_channel:")) {
+            val channelId = artistId.removePrefix("youtube_channel:")
+            try {
+                // Channel items can include playlists (albums)
+                val items = piped.getChannelItems(channelId)
+                return items.filter { it.type == "playlist" }.map { res ->
+                    com.joaomagdaleno.music_hub.common.models.Album(
+                        id = "youtube_playlist:${res.url.substringAfterLast("/")}",
+                        title = res.title ?: "Unknown Album",
+                        artists = listOf(Artist(id = artistId, name = res.uploaderName ?: "Unknown")),
+                        cover = res.thumbnail?.let { ImageHolder.NetworkRequestImageHolder(NetworkRequest(it), false) }
+                    )
+                }
+            } catch (e: Exception) {
+                FileLogger.log("MusicRepository", "getArtistAlbums failed: ${e.message}")
+            }
+        }
         return emptyList()
-    }
-
-    suspend fun getTrack(trackId: String): Track? {
-        return null
     }
 
     suspend fun getRadio(trackId: String): List<Track> {
-        return emptyList()
+        FileLogger.log("MusicRepository", "getRadio: $trackId")
+        return when {
+            !trackId.all { it.isDigit() } -> youtubeProvider.getRadio(trackId)
+            else -> emptyList()
+        }
+    }
+    
+    suspend fun getLyrics(track: Track): com.joaomagdaleno.music_hub.common.models.Lyrics.Lyric? {
+        FileLogger.log("MusicRepository", "getLyrics for: ${track.title} - ${track.artists.firstOrNull()?.name}")
+        val title = track.title
+        val artist = track.artists.firstOrNull()?.name ?: "Unknown"
+        val duration = (track.duration?.div(1000))?.toInt()
+        
+        val lrc = lrcLib.getLyrics(title, artist, duration)
+        return lrc?.let { lrcLib.parseLrc(it) }
     }
 
     suspend fun getAlbum(id: String): com.joaomagdaleno.music_hub.common.models.Album {
@@ -235,6 +304,7 @@ class MusicRepository(
     }
 
     suspend fun getLibraryFeed(): List<Shelf> {
+        FileLogger.log("MusicRepository", "getLibraryFeed requested")
         val localTracks = localProvider.getAllTracks()
         return if (localTracks.isNotEmpty()) {
             listOf(Shelf.Lists.Tracks("local_tracks", "Local Music", localTracks))

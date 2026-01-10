@@ -36,7 +36,7 @@ class LoadingTask(
         val indexes = download.indexes.ifEmpty {
             // By default, download all sources if merged, or just the first one if not.
             // Simplified: download the first source.
-            if (server.sources.isNotEmpty()) listOf(0) else emptyList()
+            if (server.streams.isNotEmpty()) listOf(0) else emptyList()
         }
         if (indexes.isEmpty()) throw Exception("No files to download")
         download = download.copy(indexesData = indexes.toJson())

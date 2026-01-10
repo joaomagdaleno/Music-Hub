@@ -21,7 +21,7 @@ class RawDataSource : BaseDataSource(true) {
     private var uri: Uri? = null
 
     override fun open(dataSpec: DataSpec): Long {
-        val streamable = dataSpec.customData as Streamable.Source.Raw
+        val streamable = dataSpec.customData as Streamable.Stream.Raw
         val (source, total) = runBlocking {
             streamable.streamProvider!!.provide(dataSpec.position, dataSpec.length)
         }

@@ -62,8 +62,10 @@ abstract class MediaDetailsViewModel(
         // Load "Feed" - usually albums for artists, etc.
         val feed: Feed<Shelf>? = when (item) {
              is Artist -> {
-                 // TODO: Implement getArtistAlbums in repository
-                 null
+                 val albums = repository.getArtistAlbums(item.id)
+                 if (albums.isNotEmpty()) {
+                     listOf(Shelf.Lists.Items("artist_albums", "Albums", albums, type = Shelf.Lists.Type.Grid)).toFeed()
+                 } else null
              }
              else -> null
         }

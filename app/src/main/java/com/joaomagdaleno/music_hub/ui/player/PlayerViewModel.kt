@@ -24,7 +24,7 @@ import com.joaomagdaleno.music_hub.download.Downloader
 import com.joaomagdaleno.music_hub.common.models.MediaState
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.serverWithDownloads
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.sourceIndex
+import com.joaomagdaleno.music_hub.playback.MediaItemUtils.streamIndex
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.track
 import com.joaomagdaleno.music_hub.playback.PlayerCommands.addToNextCommand
 import com.joaomagdaleno.music_hub.playback.PlayerCommands.addToQueueCommand
@@ -198,7 +198,7 @@ class PlayerViewModel(
 
     fun changeCurrentSource(index: Int) {
         val item = playerState.current.value?.mediaItem ?: return
-        changeCurrent(MediaItemUtils.buildSource(item, index))
+        changeCurrent(MediaItemUtils.buildStream(item, index))
     }
 
     fun setQueue(id: String, list: List<Track>, index: Int, context: EchoMediaItem?) {
@@ -299,7 +299,7 @@ class PlayerViewModel(
     val serverAndTracks = tracksFlow.combine(playerState.serverChanged) { tracks, _ -> tracks }
         .combine(playerState.current) { tracks, current ->
             val server = playerState.servers[current?.mediaItem?.mediaId]?.getOrNull()
-            val index = current?.mediaItem?.sourceIndex
+            val index = current?.mediaItem?.streamIndex
             Triple(tracks, server, index)
         }.stateIn(viewModelScope, SharingStarted.Lazily, Triple(null, null, null))
 

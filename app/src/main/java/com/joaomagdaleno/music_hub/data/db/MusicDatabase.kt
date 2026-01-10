@@ -39,7 +39,7 @@ fun Playlist.toEntity(): PlaylistEntity = PlaylistEntity(
 fun Track.toTrackEntity(): PlaylistTrackEntity {
     val pId = extras["pId"]!!.toLong()
     val eId = extras["eId"]!!.toLong()
-    return PlaylistTrackEntity(eId, pId, id, sourceName, this.toJson())
+    return PlaylistTrackEntity(eId, pId, id, origin, this.toJson())
 }
 
 fun EchoMediaItem.toEntity(): SavedEntity {

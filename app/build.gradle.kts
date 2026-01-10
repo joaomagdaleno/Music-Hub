@@ -92,6 +92,7 @@ dependencies {
     implementation(libs.bundles.room)
     ksp(libs.room.compiler)
     implementation(libs.bundles.koin)
+    implementation(libs.koin.androidx.compose)
     implementation(libs.bundles.kotlinx)
     implementation(libs.bundles.media3)
     implementation(libs.bundles.coil)
