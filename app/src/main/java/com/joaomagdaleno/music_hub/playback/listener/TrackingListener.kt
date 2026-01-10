@@ -24,9 +24,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import com.joaomagdaleno.music_hub.playback.ResumptionUtils
 import kotlinx.coroutines.withContext
 
-@UnstableApi
 @UnstableApi
 class TrackingListener(
     // We pass context for SharedPreferences access (ResumptionUtils)

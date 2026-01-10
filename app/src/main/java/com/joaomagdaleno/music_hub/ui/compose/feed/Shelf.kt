@@ -9,12 +9,31 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.lazyListState
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.unit.lerp
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.Composable
+import androidx.compose.foundation.lazy.itemsIndexed
+import com.joaomagdaleno.music_hub.R
+import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
+import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.ui.compose.components.CategoryCard
+import com.joaomagdaleno.music_hub.ui.compose.components.MediaItemCard
+import com.joaomagdaleno.music_hub.ui.compose.components.TrackItem
 import kotlin.math.abs
 
-@Composable
 fun ShelfRow(
     shelf: Shelf.Lists<out Any>,
     onItemClick: (EchoMediaItem) -> Unit

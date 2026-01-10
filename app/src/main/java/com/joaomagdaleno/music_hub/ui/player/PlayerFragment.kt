@@ -62,6 +62,7 @@ import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.isFinalState
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.setupPlayerMoreBehavior
 import com.joaomagdaleno.music_hub.ui.media.MediaFragment
+import com.joaomagdaleno.music_hub.ui.player.audiofx.AudioEffectsBottomSheet
 import com.joaomagdaleno.music_hub.ui.media.more.MediaMoreBottomSheet
 import com.joaomagdaleno.music_hub.ui.player.PlayerColors.Companion.defaultPlayerColors
 import com.joaomagdaleno.music_hub.ui.player.PlayerColors.Companion.getColorsFrom
