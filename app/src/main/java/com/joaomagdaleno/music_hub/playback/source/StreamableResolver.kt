@@ -7,9 +7,8 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.ResolvingDataSource.Resolver
 import com.joaomagdaleno.music_hub.common.models.Streamable
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.toKey
-import com.joaomagdaleno.music_hub.playback.source.StreamableDataSource.Companion.uri
-import com.joaomagdaleno.music_hub.utils.CacheUtils.saveToCache
+import com.joaomagdaleno.music_hub.playback.MediaItemUtils
+import com.joaomagdaleno.music_hub.utils.CacheUtils
 import java.util.WeakHashMap
 
 class StreamableResolver(
@@ -19,20 +18,21 @@ class StreamableResolver(
 
     @OptIn(UnstableApi::class)
     override fun resolveDataSpec(dataSpec: DataSpec): DataSpec {
-        val (id, index) = dataSpec.uri.toString().toKey().getOrNull() ?: return dataSpec
+        val (id, index) = MediaItemUtils.toKey(dataSpec.uri.toString()).getOrNull() ?: return dataSpec
         val streamable = runCatching { current[id]!!.getOrThrow().streams[index] }
         val uri = streamable.map {
             if (!it.isLive)
-                context.saveToCache(it.id, dataSpec.uri.toString(), "player")
+                CacheUtils.saveToCache(context, it.id, dataSpec.uri.toString(), "player")
             Uri.parse(it.id)
         }
-        return dataSpec.copy(uri = uri.getOrNull(), customData = streamable)
+        return copy(dataSpec, uri = uri.getOrNull(), customData = streamable)
     }
 
     companion object {
 
         @OptIn(UnstableApi::class)
-        fun DataSpec.copy(
+        fun copy(
+            dataSpec: DataSpec,
             uri: Uri? = null,
             uriPositionOffset: Long? = null,
             httpMethod: Int? = null,
@@ -45,16 +45,16 @@ class StreamableResolver(
             customData: Any? = null,
         ): DataSpec {
             return DataSpec.Builder()
-                .setUri(uri ?: this.uri)
-                .setUriPositionOffset(uriPositionOffset ?: this.uriPositionOffset)
-                .setHttpMethod(httpMethod ?: this.httpMethod)
-                .setHttpBody(httpBody ?: this.httpBody)
-                .setHttpRequestHeaders(httpRequestHeaders ?: this.httpRequestHeaders)
-                .setPosition(position ?: this.position)
-                .setLength(length ?: this.length)
-                .setKey(key ?: this.key)
-                .setFlags(flags ?: this.flags)
-                .setCustomData(customData ?: this.customData)
+                .setUri(uri ?: dataSpec.uri)
+                .setUriPositionOffset(uriPositionOffset ?: dataSpec.uriPositionOffset)
+                .setHttpMethod(httpMethod ?: dataSpec.httpMethod)
+                .setHttpBody(httpBody ?: dataSpec.httpBody)
+                .setHttpRequestHeaders(httpRequestHeaders ?: dataSpec.httpRequestHeaders)
+                .setPosition(position ?: dataSpec.position)
+                .setLength(length ?: dataSpec.length)
+                .setKey(key ?: dataSpec.key)
+                .setFlags(flags ?: dataSpec.flags)
+                .setCustomData(customData ?: dataSpec.customData)
                 .build()
         }
     }

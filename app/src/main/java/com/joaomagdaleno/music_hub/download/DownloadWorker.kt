@@ -14,7 +14,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
-import com.joaomagdaleno.music_hub.MainActivity.Companion.getMainActivity
+import com.joaomagdaleno.music_hub.MainActivity
 import com.joaomagdaleno.music_hub.R
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
@@ -44,7 +44,7 @@ class DownloadWorker(
     private fun createNotification(
         tracks: Int,
     ): ForegroundInfo {
-        createNotificationChannel(
+        NotificationUtil.createNotificationChannel(
             context, PROGRESS_CHANNEL_ID, R.string.download_progress, 0,
             NotificationUtil.IMPORTANCE_DEFAULT
         )
@@ -81,7 +81,7 @@ class DownloadWorker(
         fun getMainIntent(context: Context) = PendingIntent.getActivity(
             context,
             0,
-            Intent(context, context.getMainActivity()).apply {
+            Intent(context, MainActivity.getMainActivity(context)).apply {
                 putExtra("fromDownload", true)
             },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,

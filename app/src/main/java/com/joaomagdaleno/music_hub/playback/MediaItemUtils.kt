@@ -6,7 +6,6 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.annotation.OptIn
 import androidx.core.net.toUri
-import androidx.core.os.bundleOf
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -22,10 +21,7 @@ import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.download.Downloader
 import com.joaomagdaleno.music_hub.common.models.MediaState
 import com.joaomagdaleno.music_hub.playback.PlayerService.Companion.selectServerIndex
-import com.joaomagdaleno.music_hub.utils.Serializer.getSerialized
-import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized
-import com.joaomagdaleno.music_hub.utils.Serializer.toData
-import com.joaomagdaleno.music_hub.utils.Serializer.toJson
+import com.joaomagdaleno.music_hub.utils.Serializer
 import kotlinx.serialization.Serializable
 import kotlin.io.encoding.Base64
 import kotlin.text.Charsets.UTF_8
@@ -39,7 +35,7 @@ object MediaItemUtils {
         context: EchoMediaItem?,
     ): MediaItem {
         val item = MediaItem.Builder()
-        val metadata = state.toMetaData(bundleOf(), downloads, context, false, app)
+        val metadata = toMetaData(state, Bundle(), downloads, context, false, app)
         item.setMediaMetadata(metadata)
         item.setMediaId(state.item.id)
         item.setUri(state.item.id)
@@ -51,53 +47,53 @@ object MediaItemUtils {
         downloads: List<Downloader.Info>,
         mediaItem: MediaItem,
         state: MediaState.Loaded<Track>,
-    ): MediaItem = with(mediaItem) {
-        val item = buildUpon()
-        val metadata = state.toMetaData(
-            mediaMetadata.extras!!, downloads, context, true, app
+    ): MediaItem {
+        val item = mediaItem.buildUpon()
+        val metadata = toMetaData(
+            state, mediaItem.mediaMetadata.extras ?: Bundle(), downloads, getContext(mediaItem), true, app
         )
         item.setMediaMetadata(metadata)
         return item.build()
     }
 
-    fun buildServer(mediaItem: MediaItem, index: Int): MediaItem = with(mediaItem) {
+    fun buildServer(mediaItem: MediaItem, index: Int): MediaItem {
         val bundle = Bundle().apply {
-            putAll(mediaMetadata.extras!!)
+            putAll(mediaItem.mediaMetadata.extras ?: Bundle())
             putInt("serverIndex", index)
             putInt("retries", 0)
         }
-        buildWithBundle(this, bundle)
+        return buildWithBundle(mediaItem, bundle)
     }
 
-    fun buildStream(mediaItem: MediaItem, index: Int) = with(mediaItem) {
+    fun buildStream(mediaItem: MediaItem, index: Int): MediaItem {
         val bundle = Bundle().apply {
-            putAll(mediaMetadata.extras!!)
+            putAll(mediaItem.mediaMetadata.extras ?: Bundle())
             putInt("streamIndex", index)
             putInt("retries", 0)
         }
-        buildWithBundle(this, bundle)
+        return buildWithBundle(mediaItem, bundle)
     }
 
-    fun buildBackground(mediaItem: MediaItem, index: Int): MediaItem = with(mediaItem) {
+    fun buildBackground(mediaItem: MediaItem, index: Int): MediaItem {
         val bundle = Bundle().apply {
-            putAll(mediaMetadata.extras!!)
+            putAll(mediaItem.mediaMetadata.extras ?: Bundle())
             putInt("backgroundIndex", index)
         }
-        buildWithBundle(this, bundle)
+        return buildWithBundle(mediaItem, bundle)
     }
 
-    fun buildSubtitle(mediaItem: MediaItem, index: Int): MediaItem = with(mediaItem) {
+    fun buildSubtitle(mediaItem: MediaItem, index: Int): MediaItem {
         val bundle = Bundle().apply {
-            putAll(mediaMetadata.extras!!)
+            putAll(mediaItem.mediaMetadata.extras ?: Bundle())
             putInt("subtitleIndex", index)
         }
-        buildWithBundle(this, bundle)
+        return buildWithBundle(mediaItem, bundle)
     }
 
 
     fun withRetry(item: MediaItem): MediaItem {
         val bundle = Bundle().apply {
-            putAll(item.mediaMetadata.extras!!)
+            putAll(item.mediaMetadata.extras ?: Bundle())
             val retries = getInt("retries") + 1
             putBoolean("loaded", false)
             putInt("retries", retries)
@@ -105,27 +101,27 @@ object MediaItemUtils {
         return buildWithBundle(item, bundle)
     }
 
-    private fun buildWithBundle(mediaItem: MediaItem, bundle: Bundle) = run {
+    private fun buildWithBundle(mediaItem: MediaItem, bundle: Bundle): MediaItem {
         val item = mediaItem.buildUpon()
         val metadata =
-            mediaItem.mediaMetadata.buildUpon().setExtras(bundle).setSubtitle(bundle.indexes())
+            mediaItem.mediaMetadata.buildUpon().setExtras(bundle).setSubtitle(indexes(bundle))
                 .build()
         item.setMediaMetadata(metadata)
-        item.build()
+        return item.build()
     }
 
     @Serializable
     data class Key(val trackId: String, val streamIndex: Int, val origin: String)
 
-    fun String.toKey() = runCatching {
-        Base64.decode(this).toString(UTF_8).toData<Key>().getOrThrow()
+    fun toKey(value: String) = runCatching {
+        Serializer.toData<Key>(Base64.decode(value).toString(UTF_8)).getOrThrow()
     }
 
     fun buildForStream(
         mediaItem: MediaItem, index: Int, stream: Streamable.Stream?,
-    ) = with(mediaItem) {
-        val item = buildUpon()
-        item.setUri(Base64.encode(Key(track.id, index, origin).toJson().toByteArray()))
+    ): MediaItem {
+        val item = mediaItem.buildUpon()
+        item.setUri(Base64.encode(Serializer.toJson(Key(getTrack(mediaItem).id, index, getOrigin(mediaItem))).toByteArray()))
         when (val decryption = (stream as? Streamable.Stream.Http)?.decryption) {
             null -> {}
             is Streamable.Decryption.Widevine -> {
@@ -136,140 +132,147 @@ object MediaItemUtils {
                 item.setDrmConfiguration(config)
             }
         }
-        item.build()
+        return item.build()
     }
 
     fun buildWithBackgroundAndSubtitle(
         mediaItem: MediaItem,
         background: Streamable.Media.Background?,
         subtitle: Streamable.Media.Subtitle?,
-    ) = with(mediaItem) {
-        val bundle = mediaMetadata.extras!!
-        bundle.putSerialized("background", background)
-        val item = buildUpon()
+    ): MediaItem {
+        val bundle = mediaItem.mediaMetadata.extras ?: Bundle()
+        Serializer.putSerialized(bundle, "background", background)
+        val item = mediaItem.buildUpon()
         item.setSubtitleConfigurations(
             if (subtitle == null) listOf()
             else listOf(
                 MediaItem.SubtitleConfiguration.Builder(subtitle.url.toUri())
-                    .setMimeType(subtitle.type.toMimeType())
+                    .setMimeType(toMimeType(subtitle.type))
                     .setSelectionFlags(C.SELECTION_FLAG_DEFAULT).build()
             )
         )
-        item.build()
+        return item.build()
     }
 
 
     @OptIn(UnstableApi::class)
-    private fun MediaState<Track>.toMetaData(
+    private fun toMetaData(
+        state: MediaState<Track>,
         bundle: Bundle,
         downloads: List<Downloader.Info>,
-        context: EchoMediaItem? = bundle.getSerialized<EchoMediaItem>("context")?.getOrNull(),
+        context: EchoMediaItem? = getSerializedContext(bundle),
         loaded: Boolean = bundle.getBoolean("loaded"),
         app: App,
         serverIndex: Int? = null,
         backgroundIndex: Int? = null,
         subtitleIndex: Int? = null,
-    ) = with(item) {
-        val isLiked = (this@toMetaData as? MediaState.Loaded<*>)?.isLiked == true
-        MediaMetadata.Builder()
-            .setTitle(title)
-            .setAlbumTitle(album?.title)
-            .setAlbumArtist(album?.artists?.joinToString(", ") { it.name })
-            .setArtist(artists.joinToString(", ") { it.name })
-            .setArtworkUri(cover?.toUriWithJson())
-            .setUserRating(
-                if (isLiked) ThumbRating(true) else ThumbRating()
-            )
-            .setExtras(Bundle().apply {
-                putAll(bundle)
-                putSerialized("unloadedCover", bundle.stateNullable?.item?.cover)
-                putSerialized("state", this@toMetaData)
-                putSerialized("context", context)
-                putBoolean("loaded", loaded)
-                putInt("subtitleIndex", subtitleIndex ?: 0.takeIf { subtitles.isNotEmpty() } ?: -1)
-                putInt(
-                    "backgroundIndex", backgroundIndex ?: 0.takeIf {
-                        backgrounds.isNotEmpty() && app.settings.showBackground()
-                    } ?: -1
+    ): MediaMetadata {
+        val isLiked = (state as? MediaState.Loaded<*>)?.isLiked == true
+        return with(state.item) {
+            MediaMetadata.Builder()
+                .setTitle(title)
+                .setAlbumTitle(album?.title)
+                .setAlbumArtist(album?.artists?.joinToString(", ") { it.name })
+                .setArtist(artists.joinToString(", ") { it.name })
+                .setArtworkUri(cover?.let { toUriWithJson(it) })
+                .setUserRating(
+                    if (isLiked) ThumbRating(true) else ThumbRating()
                 )
-                val downloaded =
-                    downloads.filter { it.download.trackId == id }
-                        .mapNotNull { it.download.finalFile }
-                putInt(
-                    "serverIndex",
-                    serverIndex ?: selectServerIndex(app, origin, servers, downloaded)
-                )
-                putSerialized("downloaded", downloaded)
-            })
-            .setSubtitle(bundle.indexes())
-            .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
-            .setIsPlayable(true)
-            .setIsBrowsable(false)
-            .build()
+                .setExtras(Bundle().apply {
+                    putAll(bundle)
+                    Serializer.putSerialized(this, "unloadedCover", bundle.stateNullable?.item?.cover)
+                    Serializer.putSerialized(this, "state", state)
+                    Serializer.putSerialized(this, "context", context)
+                    putBoolean("loaded", loaded)
+                    putInt("subtitleIndex", subtitleIndex ?: 0.takeIf { subtitles.isNotEmpty() } ?: -1)
+                    putInt(
+                        "backgroundIndex", backgroundIndex ?: 0.takeIf {
+                            backgrounds.isNotEmpty() && showBackground(app.settings)
+                        } ?: -1
+                    )
+                    val downloaded =
+                        downloads.filter { it.download.trackId == id }
+                            .mapNotNull { it.download.finalFile }
+                    putInt(
+                        "serverIndex",
+                        serverIndex ?: selectServerIndex(app, origin, servers, downloaded)
+                    )
+                    Serializer.putSerialized(this, "downloaded", downloaded)
+                })
+                .setSubtitle(indexes(bundle))
+                .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+                .setIsPlayable(true)
+                .setIsBrowsable(false)
+                .build()
+        }
     }
 
-    private fun Bundle.indexes() =
-        "${getInt("serverIndex")} ${getInt("streamIndex")} ${getInt("backgroundIndex")} ${getInt("subtitleIndex")}"
+    private fun indexes(bundle: Bundle) =
+        "${bundle.getInt("serverIndex")} ${bundle.getInt("streamIndex")} ${bundle.getInt("backgroundIndex")} ${bundle.getInt("subtitleIndex")}"
 
-    private val Bundle?.stateNullable
-        get() = this?.getSerialized<MediaState<Track>>("state")?.getOrNull()
-    val Bundle?.state get() = requireNotNull(stateNullable)
-    val Bundle?.track get() = state.item
-    val Bundle?.isLoaded get() = this?.getBoolean("loaded") ?: false
-    val Bundle?.origin get() = state.origin
-    val Bundle?.context get() = this?.getSerialized<EchoMediaItem?>("context")?.getOrNull()
-    val Bundle?.serverIndex get() = this?.getInt("serverIndex", -1) ?: -1
-    val Bundle?.streamIndex get() = this?.getInt("streamIndex", -1) ?: -1
-    val Bundle?.backgroundIndex get() = this?.getInt("backgroundIndex", -1) ?: -1
-    val Bundle?.subtitleIndex get() = this?.getInt("subtitleIndex", -1) ?: -1
-    val Bundle?.background
-        get() = this?.getSerialized<Streamable.Media.Background?>("background")?.getOrNull()
-    val Bundle?.retries get() = this?.getInt("retries") ?: 0
-    val Bundle?.unloadedCover
-        get() = this?.getSerialized<ImageHolder?>("unloadedCover")?.getOrNull()
-    val Bundle?.downloaded get() = this?.getSerialized<List<String>>("downloaded")?.getOrNull()
+    val Bundle?.stateNullable
+        get() = this?.let { Serializer.getSerialized<MediaState<Track>>(it, "state")?.getOrNull() }
+    
+    fun getState(bundle: Bundle?) = requireNotNull(bundle.stateNullable)
+    fun getTrack(bundle: Bundle?) = getState(bundle).item
+    fun isLoaded(bundle: Bundle?) = bundle?.getBoolean("loaded") ?: false
+    fun getOrigin(bundle: Bundle?) = getState(bundle).origin
+    fun getSerializedContext(bundle: Bundle?) = bundle?.let { Serializer.getSerialized<EchoMediaItem?>(it, "context")?.getOrNull() }
+    fun getServerIndex(bundle: Bundle?) = bundle?.getInt("serverIndex", -1) ?: -1
+    fun getStreamIndex(bundle: Bundle?) = bundle?.getInt("streamIndex", -1) ?: -1
+    fun getBackgroundIndex(bundle: Bundle?) = bundle?.getInt("backgroundIndex", -1) ?: -1
+    fun getSubtitleIndex(bundle: Bundle?) = bundle?.getInt("subtitleIndex", -1) ?: -1
+    fun getBackground(bundle: Bundle?) = bundle?.let { Serializer.getSerialized<Streamable.Media.Background?>(it, "background")?.getOrNull() }
+    fun getRetries(bundle: Bundle?) = bundle?.getInt("retries") ?: 0
+    fun getUnloadedCover(bundle: Bundle?) = bundle?.let { Serializer.getSerialized<ImageHolder?>(it, "unloadedCover")?.getOrNull() }
+    fun getDownloaded(bundle: Bundle?) = bundle?.let { Serializer.getSerialized<List<String>>(it, "downloaded")?.getOrNull() }
 
-    val MediaItem.state get() = mediaMetadata.extras.state
-    val MediaItem.track get() = mediaMetadata.extras.track
-    val MediaItem.origin get() = mediaMetadata.extras.origin
-    val MediaItem.context get() = mediaMetadata.extras.context
-    val MediaItem.isLoaded get() = mediaMetadata.extras.isLoaded
-    val MediaItem.serverIndex get() = mediaMetadata.extras.serverIndex
-    val MediaItem.streamIndex get() = mediaMetadata.extras.streamIndex
-    val MediaItem.backgroundIndex get() = mediaMetadata.extras.backgroundIndex
-    val MediaItem.subtitleIndex get() = mediaMetadata.extras.subtitleIndex
-    val MediaItem.background get() = mediaMetadata.extras.background
-    val MediaMetadata.isLiked get() = (userRating as? ThumbRating)?.isThumbsUp == true
-    val MediaItem.isLiked get() = mediaMetadata.isLiked
-    val MediaItem.retries get() = mediaMetadata.extras.retries
-    val MediaItem.unloadedCover get() = mediaMetadata.extras.unloadedCover
-    val MediaItem.downloaded get() = mediaMetadata.extras.downloaded
+    fun getState(item: MediaItem) = getState(item.mediaMetadata.extras)
+    fun getTrack(item: MediaItem) = getTrack(item.mediaMetadata.extras)
+    fun getOrigin(item: MediaItem) = getOrigin(item.mediaMetadata.extras)
+    fun getContext(item: MediaItem) = getSerializedContext(item.mediaMetadata.extras)
+    fun isLoaded(item: MediaItem) = isLoaded(item.mediaMetadata.extras)
+    fun getServerIndex(item: MediaItem) = getServerIndex(item.mediaMetadata.extras)
+    fun getStreamIndex(item: MediaItem) = getStreamIndex(item.mediaMetadata.extras)
+    fun getBackgroundIndex(item: MediaItem) = getBackgroundIndex(item.mediaMetadata.extras)
+    fun getSubtitleIndex(item: MediaItem) = getSubtitleIndex(item.mediaMetadata.extras)
+    fun getBackground(item: MediaItem) = getBackground(item.mediaMetadata.extras)
+    fun isLiked(metadata: MediaMetadata) = (metadata.userRating as? ThumbRating)?.isThumbsUp == true
+    fun isLiked(item: MediaItem) = isLiked(item.mediaMetadata)
+    fun getRetries(item: MediaItem) = getRetries(item.mediaMetadata.extras)
+    fun getUnloadedCover(item: MediaItem) = getUnloadedCover(item.mediaMetadata.extras)
+    fun getDownloaded(item: MediaItem) = getDownloaded(item.mediaMetadata.extras)
 
-    private fun Streamable.SubtitleType.toMimeType() = when (this) {
+    private fun toMimeType(type: Streamable.SubtitleType) = when (type) {
         Streamable.SubtitleType.VTT -> MimeTypes.TEXT_VTT
         Streamable.SubtitleType.SRT -> MimeTypes.APPLICATION_SUBRIP
         Streamable.SubtitleType.ASS -> MimeTypes.TEXT_SSA
     }
 
-    private fun ImageHolder.toUriWithJson(): Uri {
-        val main = when (this) {
-            is ImageHolder.ResourceUriImageHolder -> uri
-            is ImageHolder.NetworkRequestImageHolder -> request.url
-            is ImageHolder.ResourceIdImageHolder -> "res://$resId"
+    private fun toUriWithJson(holder: ImageHolder): Uri {
+        val main = when (holder) {
+            is ImageHolder.ResourceUriImageHolder -> holder.uri
+            is ImageHolder.NetworkRequestImageHolder -> holder.request.url
+            is ImageHolder.ResourceIdImageHolder -> "res://${holder.resId}"
             is ImageHolder.HexColorImageHolder -> ""
         }.toUri()
-        val json = toJson()
+        val json = Serializer.toJson(holder)
         return main.buildUpon().appendQueryParameter("actual_data", json).build()
     }
 
     const val SHOW_BACKGROUND = "show_background"
-    fun SharedPreferences?.showBackground() = this?.getBoolean(SHOW_BACKGROUND, true) ?: true
+    fun showBackground(prefs: SharedPreferences?) = prefs?.getBoolean(SHOW_BACKGROUND, true) ?: true
 
-    fun MediaItem.serverWithDownloads(
+    fun serverWithDownloads(
         context: Context,
-    ) = track.servers + listOfNotNull(
-        Streamable.server(
-            "DOWNLOADED", Int.MAX_VALUE, context.getString(R.string.downloads)
-        ).takeIf { !downloaded.isNullOrEmpty() }
-    )
+        item: MediaItem
+    ): List<Streamable> {
+        val track = getTrack(item)
+        val downloaded = getDownloaded(item)
+        return track.servers + listOfNotNull(
+            Streamable.server(
+                "DOWNLOADED", Int.MAX_VALUE, context.getString(R.string.downloads)
+            ).takeIf { !downloaded.isNullOrEmpty() }
+        )
+    }
 }

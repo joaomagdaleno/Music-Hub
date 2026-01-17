@@ -30,7 +30,7 @@ data class Date(
     )
 
     companion object {
-        fun Int.toYearDate() = Date(this)
+        fun toYearDate(year: Int) = Date(year)
     }
 
 

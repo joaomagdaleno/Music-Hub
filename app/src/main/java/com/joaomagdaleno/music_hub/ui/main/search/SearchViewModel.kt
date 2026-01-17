@@ -1,12 +1,11 @@
 package com.joaomagdaleno.music_hub.ui.main.search
 
-import android.content.Context
-import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaomagdaleno.music_hub.common.models.QuickSearchItem
 import com.joaomagdaleno.music_hub.di.App
+import com.joaomagdaleno.music_hub.utils.ContextUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,7 +32,7 @@ class SearchViewModel(
         lastSuggestionQuery = query
         viewModelScope.launch {
             if (query.isBlank()) {
-                val history = getHistory(app.context.getSharedPreferences("search", Context.MODE_PRIVATE))
+                val history = getHistory(ContextUtils.getSettings(app.context))
                     .map { QuickSearchItem.Query(it, true) }
                 quickFeed.value = history
             } else {
@@ -46,7 +45,7 @@ class SearchViewModel(
     }
 
     fun deleteSearch(item: QuickSearchItem) {
-        val prefs = app.context.getSharedPreferences("search", Context.MODE_PRIVATE)
+        val prefs = ContextUtils.getSettings(app.context)
         val history = getHistory(prefs).toMutableList()
         history.remove(item.title)
         prefs.edit { putString("search_history", history.joinToString(",")) }
@@ -55,7 +54,7 @@ class SearchViewModel(
 
     fun saveQuery(query: String) {
         if (query.isBlank()) return
-        val prefs = app.context.getSharedPreferences("search", Context.MODE_PRIVATE)
+        val prefs = ContextUtils.getSettings(app.context)
         val history = getHistory(prefs).toMutableList()
         history.remove(query)
         history.add(0, query)
@@ -63,7 +62,7 @@ class SearchViewModel(
     }
 
     companion object {
-        private fun getHistory(prefs: SharedPreferences): List<String> {
+        private fun getHistory(prefs: android.content.SharedPreferences): List<String> {
             return prefs.getString("search_history", "")
                 ?.split(",")?.mapNotNull {
                     it.takeIf { it.isNotBlank() }

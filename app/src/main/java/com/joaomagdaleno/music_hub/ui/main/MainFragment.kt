@@ -16,10 +16,9 @@ import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.BACKGROUND_GRADIENT
 import com.joaomagdaleno.music_hub.ui.main.search.SearchFragment
-import com.joaomagdaleno.music_hub.utils.ContextUtils.getSettings
-import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
-import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import com.joaomagdaleno.music_hub.utils.ContextUtils
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue
 import com.joaomagdaleno.music_hub.utils.ui.FastScrollerHelper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -28,7 +27,7 @@ import kotlin.math.max
 
 class MainFragment : Fragment() {
 
-    private var binding by autoCleared<FragmentMainBinding>()
+    private var binding by AutoClearedValue.autoCleared<FragmentMainBinding>(this)
     private val viewModel by activityViewModel<UiViewModel>()
 
     override fun onCreateView(
@@ -38,17 +37,12 @@ class MainFragment : Fragment() {
         return binding.root
     }
 
-    private fun addIfNullInternal(tag: String, fragmentClass: Class<out Fragment>): String {
-        UiUtils.addIfNull(this, R.id.main_fragment_container_view, tag, null)
-        return tag
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        setupTransition(view)
+        AnimationUtils.setupTransition(view)
         applyPlayerBg(this, view) {
             mainBgDrawable.combine(currentNavBackground) { a, b -> b ?: a }
         }
-        observe(viewModel.navigation) {
+        ContextUtils.observe(this, viewModel.navigation) {
             val toShow = when (it) {
                 1 -> {
                     UiUtils.addIfNull<SearchFragment>(this, R.id.main_fragment_container_view, "search")
@@ -82,7 +76,7 @@ class MainFragment : Fragment() {
         ): UiViewModel {
             val uiViewModel by fragment.activityViewModel<UiViewModel>()
             val combined = uiViewModel.imageFlow()
-            fragment.observe(combined) { UiUtils.applyGradient(fragment, view, it) }
+            ContextUtils.observe(fragment, combined) { UiUtils.applyGradient(fragment, view, it) }
             return uiViewModel
         }
 
@@ -95,7 +89,7 @@ class MainFragment : Fragment() {
         ) {
             recyclerView.run {
                 val height = UiUtils.dpToPx(context, 48)
-                val settings = context.getSettings()
+                val settings = ContextUtils.getSettings(context)
                 val isGradient = settings.getBoolean(BACKGROUND_GRADIENT, true)
                 val extra = if (isGradient) 0.5f else 0f
                 setOnScrollChangeListener { _, _, _, _, _ ->
@@ -115,8 +109,13 @@ class MainFragment : Fragment() {
                     val right = if (!isRtl) it.end else it.start
                     Rect(left + pad, it.top + pad, right + pad, it.bottom + bottom + pad)
                 })
-                block(it)
+                block(viewModel(fragment), it)
             }
+        }
+        
+        private fun viewModel(fragment: Fragment): UiViewModel {
+            val vm by fragment.activityViewModel<UiViewModel>()
+            return vm
         }
     }
 }

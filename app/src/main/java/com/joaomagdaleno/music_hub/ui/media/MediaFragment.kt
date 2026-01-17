@@ -12,17 +12,14 @@ import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
 import com.joaomagdaleno.music_hub.common.models.Playlist
 import com.joaomagdaleno.music_hub.databinding.FragmentMediaBinding
 import com.joaomagdaleno.music_hub.utils.ui.UiUtils
-import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.icon
-import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.placeHolder
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder
 import com.joaomagdaleno.music_hub.ui.media.more.MediaMoreBottomSheet
 import com.joaomagdaleno.music_hub.ui.playlist.delete.DeletePlaylistBottomSheet
 import com.joaomagdaleno.music_hub.ui.playlist.edit.EditPlaylistFragment
-import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
-import com.joaomagdaleno.music_hub.utils.Serializer.getSerialized
-import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized
-import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadInto
-import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadWithThumb
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
+import com.joaomagdaleno.music_hub.utils.ContextUtils
+import com.joaomagdaleno.music_hub.utils.Serializer
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 
@@ -30,14 +27,14 @@ class MediaFragment : Fragment(R.layout.fragment_media), MediaDetailsFragment.Pa
     companion object {
         fun getBundle(origin: String, item: EchoMediaItem, loaded: Boolean) = Bundle().apply {
             putString("origin", origin)
-            putSerialized("item", item)
+            Serializer.putSerialized(this, "item", item)
             putBoolean("loaded", loaded)
         }
     }
 
     val args by lazy { requireArguments() }
     val origin by lazy { args.getString("origin")!! }
-    val item by lazy { args.getSerialized<EchoMediaItem>("item")!!.getOrThrow() }
+    val item by lazy { Serializer.getSerialized<EchoMediaItem>(args, "item")!!.getOrThrow() }
     val loaded by lazy { args.getBoolean("loaded") }
 
     override val fromPlayer = false
@@ -49,7 +46,7 @@ class MediaFragment : Fragment(R.layout.fragment_media), MediaDetailsFragment.Pa
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = FragmentMediaBinding.bind(view)
-        setupTransition(view)
+        AnimationUtils.setupTransition(this, view)
         UiUtils.applyBackPressCallback(this)
         UiUtils.configureAppBar(binding.appBarLayout) { offset ->
             binding.appbarOutline.alpha = offset
@@ -67,13 +64,13 @@ class MediaFragment : Fragment(R.layout.fragment_media), MediaDetailsFragment.Pa
             true
         }
         UiUtils.applyInsets(this) {
-            UiUtils.applyFabInsets(binding.fabContainer, it, systemInsets.value)
+            UiUtils.applyFabInsets(binding.fabContainer, it, it.system)
         }
 
-        observe(viewModel.itemResultFlow) { result ->
+        ContextUtils.observe(this, viewModel.itemResultFlow) { result ->
             val item = result?.getOrNull()?.item ?: item
             binding.toolBar.title = item.title.trim()
-            binding.endIcon.setImageResource(item.icon)
+            binding.endIcon.setImageResource(MediaViewHolder.getIcon(item))
             if (item is Artist) binding.coverContainer.run {
                 val maxWidth = UiUtils.dpToPx(context, 240)
                 radius = maxWidth.toFloat()
@@ -81,8 +78,10 @@ class MediaFragment : Fragment(R.layout.fragment_media), MediaDetailsFragment.Pa
                     matchConstraintMaxWidth = maxWidth
                 }
             }
-            item.cover.loadInto(binding.cover, null, item.placeHolder)
-            item.background.loadWithThumb(view) { UiUtils.applyGradient(this, view, it) }
+            ImageUtils.loadInto(item.cover, binding.cover, MediaViewHolder.getPlaceHolder(item))
+            ImageUtils.loadWithThumb(item.background, view) { 
+                UiUtils.applyGradient(this@MediaFragment, view, it) 
+            }
             val isEditable = (result?.getOrNull()?.item as? Playlist)?.isEditable ?: false
             binding.fabEditPlaylist.isVisible = isEditable
             binding.fabEditPlaylist.setOnClickListener {

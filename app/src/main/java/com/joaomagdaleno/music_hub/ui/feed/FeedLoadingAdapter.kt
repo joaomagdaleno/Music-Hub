@@ -9,8 +9,7 @@ import com.joaomagdaleno.music_hub.databinding.ItemShelfErrorBinding
 import com.joaomagdaleno.music_hub.databinding.ItemShelfLoginRequiredBinding
 import com.joaomagdaleno.music_hub.databinding.ItemShelfNotLoadingBinding
 import com.joaomagdaleno.music_hub.common.helpers.ClientException
-import com.joaomagdaleno.music_hub.utils.ui.getFinalExceptionTitle
-import com.joaomagdaleno.music_hub.utils.ui.getExceptionMessage
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
 import com.joaomagdaleno.music_hub.ui.common.PagedSource
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimLoadStateAdapter
@@ -57,7 +56,7 @@ class FeedLoadingAdapter(
             val throwable = loadState.error
             binding.error.run {
                 transitionName = throwable.hashCode().toString()
-                text = context.getFinalExceptionTitle(throwable)
+                text = UiUtils.getFinalExceptionTitle(context, throwable)
             }
             binding.errorView.setOnClickListener {
                 listener?.onError(binding.error, throwable)
@@ -79,7 +78,7 @@ class FeedLoadingAdapter(
             val error = (loadState as LoadState.Error).error
             val appError = error as ClientException.LoginRequired
             binding.error.run {
-                text = context.getFinalExceptionTitle(appError)
+                text = UiUtils.getFinalExceptionTitle(context, appError)
             }
             binding.login.transitionName = appError.hashCode().toString()
             binding.login.setOnClickListener {
@@ -122,14 +121,14 @@ class FeedLoadingAdapter(
     override fun getSpanSize(position: Int, width: Int, count: Int) = count
 
     companion object {
-        fun Fragment.createListener(retry: () -> Unit) =
+        fun createListener(fragment: Fragment, retry: () -> Unit) =
             object : Listener {
                 override fun onRetry() {
                     retry()
                 }
 
                 override fun onError(view: View, error: Throwable) {
-                    requireActivity().getExceptionMessage(error, retry).action?.handler?.invoke()
+                    UiUtils.getExceptionMessage(fragment.requireActivity(), error, retry).action?.handler?.invoke()
                 }
 
                 override fun onLoginRequired(view: View, error: ClientException.LoginRequired) {

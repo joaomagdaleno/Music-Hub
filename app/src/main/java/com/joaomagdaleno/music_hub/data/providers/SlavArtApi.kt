@@ -9,7 +9,7 @@ import kotlinx.serialization.json.jsonArray
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import com.joaomagdaleno.music_hub.common.helpers.ContinuationCallback.Companion.await
+import com.joaomagdaleno.music_hub.common.helpers.ContinuationCallback
 
 @Serializable
 data class SlavArtTrack(
@@ -48,7 +48,7 @@ class SlavArtApi(private val client: OkHttpClient = OkHttpClient()) {
             ?.build() ?: return emptyList()
 
         val request = Request.Builder().url(url).build()
-        val response = client.newCall(request).await()
+        val response = ContinuationCallback.await(client.newCall(request))
 
         if (!response.isSuccessful) return emptyList()
 
@@ -140,7 +140,7 @@ class SlavArtApi(private val client: OkHttpClient = OkHttpClient()) {
             ?.build() ?: return null
 
         val request = Request.Builder().url(url).build()
-        val response = client.newCall(request).await()
+        val response = ContinuationCallback.await(client.newCall(request))
 
         if (!response.isSuccessful) return null
 
@@ -152,7 +152,7 @@ class SlavArtApi(private val client: OkHttpClient = OkHttpClient()) {
     suspend fun getAlbumTracks(albumId: String): List<SlavArtResult> {
         val url = "$baseUrl/api/album/$albumId".toHttpUrlOrNull() ?: return emptyList()
         val request = Request.Builder().url(url).build()
-        val response = client.newCall(request).await()
+        val response = ContinuationCallback.await(client.newCall(request))
 
         if (!response.isSuccessful) return emptyList()
 
@@ -173,7 +173,7 @@ class SlavArtApi(private val client: OkHttpClient = OkHttpClient()) {
     suspend fun getArtistInfo(artistId: String): SlavArtArtistInfo {
         val url = "$baseUrl/api/artist/$artistId".toHttpUrlOrNull() ?: return SlavArtArtistInfo(emptyList(), emptyList())
         val request = Request.Builder().url(url).build()
-        val response = client.newCall(request).await()
+        val response = ContinuationCallback.await(client.newCall(request))
 
         if (!response.isSuccessful) return SlavArtArtistInfo(emptyList(), emptyList())
 

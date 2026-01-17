@@ -7,7 +7,6 @@ import android.net.Uri
 import androidx.annotation.CallSuper
 import androidx.annotation.OptIn
 import androidx.core.net.toUri
-import androidx.core.os.bundleOf
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
@@ -22,21 +21,11 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.common.models.MediaState
 import com.joaomagdaleno.music_hub.common.helpers.PagedData
-import com.joaomagdaleno.music_hub.common.models.Album
-import com.joaomagdaleno.music_hub.common.models.Artist
-import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
-import com.joaomagdaleno.music_hub.common.models.Feed
-import com.joaomagdaleno.music_hub.common.models.ImageHolder
-import com.joaomagdaleno.music_hub.common.models.Playlist
-import com.joaomagdaleno.music_hub.common.models.Radio
-import com.joaomagdaleno.music_hub.common.models.Shelf
-import com.joaomagdaleno.music_hub.common.models.Track
+import com.joaomagdaleno.music_hub.common.models.*
 import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.download.Downloader
-import com.joaomagdaleno.music_hub.utils.CacheUtils.getFromCache
-import com.joaomagdaleno.music_hub.utils.CacheUtils.saveToCache
-import com.joaomagdaleno.music_hub.utils.CoroutineUtils.await
-import com.joaomagdaleno.music_hub.utils.CoroutineUtils.future
+import com.joaomagdaleno.music_hub.utils.CacheUtils
+import com.joaomagdaleno.music_hub.utils.CoroutineUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import java.util.WeakHashMap
@@ -71,7 +60,7 @@ abstract class AndroidAutoCallback(
         page: Int,
         pageSize: Int,
         params: MediaLibraryService.LibraryParams?
-    ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = scope.future {
+    ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = CoroutineUtils.future(scope) {
         LibraryResult.ofItemList(listOf(), null)
     }
 
@@ -85,7 +74,7 @@ abstract class AndroidAutoCallback(
         pageSize: Int,
         params: MediaLibraryService.LibraryParams?
     ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
-        return scope.future {
+        return CoroutineUtils.future(scope) {
             LibraryResult.ofItemList(listOf(), null)
         }
     }
@@ -97,13 +86,13 @@ abstract class AndroidAutoCallback(
         mediaItems: MutableList<MediaItem>,
         startIndex: Int,
         startPositionMs: Long
-    ) = scope.future {
+    ) = CoroutineUtils.future(scope) {
         val new = mediaItems.mapNotNull {
             if (it.mediaId.startsWith("auto/")) {
                 val id = it.mediaId.substringAfter("auto/")
-                val (track, origin, con) =
-                    context.getFromCache<Triple<Track, String, EchoMediaItem?>>(id, "auto")
-                        ?: return@mapNotNull null
+                val triple = CacheUtils.getFromCache<Triple<Track, String, EchoMediaItem?>>(context, id, "auto")
+                         ?: return@mapNotNull null
+                val (track, origin, con) = triple
                 MediaItemUtils.build(
                     app,
                     downloadFlow.value,
@@ -115,7 +104,7 @@ abstract class AndroidAutoCallback(
         val future = super.onSetMediaItems(
             mediaSession, controller, new, startIndex, startPositionMs
         )
-        future.await(context)
+        CoroutineUtils.await(future, context)
     }
 
     companion object {
@@ -133,23 +122,23 @@ abstract class AndroidAutoCallback(
         private const val PLAYLIST = "playlist"
         private const val RADIO = "radio"
 
-        private fun Resources.getUri(int: Int): Uri {
+        private fun getResourcesUri(resources: Resources, int: Int): Uri {
             val scheme = ContentResolver.SCHEME_ANDROID_RESOURCE
-            val pkg = getResourcePackageName(int)
-            val type = getResourceTypeName(int)
-            val name = getResourceEntryName(int)
+            val pkg = resources.getResourcePackageName(int)
+            val type = resources.getResourceTypeName(int)
+            val name = resources.getResourceEntryName(int)
             val uri = "$scheme://$pkg/$type/$name"
             return uri.toUri()
         }
 
-        private fun ImageHolder.toUri(context: Context) = when (this) {
-            is ImageHolder.ResourceUriImageHolder -> uri.toUri()
-            is ImageHolder.NetworkRequestImageHolder -> request.url.toUri()
-            is ImageHolder.ResourceIdImageHolder -> context.resources.getUri(resId)
+        private fun imageToUri(context: Context, image: ImageHolder) = when (image) {
+            is ImageHolder.ResourceUriImageHolder -> image.uri.toUri()
+            is ImageHolder.NetworkRequestImageHolder -> image.request.url.toUri()
+            is ImageHolder.ResourceIdImageHolder -> getResourcesUri(context.resources, image.resId)
             is ImageHolder.HexColorImageHolder -> "".toUri()
         }
 
-        private fun browsableItem(
+        fun browsableItem(
             id: String,
             title: String,
             subtitle: String? = null,
@@ -170,27 +159,27 @@ abstract class AndroidAutoCallback(
             )
             .build()
 
-        private fun Track.toItem(
-            context: Context, origin: String, con: EchoMediaItem? = null
+        private fun trackToMediaItem(
+            context: Context, track: Track, origin: String, con: EchoMediaItem? = null
         ): MediaItem {
-            context.saveToCache(id, Triple(this, origin, con), "auto")
+            CacheUtils.saveToCache(context, track.id, Triple(track, origin, con), "auto")
             return MediaItem.Builder()
-                .setMediaId("auto/$id")
+                .setMediaId("auto/${track.id}")
                 .setMediaMetadata(
                     MediaMetadata.Builder()
                         .setIsPlayable(true)
                         .setIsBrowsable(false)
                         .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
-                        .setTitle(title)
-                        .setArtist(subtitleWithE)
-                        .setAlbumTitle(album?.title)
-                        .setArtworkUri(cover?.toUri(context))
+                        .setTitle(track.title)
+                        .setArtist(track.subtitleWithE)
+                        .setAlbumTitle(track.album?.title)
+                        .setArtworkUri(track.cover?.let { imageToUri(context, it) })
                         .build()
                 ).build()
         }
 
 
-        private fun Any.toMediaItem(context: Context): MediaItem {
+        fun anyToMediaItem(context: Context, any: Any): MediaItem {
             // Placeholder for now
             return browsableItem("placeholder", "Placeholder")
         }
@@ -203,14 +192,14 @@ abstract class AndroidAutoCallback(
         val errorIo = LibraryResult.ofError<ImmutableList<MediaItem>>(SessionError.ERROR_IO)
 
         private val itemMap = WeakHashMap<String, EchoMediaItem>()
-        private fun EchoMediaItem.toMediaItem(
-            context: Context, origin: String
-        ): MediaItem = when (this) {
-            is Track -> toItem(context, origin)
+        fun echoMediaItemToMediaItem(
+            context: Context, item: EchoMediaItem, origin: String
+        ): MediaItem = when (item) {
+            is Track -> trackToMediaItem(context, item, origin)
             else -> {
-                val id = hashCode().toString()
-                itemMap[id] = this
-                val (page, type) = when (this) {
+                val id = item.hashCode().toString()
+                itemMap[id] = item
+                val (page, type) = when (item) {
                     is Artist, is Radio -> USER to MediaMetadata.MEDIA_TYPE_MIXED
                     is Album -> ALBUM to MediaMetadata.MEDIA_TYPE_ALBUM
                     is Playlist -> PLAYLIST to MediaMetadata.MEDIA_TYPE_PLAYLIST
@@ -218,28 +207,29 @@ abstract class AndroidAutoCallback(
                 }
                 browsableItem(
                     "$ROOT/$origin/$page/$id",
-                    title,
-                    subtitleWithE,
+                    item.title,
+                    item.subtitleWithE,
                     true,
-                    cover?.toUri(context),
+                    item.cover?.let { imageToUri(context, it) },
                     type
                 )
             }
         }
 
         private val listsMap = WeakHashMap<String, Shelf.Lists<*>>()
-        private fun getListsItems(
+        private val feedMap = WeakHashMap<String, Feed<Shelf>>()
+        fun getListsItems(
             context: Context, id: String, origin: String
         ) = run {
             val shelf = listsMap[id]!!
             when (shelf) {
-                is Shelf.Lists.Categories -> shelf.list.map { it.toMediaItem(context, origin) }
-                is Shelf.Lists.Items -> shelf.list.map { it.toMediaItem(context, origin) }
-                is Shelf.Lists.Tracks -> shelf.list.map { it.toItem(context, origin) }
+                is Shelf.Lists.Categories -> shelf.list.map { echoMediaItemToMediaItem(context, it, origin) }
+                is Shelf.Lists.Items -> shelf.list.map { echoMediaItemToMediaItem(context, it, origin) }
+                is Shelf.Lists.Tracks -> shelf.list.map { trackToMediaItem(context, it, origin) }
             } + listOfNotNull(
                 if (shelf.more != null) {
                     val moreId = shelf.id
-                    feedMap[moreId] = shelf.more
+                    feedMap[moreId] = shelf.more!!
                     browsableItem(
                         "$ROOT/$origin/$FEED/$moreId",
                         context.getString(R.string.more)
@@ -248,20 +238,20 @@ abstract class AndroidAutoCallback(
             )
         }
 
-        private fun Shelf.toMediaItem(
-            context: Context, origin: String
-        ): MediaItem = when (this) {
+        fun shelfToMediaItem(
+            context: Context, shelf: Shelf, origin: String
+        ): MediaItem = when (shelf) {
             is Shelf.Category -> {
-                val items = feed
-                if (items != null) feedMap[id] = items
-                browsableItem("$ROOT/$origin/$FEED/$id", title, subtitle, items != null)
+                val items = shelf.feed
+                if (items != null) feedMap[shelf.id] = items
+                browsableItem("$ROOT/$origin/$FEED/${shelf.id}", shelf.title, shelf.subtitle, items != null)
             }
 
-            is Shelf.Item -> media.toMediaItem(context, origin)
+            is Shelf.Item -> echoMediaItemToMediaItem(context, shelf.media, origin)
             is Shelf.Lists<*> -> {
-                val id = "${id.hashCode()}"
-                listsMap[id] = this
-                browsableItem("$ROOT/$origin/$LIST/$id", title, subtitle)
+                val id = "${shelf.id.hashCode()}"
+                listsMap[id] = shelf
+                browsableItem("$ROOT/$origin/$LIST/$id", shelf.title, shelf.subtitle)
             }
         }
 
@@ -269,46 +259,38 @@ abstract class AndroidAutoCallback(
         // THIS PROBABLY BREAKS GOING BACK TBH, NEED TO TEST
         private val shelvesMap = WeakHashMap<String, PagedData<Shelf>>()
         private val continuations = WeakHashMap<Pair<String, Int>, String?>()
-        private suspend fun getShelfItems(
+        suspend fun getShelfItems(
             context: Context, id: String, origin: String, page: Int
         ): List<MediaItem> {
             val shelf = shelvesMap[id]!!
             val (list, next) = shelf.loadPage(continuations[id to page])
             continuations[id to page + 1] = next
-            return listOfNotNull(
-                *list.map { it.toMediaItem(context, origin) }.toTypedArray()
-            )
+            return list.map { shelfToMediaItem(context, it, origin) }
         }
 
-        private val feedMap = WeakHashMap<String, Feed<Shelf>>()
-        private suspend fun Feed<Shelf>.toMediaItems(
-            id: String, context: Context, origin: String, page: Int
+        suspend fun feedToMediaItems(
+            feed: Feed<Shelf>, id: String, context: Context, origin: String, page: Int
         ): List<MediaItem> {
-            val id = "${id.hashCode()}"
-            feedMap[id] = this
+            val feedId = "${id.hashCode()}"
+            feedMap[feedId] = feed
             //TODO
             return listOf()
         }
 
         private val tracksMap = WeakHashMap<String, Pair<EchoMediaItem, PagedData<Track>>>()
-        private suspend fun getTracks(
+        suspend fun getTracks(
             context: Context,
             id: String,
             page: Int,
             getTracks: suspend () -> Pair<EchoMediaItem, Feed<Track>?>
         ): List<MediaItem> {
             val (item, tracks) = tracksMap.getOrPut(id) {
-                val tracks = getTracks().run {
-                    first to (second?.run { getPagedData(tabs.firstOrNull()) }?.pagedData
-                        ?: PagedData.empty())
-                }
-                tracksMap[id] = tracks
-                tracks
+                val result = getTracks()
+                result.first to (result.second?.run { getPagedData(tabs.firstOrNull()) }?.pagedData ?: PagedData.empty())
             }
             val (list, next) = tracks.loadPage(continuations[id to page])
             continuations[id to page + 1] = next
-            return list.map { it.toItem(context, id, item) }
+            return list.map { trackToMediaItem(context, it, id, item) }
         }
     }
-
 }

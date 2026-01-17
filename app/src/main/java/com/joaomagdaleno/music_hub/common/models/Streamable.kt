@@ -1,34 +1,11 @@
 package com.joaomagdaleno.music_hub.common.models
 
-import com.joaomagdaleno.music_hub.common.models.Streamable.Media.Companion.toBackgroundMedia
-import com.joaomagdaleno.music_hub.common.models.Streamable.Media.Companion.toMedia
-import com.joaomagdaleno.music_hub.common.models.Streamable.Media.Companion.toServerMedia
-import com.joaomagdaleno.music_hub.common.models.Streamable.Media.Companion.toSubtitleMedia
-import com.joaomagdaleno.music_hub.common.models.NetworkRequest.Companion.toGetRequest
-import com.joaomagdaleno.music_hub.common.models.Streamable.Stream.Companion.toStream
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.json.JsonClassDiscriminator
 import java.io.InputStream
 
-/**
- * A data class representing an unloaded streamable item that is used when playing a [Track]
- * The streamable item can be of three types:
- * - [Streamable.server] - To represent a server that contains data to be played
- * - [Streamable.background] - To represent a background video
- * - [Streamable.subtitle] - To represent subtitle
- *
- *
- * @property id The id of the streamable item
- * @property quality The quality of the streamable item, this is used to sort the streamable items
- * @property type The type of the streamable item
- * @property title The title of the streamable item
- * @property extras Any extra data you want to associate with the streamable item
- *
- * @see Streamable.Media
- */
-@Suppress("unused")
 @Serializable
 data class Streamable(
     val id: String,
@@ -38,125 +15,41 @@ data class Streamable(
     val extras: Map<String, String> = mapOf()
 ) {
 
-    /**
-     * A class that represents a loaded streamable media.
-     *
-     * There are three types of media:
-     * - [Subtitle] - To represent a loaded subtitle media
-     * - [Server] - To represent a loaded server media
-     * - [Background] - To represent a loaded background media
-     *
-     * @see toMedia
-     * @see toSubtitleMedia
-     * @see toServerMedia
-     * @see toBackgroundMedia
-     */
     @OptIn(ExperimentalSerializationApi::class)
     @JsonClassDiscriminator("mediaType")
     @Serializable
     sealed class Media {
 
-        /**
-         * A data class representing a loaded subtitle for a [Track].
-         *
-         * Headers are unfortunately not supported for subtitles.
-         *
-         * @property url The url of the subtitle
-         * @property type The type of the subtitle
-         *
-         * @see SubtitleType
-         * @see toSubtitleMedia
-         */
         @Serializable
         data class Subtitle(val url: String, val type: SubtitleType) : Media()
 
-        /**
-         * A data class representing a loaded server media for a [Track].
-         *
-         * The streams will all load at the same time if [merged] is true and combined into a
-         * single media stream like a M3U8 with multiple qualities.
-         *
-         * If [merged] is false, the streams will be loaded separately and
-         * the user can switch between them.
-         *
-         * @property streams The list of streams for the server media
-         * @property merged Whether the server media is merged or not
-         *
-         * @see Stream
-         * @see Stream.toMedia
-         * @see toServerMedia
-         */
         @Serializable
         data class Server(val streams: List<Stream>, val merged: Boolean) : Media()
 
-        /**
-         * A data class representing a loaded background video for a [Track].
-         * The sound of the background video will be removed.
-         *
-         * @property request The request for the background media
-         *
-         * @see NetworkRequest
-         * @see toBackgroundMedia
-         */
         @Serializable
         data class Background(val request: NetworkRequest) : Media()
+        
         companion object {
-            /**
-             * Creates a [Server] media from this [Stream].
-             */
-            fun Stream.toMedia() = Server(listOf(this), false)
+            fun toMedia(stream: Stream) = Server(listOf(stream), false)
 
-            /**
-             * Creates a [Background] media from this String Url.
-             *
-             * @param headers The headers to be used for the request
-             * @return A [Background] media from the String Url
-             */
-            fun String.toBackgroundMedia(headers: Map<String, String> = mapOf()) =
-                Background(this.toGetRequest(headers))
+            fun toBackgroundMedia(url: String, headers: Map<String, String> = mapOf()) =
+                Background(NetworkRequest.toGetRequest(url, headers))
 
-            /**
-             * Creates a single [Stream] server media from this String Url.
-             *
-             * @param headers The headers to be used for the request
-             * @param type The type of the stream
-             * @return A single [Stream.Http] media with the given [type]
-             */
-            fun String.toServerMedia(
+            fun toServerMedia(
+                url: String,
                 headers: Map<String, String> = mapOf(),
                 type: StreamFormat = StreamFormat.Progressive,
                 isVideo: Boolean = false
-            ) = this.toStream(headers, type, isVideo).toMedia()
+            ) = toMedia(Stream.toStream(url, headers, type, isVideo))
 
-            /**
-             * Creates a [Subtitle] media from this String Url.
-             *
-             * @param type The type of the subtitle
-             * @return A [Subtitle] media from the String Url
-             */
-            fun String.toSubtitleMedia(type: SubtitleType) = Subtitle(this, type)
+            fun toSubtitleMedia(url: String, type: SubtitleType) = Subtitle(url, type)
         }
     }
 
-    /**
-     * A class representing Media Decryption for a [Stream].
-     *
-     * There is only one type of decryption:
-     * - [Widevine] - To represent a Widevine decryption
-     */
     @OptIn(ExperimentalSerializationApi::class)
     @JsonClassDiscriminator("decryptionType")
     @Serializable
     sealed class Decryption {
-
-        /**
-         * A data class representing a Widevine decryption for a [Stream].
-         *
-         * @property license The license request for the Widevine decryption
-         * @property isMultiSession Whether the Widevine decryption is multi-session or not
-         *
-         * @see NetworkRequest
-         */
         @Serializable
         data class Widevine(
             val license: NetworkRequest,
@@ -164,20 +57,6 @@ data class Streamable(
         ) : Decryption()
     }
 
-    /**
-     * A class representing the actual stream where streamable audio/video is present.
-     *
-     * There are three types of streams:
-     * - [Http] - To represent a stream that contains Audio/Video on a Http Url.
-     * - [Raw] - To represent a stream that contains Audio/Video in a Byte Stream.
-     *
-     * @property quality The quality of the stream, this is used to sort the streams
-     * @property title The title of the stream
-     *
-     * @see StreamFormat
-     * @see toStream
-     * @see Media.toServerMedia
-     */
     @OptIn(ExperimentalSerializationApi::class)
     @JsonClassDiscriminator("streamType")
     @Serializable
@@ -188,17 +67,6 @@ data class Streamable(
         abstract val isVideo: Boolean
         abstract val isLive: Boolean
 
-        /**
-         * A data class representing a stream that contains Audio/Video on a Http Url.
-         *
-         * @property request The request for the stream
-         * @property format The format of the stream
-         * @property decryption The decryption for the stream
-         * @param isLive If true, will prevent caching of the stream
-         *
-         * @see NetworkRequest
-         * @see Decryption
-         */
         @Serializable
         data class Http(
             val request: NetworkRequest,
@@ -212,13 +80,6 @@ data class Streamable(
             override val id = request.url
         }
 
-        /**
-         * A data class representing a stream that contains Audio/Video in a Byte Stream.
-         *
-         * @property streamProvider A function that provides an [InputStream] from a given position.
-         *
-         * @see InputProvider
-         */
         @Serializable
         data class Raw(
             @Transient val streamProvider: InputProvider? = null,
@@ -230,129 +91,47 @@ data class Streamable(
         ) : Stream()
 
         companion object {
-            /**
-             * Creates a [Http] stream from the String Url.
-             *
-             * @param headers The headers to be used for the request
-             * @param format The format of the stream
-             * @return A [Stream] from the String Url
-             */
-            fun String.toStream(
+            fun toStream(
+                url: String,
                 headers: Map<String, String> = mapOf(),
                 format: StreamFormat = StreamFormat.Progressive,
                 isVideo: Boolean = false,
                 isLive: Boolean = false
-            ) = Http(this.toGetRequest(headers), format, isVideo = isVideo, isLive = isLive)
+            ) = Http(NetworkRequest.toGetRequest(url, headers), format, isVideo = isVideo, isLive = isLive)
 
-            fun InputProvider.toStream(
-                id: String, isVideo: Boolean = false, isLive: Boolean = false
-            ) = Raw(this, id, isVideo = isVideo, isLive = isLive)
+            fun toStream(
+                id: String, provider: InputProvider, isVideo: Boolean = false, isLive: Boolean = false
+            ) = Raw(provider, id, isVideo = isVideo, isLive = isLive)
         }
     }
 
-    /**
-     * An interface that provides an [InputStream] from a given position.
-     *
-     * This is used for [Streamable.Stream.Raw] to provide the stream data.
-     */
     fun interface InputProvider {
-
-        /**
-         * Provides an [InputStream] from a given position.
-         *
-         * @param position The position to start reading from, 0 if the stream should start from the beginning
-         * @param length The total bytes that should be the end of the stream, -1 if unknown. Important for seeking.
-         * @return An [InputStream] from the given position and the total bytes that can be read, or -1 if unknown.
-         */
         suspend fun provide(position: Long, length: Long): Pair<InputStream, Long>
     }
 
     companion object {
-
-        /**
-         * Creates a [Streamable] with the given [id], [quality], [title], and [extras] for a server media.
-         *
-         * @param id The id of the streamable item
-         * @param quality The quality of the streamable item, this is used to sort the streamable items
-         * @param title The title of the streamable item
-         * @param extras Any extra data you want to associate with the streamable item
-         * @return A [Streamable] with the given [id], [quality], [title], and [extras] for a server media
-         */
         fun server(
             id: String, quality: Int, title: String? = null, extras: Map<String, String> = mapOf()
         ) = Streamable(id, quality, MediaType.Server, title, extras)
 
-        /**
-         * Creates a [Streamable] with the given [id], [quality], [title], and [extras] for a background media.
-         *
-         * @param id The id of the streamable item
-         * @param quality The quality of the streamable item, this is used to sort the streamable items
-         * @param title The title of the streamable item
-         * @param extras Any extra data you want to associate with the streamable item
-         * @return A [Streamable] with the given [id], [quality], [title], and [extras] for a background media
-         */
         fun background(
             id: String, quality: Int, title: String? = null, extras: Map<String, String> = mapOf()
         ) = Streamable(id, quality, MediaType.Background, title, extras)
 
-        /**
-         * Creates a [Streamable] with the given [id], [quality], [title], and [extras] for a subtitle media.
-         *
-         * @param id The id of the streamable item
-         * @param title The title of the streamable item
-         * @param extras Any extra data you want to associate with the streamable item
-         * @return A [Streamable] with the given [id], [title], and [extras] for a subtitle media
-         */
         fun subtitle(
             id: String, title: String? = null, extras: Map<String, String> = mapOf()
         ) = Streamable(id, 0, MediaType.Subtitle, title, extras)
     }
 
-    /**
-     * An enum class representing the type of media
-     */
     enum class MediaType {
-        /** Represents an unloaded background streamable */
-        Background,
-
-        /** Represents an unloaded server streamable */
-        Server,
-
-        /** Represents an unloaded subtitle streamable */
-        Subtitle
+        Background, Server, Subtitle
     }
 
-    /**
-     * An enum class representing the type of subtitle
-     */
     enum class SubtitleType {
-        /** WebVTT subtitle format */
-        VTT,
-
-        /** SubRip subtitle format */
-        SRT,
-
-        /** Advanced SubStation Alpha subtitle format */
-        ASS
+        VTT, SRT, ASS
     }
 
-    /**
-     * An enum representing the format of [Stream].
-     */
     enum class StreamFormat {
-        /**
-         * Stream that contain Audio/Video in container format File.
-         */
-        Progressive,
-
-        /**
-         * Stream that is a M3U8 File.
-         */
-        HLS,
-
-        /**
-         * Stream that is a Dash Manifest File.
-         */
-        DASH
+        Progressive, HLS, DASH
     }
 }

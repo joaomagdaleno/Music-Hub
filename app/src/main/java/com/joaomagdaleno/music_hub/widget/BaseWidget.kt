@@ -21,10 +21,8 @@ import com.joaomagdaleno.music_hub.playback.PlayerCommands.repeatCommand
 import com.joaomagdaleno.music_hub.playback.PlayerCommands.repeatOffCommand
 import com.joaomagdaleno.music_hub.playback.PlayerCommands.repeatOneCommand
 import com.joaomagdaleno.music_hub.playback.PlayerCommands.resumeCommand
-import com.joaomagdaleno.music_hub.playback.PlayerCommands.unlikeCommand
-import com.joaomagdaleno.music_hub.playback.PlayerService.Companion.getPendingIntent
-import com.joaomagdaleno.music_hub.playback.ResumptionUtils.recoverIndex
-import com.joaomagdaleno.music_hub.playback.ResumptionUtils.recoverTracks
+import com.joaomagdaleno.music_hub.playback.PlayerService
+import com.joaomagdaleno.music_hub.playback.ResumptionUtils
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -125,8 +123,8 @@ abstract class BaseWidget : AppWidgetProvider(), KoinComponent {
         const val ACTION_REPEAT_ONE = "com.joaomagdaleno.music_hub.widget.REPEAT_ONE"
         const val ACTION_RESUME = "com.joaomagdaleno.music_hub.widget.RESUME"
 
-        fun Context.createIntent(clazz: Class<*>, action: String) = PendingIntent.getBroadcast(
-            this, 0, Intent(this, clazz).apply {
+        fun createIntent(context: Context, clazz: Class<*>, action: String) = PendingIntent.getBroadcast(
+            context, 0, Intent(context, clazz).apply {
                 this.action = action
             }, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )!!
@@ -139,9 +137,9 @@ abstract class BaseWidget : AppWidgetProvider(), KoinComponent {
             views: RemoteViews,
         ) {
             val current = controller?.currentMediaItem
-            val item = current?.state ?: context.run {
-                val list = recoverTracks().orEmpty()
-                val index = recoverIndex() ?: 0
+            val item = current?.state ?: run {
+                val list = ResumptionUtils.recoverTracks(context).orEmpty()
+                val index = ResumptionUtils.recoverIndex(context) ?: 0
                 list.getOrNull(index)?.first
             }
             val title = item?.item?.title
@@ -152,18 +150,19 @@ abstract class BaseWidget : AppWidgetProvider(), KoinComponent {
                 R.id.trackArtist,
                 artist ?: context.getString(R.string.unknown).takeIf { title != null }
             )
-            val image = image?.run { copy(config ?: Bitmap.Config.ARGB_8888, false) }
-            if (image == null) views.setImageViewResource(R.id.trackCover, R.drawable.art_music)
-            else views.setImageViewBitmap(R.id.trackCover, image)
+            val finalImage = image?.run { copy(config ?: Bitmap.Config.ARGB_8888, false) }
+            if (finalImage == null) views.setImageViewResource(R.id.trackCover, R.drawable.art_music)
+            else views.setImageViewBitmap(R.id.trackCover, finalImage)
 
-            views.setOnClickPendingIntent(android.R.id.background, getPendingIntent(context))
+            views.setOnClickPendingIntent(android.R.id.background, PlayerService.getPendingIntent(context))
 
             val isPlaying = if (current != null) controller.playWhenReady else false
             views.setOnClickPendingIntent(
-                R.id.playPauseButton, context.createIntent(
+                R.id.playPauseButton, createIntent(
+                    context,
                     clazz,
                     if (current != null) {
-                        if (isPlaying) ACTION_PLAY_PAUSE else ACTION_PLAY_PAUSE
+                        ACTION_PLAY_PAUSE
                     } else ACTION_RESUME
                 )
             )
@@ -175,7 +174,7 @@ abstract class BaseWidget : AppWidgetProvider(), KoinComponent {
             )
 
             views.setOnClickPendingIntent(
-                R.id.nextButton, context.createIntent(clazz, ACTION_NEXT)
+                R.id.nextButton, createIntent(context, clazz, ACTION_NEXT)
             )
             views.setFloat(
                 R.id.nextButton,
@@ -183,7 +182,7 @@ abstract class BaseWidget : AppWidgetProvider(), KoinComponent {
                 if (controller?.hasNextMediaItem() == true) 1f else 0.5f
             )
             views.setOnClickPendingIntent(
-                R.id.previousButton, context.createIntent(clazz, ACTION_PREVIOUS)
+                R.id.previousButton, createIntent(context, clazz, ACTION_PREVIOUS)
             )
             views.setFloat(
                 R.id.previousButton,
@@ -194,7 +193,7 @@ abstract class BaseWidget : AppWidgetProvider(), KoinComponent {
             val isLiked = (item as? MediaState.Loaded)?.isLiked ?: false
             views.setOnClickPendingIntent(
                 R.id.likeButton,
-                context.createIntent(clazz, if (isLiked) ACTION_UNLIKE else ACTION_LIKE)
+                createIntent(context, clazz, if (isLiked) ACTION_UNLIKE else ACTION_LIKE)
             )
             views.setImageViewResource(
                 R.id.likeButton,
@@ -203,7 +202,8 @@ abstract class BaseWidget : AppWidgetProvider(), KoinComponent {
 
             val repeatMode = controller?.repeatMode ?: 0
             views.setOnClickPendingIntent(
-                R.id.repeatButton, context.createIntent(
+                R.id.repeatButton, createIntent(
+                    context,
                     clazz,
                     when (repeatMode) {
                         Player.REPEAT_MODE_OFF -> ACTION_REPEAT

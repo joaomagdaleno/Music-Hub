@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.CoroutineContext
-import kotlin.experimental.ExperimentalTypeInference
 
 object CoroutineUtils {
     fun setDebug() {
@@ -28,30 +27,30 @@ object CoroutineUtils {
         )
     }
 
-    suspend fun <T, R> Flow<T>.collectWith(flow: Flow<R>, block: suspend (T, R) -> Unit) {
-        this.combine(flow) { t, r -> t to r }.collectLatest { (t, r) -> block(t, r) }
+    suspend fun <T, R> collectWith(flow1: Flow<T>, flow2: Flow<R>, block: suspend (T, R) -> Unit) {
+        flow1.combine(flow2) { t, r -> t to r }.collectLatest { (t, r) -> block(t, r) }
     }
 
-    fun <T> Flow<T>.throttleLatest(delayMillis: Long): Flow<T> = conflate().transform {
+    fun <T> throttleLatest(flow: Flow<T>, delayMillis: Long): Flow<T> = flow.conflate().transform {
         emit(it)
         delay(delayMillis)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class, ExperimentalTypeInference::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     inline fun <reified T, R> combineTransformLatest(
         vararg flows: Flow<T>,
-        @BuilderInference noinline transform: suspend FlowCollector<R>.(Array<T>) -> Unit
+        noinline transform: suspend FlowCollector<R>.(Array<T>) -> Unit
     ): Flow<R> {
         return combine(*flows) { it }
             .transformLatest(transform)
     }
 
-    @OptIn(ExperimentalTypeInference::class)
-    fun <T1, T2, R> Flow<T1>.combineTransformLatest(
+    fun <T1, T2, R> combineTransformLatest(
+        flow1: Flow<T1>,
         flow2: Flow<T2>,
-        @BuilderInference transform: suspend FlowCollector<R>.(T1, T2) -> Unit
+        transform: suspend FlowCollector<R>.(T1, T2) -> Unit
     ): Flow<R> {
-        return combineTransformLatest(this, flow2) { args ->
+        return combineTransformLatest(flow1, flow2) { args ->
             @Suppress("UNCHECKED_CAST")
             transform(
                 args[0] as T1,
@@ -60,21 +59,21 @@ object CoroutineUtils {
         }
     }
 
-    fun <T> CoroutineScope.future(
-        context: CoroutineContext = Dispatchers.IO, block: suspend () -> T
+    fun <T> future(
+        scope: CoroutineScope, context: CoroutineContext = Dispatchers.IO, block: suspend () -> T
     ): ListenableFuture<T> {
         val future = SettableFuture.create<T>()
-        launch(context) {
+        scope.launch(context) {
             future.set(block())
         }
         return future
     }
 
-    fun <T> CoroutineScope.futureCatching(
-        context: CoroutineContext = Dispatchers.IO, block: suspend () -> T
+    fun <T> futureCatching(
+        scope: CoroutineScope, context: CoroutineContext = Dispatchers.IO, block: suspend () -> T
     ): ListenableFuture<T> {
         val future = SettableFuture.create<T>()
-        launch(context) {
+        scope.launch(context) {
             runCatching {
                 future.set(block())
             }.getOrElse {
@@ -84,13 +83,12 @@ object CoroutineUtils {
         return future
     }
 
-
-    suspend fun <T> ListenableFuture<T>.await(context: Context) = suspendCancellableCoroutine {
-        it.invokeOnCancellation {
-            cancel(true)
+    suspend fun <T> await(future: ListenableFuture<T>, context: Context) = suspendCancellableCoroutine { continuation ->
+        continuation.invokeOnCancellation {
+            future.cancel(true)
         }
-        addListener({
-            it.resumeWith(runCatching { get()!! })
+        future.addListener({
+            continuation.resumeWith(runCatching { future.get()!! })
         }, ContextCompat.getMainExecutor(context))
     }
 }

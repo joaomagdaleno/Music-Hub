@@ -15,12 +15,9 @@ import com.joaomagdaleno.music_hub.databinding.ItemShelfCategoryBinding
 import com.joaomagdaleno.music_hub.databinding.ItemShelfListsMediaBinding
 import com.joaomagdaleno.music_hub.databinding.ItemShelfListsThreeTracksBinding
 import com.joaomagdaleno.music_hub.playback.PlayerState
-import com.joaomagdaleno.music_hub.playback.PlayerState.Current.Companion.isPlaying
 import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
-import com.joaomagdaleno.music_hub.ui.feed.viewholders.CategoryViewHolder.Companion.bind
-import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.applyCover
-import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.bind
-import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.subtitle
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.CategoryViewHolder
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
 
 sealed class ShelfViewHolder<T : ShelfType>(view: View) : ScrollAnimViewHolder(view) {
@@ -56,7 +53,7 @@ sealed class ShelfViewHolder<T : ShelfType>(view: View) : ScrollAnimViewHolder(v
         override fun bind(index: Int, list: List<ShelfType.Category>) {
             val item = list[index]
             this.item = item
-            binding.bind(item.category)
+            CategoryViewHolder.bind(binding, item.category)
         }
     }
 
@@ -96,11 +93,11 @@ sealed class ShelfViewHolder<T : ShelfType>(view: View) : ScrollAnimViewHolder(v
         override fun bind(index: Int, list: List<ShelfType.Media>) {
             val shelf = list[index]
             this.shelf = shelf
-            binding.bind(shelf.media)
+            bindMedia(binding, shelf.media)
         }
 
         override fun onCurrentChanged(current: PlayerState.Current?) {
-            val isPlaying = current.isPlaying(shelf?.media?.id)
+            val isPlaying = PlayerState.Current.isPlaying(current, shelf?.media?.id)
             binding.coverContainer.isPlaying.isVisible = isPlaying
             (binding.coverContainer.isPlaying.icon as Animatable).start()
         }
@@ -157,7 +154,7 @@ sealed class ShelfViewHolder<T : ShelfType>(view: View) : ScrollAnimViewHolder(v
                 val track = tracks.getOrNull(index)
                 view.root.isVisible = track != null
                 if (track == null) return@forEachIndexed
-                view.bind(track, number?.let { it * 3 + index })
+                MediaViewHolder.bind(view, track, number?.let { it * 3 + index })
             }
         }
 
@@ -165,7 +162,7 @@ sealed class ShelfViewHolder<T : ShelfType>(view: View) : ScrollAnimViewHolder(v
             val tracks = shelf?.tracks?.toList() ?: return
             bindings.forEachIndexed { index, binding ->
                 val track = tracks.getOrNull(index) ?: return@forEachIndexed
-                val isPlaying = current.isPlaying(track.id)
+                val isPlaying = PlayerState.Current.isPlaying(current, track.id)
                 binding.coverContainer.isPlaying.isVisible = isPlaying
                 (binding.coverContainer.isPlaying.icon as Animatable).start()
             }
@@ -173,15 +170,16 @@ sealed class ShelfViewHolder<T : ShelfType>(view: View) : ScrollAnimViewHolder(v
     }
 
     companion object {
-        fun ItemShelfListsMediaBinding.bind(item: EchoMediaItem) {
+        fun bindMedia(binding: ItemShelfListsMediaBinding, item: EchoMediaItem) {
+            val context = binding.root.context
             val gravity = if (item is Artist) Gravity.CENTER else Gravity.NO_GRAVITY
-            title.text = item.title
-            title.gravity = gravity
-            val sub = item.subtitle(root.context)
-            subtitle.text = sub
-            subtitle.gravity = gravity
-            subtitle.isVisible = !sub.isNullOrBlank()
-            coverContainer.run { applyCover(item, cover, listBg1, listBg2, icon) }
+            binding.title.text = item.title
+            binding.title.gravity = gravity
+            val sub = MediaViewHolder.subtitle(item, context)
+            binding.subtitle.text = sub
+            binding.subtitle.gravity = gravity
+            binding.subtitle.isVisible = !sub.isNullOrBlank()
+            MediaViewHolder.applyCover(item, binding.coverContainer.cover, binding.coverContainer.listBg1, binding.coverContainer.listBg2, binding.coverContainer.icon)
         }
     }
 }

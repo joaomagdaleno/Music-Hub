@@ -4,19 +4,15 @@ import android.content.Context
 import android.os.Build
 import com.joaomagdaleno.music_hub.BuildConfig
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.helpers.ContinuationCallback.Companion.await
+import com.joaomagdaleno.music_hub.common.helpers.ContinuationCallback
 import com.joaomagdaleno.music_hub.common.models.Message
 import com.joaomagdaleno.music_hub.di.App
-import com.joaomagdaleno.music_hub.utils.ContextUtils.appVersion
-import com.joaomagdaleno.music_hub.utils.ContextUtils.getTempFile
-import com.joaomagdaleno.music_hub.utils.Serializer.toData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okio.use
 import java.io.File
 import java.util.zip.ZipFile
 
@@ -30,7 +26,7 @@ object AppUpdater {
         val messageFlow = app.messageFlow
         val githubRepo = app.context.getString(R.string.app_github_repo)
         val appType = BuildConfig.BUILD_TYPE
-        val version = appVersion()
+        val version = ContextUtils.appVersion()
 
         val url = runCatching {
             when (appType) {
@@ -80,8 +76,8 @@ object AppUpdater {
         val url = "https://api.github.com/repos/$user/$repo/releases/latest"
         val request = Request.Builder().url(url).build()
         val res = runCatching {
-            client.newCall(request).await().use {
-                it.body?.string()?.toData<GithubReleaseResponse>()?.getOrThrow()
+            ContinuationCallback.await(client.newCall(request)).use {
+                it.body?.string()?.let { body -> Serializer.toData<GithubReleaseResponse>(body).getOrThrow() }
             } ?: throw Exception("Empty release response")
         }.getOrElse {
             throw Exception("Failed to fetch latest release", it)
@@ -105,8 +101,9 @@ object AppUpdater {
         val url =
             "https://api.github.com/repos/$githubRepo/actions/workflows/nightly.yml/runs?per_page=1&conclusion=success"
         val request = Request.Builder().url(url).build()
-        client.newCall(request).await().body?.string()?.toData<GithubRunsResponse>()?.getOrThrow()
-            ?.workflowRuns?.firstOrNull { it.sha.take(7) != hash }?.id
+        ContinuationCallback.await(client.newCall(request)).use {
+            it.body?.string()?.let { body -> Serializer.toData<GithubRunsResponse>(body).getOrThrow() }
+        }?.workflowRuns?.firstOrNull { it.sha.take(7) != hash }?.id
     }.getOrElse {
         throw Exception("Failed to fetch workflow ID", it)
     }
@@ -146,8 +143,8 @@ object AppUpdater {
         client: OkHttpClient
     ) = runIOCatching {
         val request = Request.Builder().url(url).build()
-        val res = client.newCall(request).await().body?.byteStream() ?: throw Exception("Empty body")
-        val file = context.getTempFile()
+        val res = ContinuationCallback.await(client.newCall(request)).body?.byteStream() ?: throw Exception("Empty body")
+        val file = ContextUtils.getTempFile(context)
         res.use { input -> file.outputStream().use { output -> input.copyTo(output) } }
         file
     }

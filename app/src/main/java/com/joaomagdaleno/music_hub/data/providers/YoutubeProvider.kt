@@ -6,8 +6,6 @@ import com.joaomagdaleno.music_hub.common.models.ImageHolder
 import com.joaomagdaleno.music_hub.common.models.NetworkRequest
 import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.common.models.Track
-import com.joaomagdaleno.music_hub.data.providers.PipedApi
-import com.joaomagdaleno.music_hub.data.providers.PipedSearchResult
 
 class YoutubeSource : MusicSource {
     override val name = "YOUTUBE"
@@ -15,7 +13,7 @@ class YoutubeSource : MusicSource {
 
     override suspend fun search(query: String): List<Track> {
         val results = api.search(query)
-        return results.map { it.toTrack() }
+        return results.map { pipedSearchResultToTrack(name, it) }
     }
 
     override suspend fun getStreamUrl(track: Track): String {
@@ -31,7 +29,7 @@ class YoutubeSource : MusicSource {
         try {
             val trending = api.getTrending("BR")
             if (trending.isNotEmpty()) {
-                val tracks = trending.map { it.toTrack() }
+                val tracks = trending.map { pipedSearchResultToTrack(name, it) }
                 shelves.add(Shelf.Lists.Tracks("trending_youtube", "Trending on YouTube", tracks))
             }
         } catch (e: Exception) {
@@ -42,12 +40,12 @@ class YoutubeSource : MusicSource {
 
     override suspend fun getAlbumTracks(albumId: String): List<Track> {
         val results = api.getPlaylistTracks(albumId.removePrefix("youtube_playlist:"))
-        return results.map { it.toTrack() }
+        return results.map { pipedSearchResultToTrack(name, it) }
     }
 
     override suspend fun getArtistTracks(artistId: String): List<Track> {
         val items = api.getChannelItems(artistId.removePrefix("youtube_channel:"))
-        return items.map { it.toTrack() }
+        return items.map { pipedSearchResultToTrack(name, it) }
     }
 
     override suspend fun getTrack(trackId: String): Track? {
@@ -71,7 +69,7 @@ class YoutubeSource : MusicSource {
     override suspend fun getRadio(trackId: String): List<Track> {
         return try {
             val result = api.getStream(trackId)
-            result?.relatedStreams?.map { it.toTrack() } ?: emptyList()
+            result?.relatedStreams?.map { pipedSearchResultToTrack(name, it) } ?: emptyList()
         } catch (e: Exception) {
             emptyList()
         }
@@ -80,7 +78,7 @@ class YoutubeSource : MusicSource {
     override suspend fun getPlaylistTracks(playlistId: String): List<Track> {
         return try {
             val items = api.getPlaylistItems(playlistId)
-            items.map { it.toTrack() }
+            items.map { pipedSearchResultToTrack(name, it) }
         } catch (e: Exception) {
             emptyList()
         }
@@ -99,18 +97,20 @@ class YoutubeSource : MusicSource {
         return Artist(id = artistId, name = "YouTube Artist")
     }
 
-    private fun PipedSearchResult.toTrack(): Track {
-        val videoId = url.substringAfter("v=", "")
-        return Track(
-            id = videoId,
-            title = title ?: "Unknown",
-            origin = name,
-            originalUrl = url,
-            artists = listOf(Artist(id = "youtube_channel:${uploaderUrl?.substringAfterLast("/")}", name = uploaderName ?: "Unknown")),
-            cover = thumbnail?.let { ImageHolder.NetworkRequestImageHolder(NetworkRequest(it), false) },
-            duration = duration?.times(1000),
-            isPlayable = Track.Playable.Yes,
-            extras = mapOf("video_id" to videoId)
-        )
+    companion object {
+        fun pipedSearchResultToTrack(sourceName: String, result: PipedSearchResult): Track {
+            val videoId = result.url.substringAfter("v=", "")
+            return Track(
+                id = videoId,
+                title = result.title ?: "Unknown",
+                origin = sourceName,
+                originalUrl = result.url,
+                artists = listOf(Artist(id = "youtube_channel:${result.uploaderUrl?.substringAfterLast("/")}", name = result.uploaderName ?: "Unknown")),
+                cover = result.thumbnail?.let { ImageHolder.NetworkRequestImageHolder(NetworkRequest(it), false) },
+                duration = result.duration?.times(1000),
+                isPlayable = Track.Playable.Yes,
+                extras = mapOf("video_id" to videoId)
+            )
+        }
     }
 }

@@ -22,25 +22,26 @@ class BlurTransformation(
     override val cacheKey = "${BlurTransformation::class.simpleName}-$radius"
 
     override suspend fun transform(input: Bitmap, size: Size) =
-        input.blurred(context, radius)
+        blurred(input, context, radius)
 
     companion object {
         private const val DEFAULT_RADIUS = 20f
         private const val MAX_WIDTH = 256
-        fun Bitmap.blurred(
+        fun blurred(
+            bitmap: Bitmap,
             context: Context,
             radius: Float = DEFAULT_RADIUS
         ): Bitmap {
             require(radius in 0.0..25.0) { "radius must be in [0, 25]." }
 
             val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-            val scale = width.toFloat() / MAX_WIDTH
-            val scaledHeight = (height / scale).toInt()
+            val scale = bitmap.width.toFloat() / MAX_WIDTH
+            val scaledHeight = (bitmap.height / scale).toInt()
             val output =
-                createBitmap(MAX_WIDTH, scaledHeight, config ?: Bitmap.Config.ARGB_8888)
+                createBitmap(MAX_WIDTH, scaledHeight, bitmap.config ?: Bitmap.Config.ARGB_8888)
             output.applyCanvas {
                 scale(1 / scale, 1 / scale)
-                drawBitmap(this@blurred, 0f, 0f, paint)
+                drawBitmap(bitmap, 0f, 0f, paint)
             }
 
             var script: RenderScript? = null

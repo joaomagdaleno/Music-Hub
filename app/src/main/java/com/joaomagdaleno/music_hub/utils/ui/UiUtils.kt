@@ -512,13 +512,13 @@ object UiUtils {
     private fun getExceptionDetails(throwable: Throwable): String? = when (throwable) {
         is PlayerException -> throwable.mediaItem?.let {
             """
-            Track: ${it.track.toJson()}
-            Stream: ${it.run { track.servers.getOrNull(serverIndex)?.toJson() }}
+            Track: ${Serializer.toJson(it.track)}
+            Stream: ${it.run { Serializer.toJson(track.servers.getOrNull(serverIndex)) }}
         """.trimIndent()
         }
         is DownloadException -> """
             Type: ${throwable.type}
-            Track: ${throwable.downloadEntity.toJson()}
+            Track: ${Serializer.toJson(throwable.downloadEntity)}
         """.trimIndent()
         is Serializer.DecodingException -> "JSON: ${throwable.json}"
         else -> null
@@ -574,7 +574,7 @@ object UiUtils {
             .url("https://paste.rs")
             .post(data.trace.toRequestBody())
             .build()
-        runCatching { exceptionClient.newCall(request).await().body?.string() }
+        runCatching { ContinuationCallback.await(exceptionClient.newCall(request)).body?.string() }
     }
 
     fun setupSnackBar(
@@ -705,6 +705,3 @@ object UiUtils {
         }
     }
 }
-
-@Serializable
-data class ExceptionData(val title: String, val trace: String)

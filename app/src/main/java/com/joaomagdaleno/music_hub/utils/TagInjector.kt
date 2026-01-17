@@ -8,7 +8,7 @@ import org.jaudiotagger.tag.TagOptionSingleton
 import org.jaudiotagger.tag.images.ArtworkFactory
 import java.io.File
 import java.io.FileOutputStream
-import com.joaomagdaleno.music_hub.common.helpers.ContinuationCallback.Companion.await
+import com.joaomagdaleno.music_hub.common.helpers.ContinuationCallback
 
 object TagInjector {
 
@@ -53,7 +53,7 @@ object TagInjector {
     private suspend fun downloadImage(url: String): File? {
         return try {
             val request = Request.Builder().url(url).build()
-            val response = client.newCall(request).await()
+            val response = ContinuationCallback.await(client.newCall(request))
             if (!response.isSuccessful) return null
 
             val tempFile = File.createTempFile("cover", ".jpg")

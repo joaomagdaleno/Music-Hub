@@ -12,7 +12,6 @@ import androidx.core.view.WindowInsetsCompat.CONSUMED
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
@@ -24,11 +23,11 @@ import com.joaomagdaleno.music_hub.common.models.Lyrics
 import com.joaomagdaleno.music_hub.databinding.FragmentPlayerLyricsBinding
 import com.joaomagdaleno.music_hub.databinding.ItemLyricsItemBinding
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
-import com.joaomagdaleno.music_hub.ui.player.PlayerColors.Companion.defaultPlayerColors
+import com.joaomagdaleno.music_hub.ui.player.PlayerColors
 import com.joaomagdaleno.music_hub.ui.player.PlayerViewModel
-import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
-import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import com.joaomagdaleno.music_hub.utils.ContextUtils
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue
 import com.joaomagdaleno.music_hub.utils.ui.FastScrollerHelper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -37,7 +36,7 @@ import org.koin.androidx.viewmodel.ext.android.activityViewModel
 
 class LyricsFragment : Fragment() {
 
-    private var binding by autoCleared<FragmentPlayerLyricsBinding>()
+    private var binding by AutoClearedValue.autoCleared<FragmentPlayerLyricsBinding>(this)
     private val viewModel by activityViewModel<LyricsViewModel>()
     private val playerVM by activityViewModel<PlayerViewModel>()
     private val uiViewModel by activityViewModel<UiViewModel>()
@@ -81,14 +80,13 @@ class LyricsFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        setupTransition(view, false, axis = MaterialSharedAxis.Y)
+        AnimationUtils.setupTransition(this, view, false, axis = MaterialSharedAxis.Y)
         FastScrollerHelper.applyTo(binding.lyricsRecyclerView)
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, _ -> CONSUMED }
-        observe(uiViewModel.moreSheetState) {
+        ContextUtils.observe(this, uiViewModel.moreSheetState) {
             binding.root.keepScreenOn = it == BottomSheetBehavior.STATE_EXPANDED
         }
 
-        // Search and source selection removed in monolithic mode
         binding.searchBarText.isVisible = false
 
         var job: Job? = null
@@ -104,19 +102,19 @@ class LyricsFragment : Fragment() {
             }
         })
 
-        observe(uiViewModel.playerColors) {
+        ContextUtils.observe(this, uiViewModel.playerColors) {
             lyricAdapter.updateColors()
-            val colors = it ?: requireContext().defaultPlayerColors()
+            val colors = it ?: PlayerColors.defaultPlayerColors(requireContext())
             binding.noLyrics.setTextColor(colors.onBackground)
         }
 
         binding.lyricsRecyclerView.adapter = lyricAdapter
         binding.lyricsRecyclerView.itemAnimator = null
-        observe(viewModel.lyricsState) { state ->
+        ContextUtils.observe(this, viewModel.lyricsState) { state ->
             binding.noLyrics.isVisible = state == LyricsViewModel.State.Empty
             
             val lyricsItem = (state as? LyricsViewModel.State.Loaded)?.result?.getOrNull()
-            binding.lyricsItem.bind(lyricsItem)
+            bindLyricsItem(binding.lyricsItem, lyricsItem)
             currentLyricsPos = -1
             currentLyrics = lyricsItem?.lyrics
             val list = when (val lyrics = currentLyrics) {
@@ -128,18 +126,19 @@ class LyricsFragment : Fragment() {
             lyricAdapter.submitList(list)
         }
 
-        observe(playerVM.progress) { updateLyrics(it.first) }
+        ContextUtils.observe(this, playerVM.progress) { updateLyrics(it.first) }
     }
 
-    fun ItemLyricsItemBinding.bind(lyrics: Lyrics?) = root.run {
+    private fun bindLyricsItem(binding: ItemLyricsItemBinding, lyrics: Lyrics?) {
+        val root = binding.root
         if (lyrics == null) {
-            isVisible = false
+            root.isVisible = false
             return
         }
-        isVisible = true
-        setTitle(lyrics.title)
-        setSubtitle(lyrics.subtitle)
-        setBackgroundResource(R.color.amoled_bg)
+        root.isVisible = true
+        binding.root.setTitle(lyrics.title)
+        binding.root.setSubtitle(lyrics.subtitle)
+        binding.root.setBackgroundResource(R.color.amoled_bg)
     }
 
     class CenterSmoothScroller(context: Context) : LinearSmoothScroller(context) {

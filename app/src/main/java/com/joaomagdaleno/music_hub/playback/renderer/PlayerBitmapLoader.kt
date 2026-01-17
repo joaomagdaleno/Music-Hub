@@ -27,7 +27,8 @@ class PlayerBitmapLoader(
     }
 
     override fun loadBitmap(uri: Uri): ListenableFuture<Bitmap> = scope.futureCatching {
-        val cover = uri.getQueryParameter("actual_data")!!.toData<ImageHolder>().getOrThrow()
+        val json = uri.getQueryParameter("actual_data")!!
+        val cover = Serializer.toData<ImageHolder>(json).getOrThrow()
         cover.loadDrawable(context)?.toBitmapOrNull()
             ?: error("Failed to load bitmap of $cover")
     }

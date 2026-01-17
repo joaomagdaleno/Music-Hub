@@ -9,11 +9,8 @@ import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.download.Downloader
 import com.joaomagdaleno.music_hub.common.models.MediaState
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.context
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.origin
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.track
-import com.joaomagdaleno.music_hub.utils.CacheUtils.getFromCache
-import com.joaomagdaleno.music_hub.utils.CacheUtils.saveToCache
+import com.joaomagdaleno.music_hub.playback.MediaItemUtils
+import com.joaomagdaleno.music_hub.utils.CacheUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -29,36 +26,37 @@ object ResumptionUtils {
     private const val SHUFFLE = "shuffle"
     private const val REPEAT = "repeat"
 
-    private fun Player.mediaItems() = (0 until mediaItemCount).map { getMediaItemAt(it) }
+    private fun getMediaItems(player: Player) = (0 until player.mediaItemCount).map { player.getMediaItemAt(it) }
+    
     fun saveIndex(context: Context, index: Int) {
-        context.saveToCache(INDEX, index, FOLDER)
+        CacheUtils.saveToCache(context, INDEX, index, FOLDER)
     }
 
     suspend fun saveQueue(context: Context, player: Player) = withContext(Dispatchers.Main) {
-        val list = player.mediaItems()
-        context.saveToCache(CLEARED, list.isEmpty())
+        val list = getMediaItems(player)
+        CacheUtils.saveToCache(context, CLEARED, list.isEmpty())
         if (list.isEmpty()) return@withContext
         val currentIndex = player.currentMediaItemIndex
         withContext(Dispatchers.IO) {
             val origins = list.map { it.origin }
             val tracks = list.map { it.track }
             val contexts = list.map { it.context }
-            context.saveToCache(INDEX, currentIndex, FOLDER)
-            context.saveToCache(ORIGINS, origins, FOLDER)
-            context.saveToCache(TRACKS, tracks, FOLDER)
-            context.saveToCache(CONTEXTS, contexts, FOLDER)
+            CacheUtils.saveToCache(context, INDEX, currentIndex, FOLDER)
+            CacheUtils.saveToCache(context, ORIGINS, origins, FOLDER)
+            CacheUtils.saveToCache(context, TRACKS, tracks, FOLDER)
+            CacheUtils.saveToCache(context, CONTEXTS, contexts, FOLDER)
         }
     }
 
     fun saveCurrentPos(context: Context, position: Long) {
-        context.saveToCache(POSITION, position, FOLDER)
+        CacheUtils.saveToCache(context, POSITION, position, FOLDER)
     }
 
-    fun Context.recoverTracks(withClear: Boolean = false): List<Pair<MediaState.Unloaded<Track>, EchoMediaItem?>>? {
-        if (withClear && getFromCache<Boolean>(CLEARED) != false) return null
-        val tracks = getFromCache<List<Track>>(TRACKS, FOLDER)
-        val origins = getFromCache<List<String>>(ORIGINS, FOLDER)
-        val contexts = getFromCache<List<EchoMediaItem>>(CONTEXTS, FOLDER)
+    fun recoverTracks(context: Context, withClear: Boolean = false): List<Pair<MediaState.Unloaded<Track>, EchoMediaItem?>>? {
+        if (withClear && CacheUtils.getFromCache<Boolean>(context, CLEARED) != false) return null
+        val tracks = CacheUtils.getFromCache<List<Track>>(context, TRACKS, FOLDER)
+        val origins = CacheUtils.getFromCache<List<String>>(context, ORIGINS, FOLDER)
+        val contexts = CacheUtils.getFromCache<List<EchoMediaItem>>(context, CONTEXTS, FOLDER)
         return tracks?.mapIndexedNotNull { index, track ->
             val origin = origins?.getOrNull(index) ?: return@mapIndexedNotNull null
             val item = contexts?.getOrNull(index)
@@ -66,39 +64,40 @@ object ResumptionUtils {
         }
     }
 
-    private fun Context.recoverQueue(
+    private fun recoverQueue(
+        context: Context,
         app: App,
         downloads: List<Downloader.Info>,
         withClear: Boolean = false
     ): List<MediaItem>? {
-        val tracks = recoverTracks(withClear) ?: return null
+        val tracks = recoverTracks(context, withClear) ?: return null
         return tracks.map { (state, item) ->
             MediaItemUtils.build(app, downloads, state, item)
         }
     }
 
-    fun Context.recoverIndex() = getFromCache<Int>(INDEX, FOLDER)
-    private fun Context.recoverPosition() = getFromCache<Long>(POSITION, FOLDER)
+    fun recoverIndex(context: Context) = CacheUtils.getFromCache<Int>(context, INDEX, FOLDER)
+    fun recoverPosition(context: Context) = CacheUtils.getFromCache<Long>(context, POSITION, FOLDER)
 
-
-    fun Context.recoverShuffle() = getFromCache<Boolean>(SHUFFLE, FOLDER)
+    fun recoverShuffle(context: Context) = CacheUtils.getFromCache<Boolean>(context, SHUFFLE, FOLDER)
     fun saveShuffle(context: Context, shuffle: Boolean) {
-        context.saveToCache(SHUFFLE, shuffle, FOLDER)
+        CacheUtils.saveToCache(context, SHUFFLE, shuffle, FOLDER)
     }
 
-    fun Context.recoverRepeat() = getFromCache<Int>(REPEAT, FOLDER)
+    fun recoverRepeat(context: Context) = CacheUtils.getFromCache<Int>(context, REPEAT, FOLDER)
     fun saveRepeat(context: Context, repeat: Int) {
-        context.saveToCache(REPEAT, repeat, FOLDER)
+        CacheUtils.saveToCache(context, REPEAT, repeat, FOLDER)
     }
 
-    fun Context.recoverPlaylist(
+    fun recoverPlaylist(
+        context: Context,
         app: App,
         downloads: List<Downloader.Info>,
         withClear: Boolean = false
     ): Triple<List<MediaItem>, Int, Long> {
-        val items = recoverQueue(app, downloads, withClear) ?: emptyList()
-        val index = recoverIndex() ?: C.INDEX_UNSET
-        val position = recoverPosition() ?: -1L
+        val items = recoverQueue(context, app, downloads, withClear) ?: emptyList()
+        val index = recoverIndex(context) ?: C.INDEX_UNSET
+        val position = recoverPosition(context) ?: -1L
         return Triple(items, index, position)
     }
 }

@@ -5,7 +5,7 @@ import android.content.Intent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.fragment.app.FragmentActivity
-import com.joaomagdaleno.music_hub.utils.PermsUtils.registerActivityResultLauncher
+import com.joaomagdaleno.music_hub.utils.PermsUtils
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import kotlin.coroutines.resume
@@ -23,7 +23,7 @@ object InstallationUtils {
             putExtra(Intent.EXTRA_RETURN_RESULT, true)
             data = contentUri
         }
-        val it = activity.waitForResult(installIntent)
+        val it = waitForResult(activity, installIntent)
         if (it.resultCode == Activity.RESULT_OK) return
         val result = it.data?.extras?.getInt("android.intent.extra.INSTALL_RESULT")
         if (result != null && result != 0) {
@@ -31,11 +31,12 @@ object InstallationUtils {
         }
     }
 
-    private suspend fun FragmentActivity.waitForResult(
+    private suspend fun waitForResult(
+        activity: FragmentActivity,
         intent: Intent
     ) = suspendCancellableCoroutine { cont ->
         val contract = ActivityResultContracts.StartActivityForResult()
-        val launcher = registerActivityResultLauncher(contract) { cont.resume(it) }
+        val launcher = PermsUtils.registerActivityResultLauncher(activity, contract) { cont.resume(it) }
         cont.invokeOnCancellation { launcher.unregister() }
         launcher.launch(intent)
     }

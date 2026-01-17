@@ -1,8 +1,7 @@
 package com.joaomagdaleno.music_hub.utils
 
 import android.content.Context
-import com.joaomagdaleno.music_hub.utils.Serializer.toData
-import com.joaomagdaleno.music_hub.utils.Serializer.toJson
+import com.joaomagdaleno.music_hub.utils.Serializer
 import java.io.File
 
 object CacheUtils {
@@ -12,31 +11,31 @@ object CacheUtils {
 
     const val CACHE_FOLDER_SIZE = 50 * 1024 * 1024 //50MB
 
-    inline fun <reified T> Context.saveToCache(
-        id: String, data: T?, folderName: String = T::class.java.simpleName
+    inline fun <reified T> saveToCache(
+        context: Context, id: String, data: T?, folderName: String = T::class.java.simpleName
     ) = runCatching {
         val fileName = id.hashCode().toString()
-        val cacheDir = cacheDir(this, folderName)
-        val file = File(cacheDir, fileName)
+        val dir = cacheDir(context, folderName)
+        val file = File(dir, fileName)
 
-        var size = cacheDir.walk().sumOf { it.length().toInt() }
+        var size = dir.walk().sumOf { it.length().toInt() }
         while (size > CACHE_FOLDER_SIZE) {
-            val files = cacheDir.listFiles()
+            val files = dir.listFiles()
             files?.sortBy { it.lastModified() }
             files?.firstOrNull()?.delete()
-            size = cacheDir.walk().sumOf { it.length().toInt() }
+            size = dir.walk().sumOf { it.length().toInt() }
         }
-        file.writeText(data.toJson())
+        file.writeText(Serializer.toJson(data))
     }
 
-    inline fun <reified T> Context.getFromCache(
-        id: String, folderName: String = T::class.java.simpleName
+    inline fun <reified T> getFromCache(
+        context: Context, id: String, folderName: String = T::class.java.simpleName
     ): T? {
         val fileName = id.hashCode().toString()
-        val cacheDir = cacheDir(this, folderName)
-        val file = File(cacheDir, fileName)
+        val dir = cacheDir(context, folderName)
+        val file = File(dir, fileName)
         return if (file.exists()) runCatching {
-            file.readText().toData<T>().getOrThrow()
+            Serializer.toData<T>(file.readText()).getOrThrow()
         }.getOrNull() else null
     }
 }

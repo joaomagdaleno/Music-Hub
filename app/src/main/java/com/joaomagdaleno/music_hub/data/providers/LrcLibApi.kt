@@ -1,6 +1,6 @@
 package com.joaomagdaleno.music_hub.data.providers
 
-import com.joaomagdaleno.music_hub.common.helpers.ContinuationCallback.Companion.await
+import com.joaomagdaleno.music_hub.common.helpers.ContinuationCallback
 import com.joaomagdaleno.music_hub.common.models.Lyrics
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -30,7 +30,7 @@ class LrcLibApi(private val client: OkHttpClient = OkHttpClient()) {
             ?.build() ?: return null
 
         val request = Request.Builder().url(url).build()
-        val response = try { client.newCall(request).await() } catch (e: Exception) { null }
+        val response = try { ContinuationCallback.await(client.newCall(request)) } catch (e: Exception) { null }
 
         if (response != null && response.isSuccessful) {
             val body = response.body?.string() ?: return null
@@ -49,7 +49,7 @@ class LrcLibApi(private val client: OkHttpClient = OkHttpClient()) {
             ?.build() ?: return null
 
         val request = Request.Builder().url(url).build()
-        val response = try { client.newCall(request).await() } catch (e: Exception) { null }
+        val response = try { ContinuationCallback.await(client.newCall(request)) } catch (e: Exception) { null }
 
         if (response != null && response.isSuccessful) {
             val body = response.body?.string() ?: return null

@@ -9,7 +9,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import com.joaomagdaleno.music_hub.common.helpers.ContinuationCallback.Companion.await
+import com.joaomagdaleno.music_hub.common.helpers.ContinuationCallback
 import com.joaomagdaleno.music_hub.utils.FileLogger
 import java.util.concurrent.TimeUnit
 
@@ -76,7 +76,7 @@ class PipedApi(
 
             try {
                 val request = Request.Builder().url(url).build()
-                val response = client.newCall(request).await()
+                val response = ContinuationCallback.await(client.newCall(request))
 
                 if (response.isSuccessful) {
                     val body = response.body?.string() ?: continue

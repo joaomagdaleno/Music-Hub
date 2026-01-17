@@ -6,12 +6,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
-import com.joaomagdaleno.music_hub.common.models.Feed.Buttons.Companion.EMPTY
-import com.joaomagdaleno.music_hub.common.models.Feed.Companion.toFeed
+import com.joaomagdaleno.music_hub.common.models.Feed
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
 import com.joaomagdaleno.music_hub.ui.compose.screens.HomeFeed
 import com.joaomagdaleno.music_hub.ui.compose.theme.MusicHubTheme
-import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener.Companion.getFeedListener
+import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
 import com.joaomagdaleno.music_hub.ui.feed.FeedData
 import com.joaomagdaleno.music_hub.ui.feed.FeedViewModel
 import com.joaomagdaleno.music_hub.utils.ContextUtils
@@ -24,13 +23,13 @@ class HomeFragment : Fragment() {
     private val feedData by lazy {
         val vm by viewModel<FeedViewModel>()
         val id = "home"
-        vm.getFeedData(id, EMPTY, cached = { null }) {
-            val feed = getHomeFeed().toFeed()
+        vm.getFeedData(id, Feed.Buttons.EMPTY, cached = { null }) { repo ->
+            val feed = Feed.toFeedFromList(repo.getHomeFeed())
             FeedData.State("internal", null, feed)
         }
     }
 
-    private val listener by lazy { getFeedListener(requireParentFragment()) }
+    private val listener by lazy { FeedClickListener.getFeedListener(requireParentFragment()) }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -52,7 +51,6 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        // Keep observation logic for background updates
         val uiViewModel by activityViewModel<UiViewModel>()
         ContextUtils.observe(
             this,
@@ -61,8 +59,5 @@ class HomeFragment : Fragment() {
             if (curr != 0) return@observe
             uiViewModel.currentNavBackground.value = bg
         }
-        
-        // Note: Automatic scrolling to top on reselection is currently not implemented in Compose version
-        // We would need to expose the LazyListState to do that.
     }
 }

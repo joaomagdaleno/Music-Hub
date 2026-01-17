@@ -13,7 +13,7 @@ interface GestureListener {
     val onDoubleClick: (() -> Unit)?
 
     companion object {
-        fun View.handleGestures(listener: GestureListener) {
+        fun handleGestures(view: View, listener: GestureListener) {
             val gestureListener = object : GestureDetector.SimpleOnGestureListener() {
                 private var timer: Timer? = null
                 private var beingDoubleClicked = false
@@ -25,9 +25,9 @@ interface GestureListener {
 
                 override fun onDoubleTap(e: MotionEvent): Boolean {
                     val onDoubleClick = listener.onDoubleClick ?: return false
-                    isPressed = true
-                    isPressed = false
-                    (background as? RippleDrawable)?.setHotspot(e.x, e.y)
+                    view.isPressed = true
+                    view.isPressed = false
+                    (view.background as? RippleDrawable)?.setHotspot(e.x, e.y)
                     onDoubleClick.invoke()
                     beingDoubleClicked = true
                     timer?.cancel()
@@ -41,10 +41,10 @@ interface GestureListener {
                     listener.onLongClick?.invoke()
                 }
             }
-            val detector = GestureDetector(context, gestureListener)
-            setOnTouchListener { _, event ->
+            val detector = GestureDetector(view.context, gestureListener)
+            view.setOnTouchListener { _, event ->
                 detector.onTouchEvent(event)
-                performClick()
+                view.performClick()
                 true
             }
         }

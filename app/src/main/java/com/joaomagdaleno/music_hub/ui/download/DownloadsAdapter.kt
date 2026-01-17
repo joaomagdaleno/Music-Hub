@@ -13,11 +13,11 @@ import com.joaomagdaleno.music_hub.download.Downloader
 import com.joaomagdaleno.music_hub.download.db.models.ContextEntity
 import com.joaomagdaleno.music_hub.download.db.models.DownloadEntity
 import com.joaomagdaleno.music_hub.download.db.models.TaskType
-import com.joaomagdaleno.music_hub.download.tasks.BaseTask.Companion.getTitle
+import com.joaomagdaleno.music_hub.download.tasks.BaseTask
 import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.utils.ui.ExceptionData
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
-import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadInto
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimListAdapter
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
 
@@ -62,7 +62,7 @@ class DownloadsAdapter(
             binding.apply {
                 val track = entity.track.getOrNull()
                 title.text = track?.title
-                track?.cover.loadInto(imageView, R.drawable.art_music)
+                ImageUtils.loadInto(track?.cover, imageView, R.drawable.art_music)
                 val sub = item.context?.mediaItem?.getOrNull()?.title
                 subtitle.text = sub
                 subtitle.isVisible = !sub.isNullOrEmpty()
@@ -97,9 +97,7 @@ class DownloadsAdapter(
             progressBar.max = item.progress.size.toInt()
             progressBar.progress = item.progress.progress.toInt()
             subtitle.text = toText(item.progress)
-            title.text = root.context.run {
-                getTitle(item.taskType, getString(R.string.download))
-            }
+            title.text = BaseTask.getTitle(root.context, item.taskType, root.context.getString(R.string.download))
         }
     }
 
@@ -146,7 +144,7 @@ class DownloadsAdapter(
 
 
     companion object {
-        fun List<Downloader.Info>.toItems() = filter {
+        fun toItems(list: List<Downloader.Info>) = list.filter {
             it.download.finalFile == null
         }.flatMap { info ->
             val download = info.download

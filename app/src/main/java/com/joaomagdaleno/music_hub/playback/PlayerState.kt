@@ -5,8 +5,7 @@ import com.joaomagdaleno.music_hub.common.helpers.Page
 import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
 import com.joaomagdaleno.music_hub.common.models.Streamable
 import com.joaomagdaleno.music_hub.common.models.Track
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.context
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.track
+import com.joaomagdaleno.music_hub.playback.MediaItemUtils
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.util.WeakHashMap
@@ -27,8 +26,8 @@ data class PlayerState(
         val isPlaying: Boolean,
     ) {
 
-        val context by lazy { mediaItem.context }
-        val track by lazy { mediaItem.track }
+        val context by lazy { MediaItemUtils.getContext(mediaItem) }
+        val track by lazy { MediaItemUtils.getTrack(mediaItem) }
         fun isPlaying(id: String?): Boolean {
             val same = mediaItem.mediaId == id
                     || context?.id == id
@@ -38,7 +37,7 @@ data class PlayerState(
         }
 
         companion object {
-            fun Current?.isPlaying(id: String?): Boolean = this?.isPlaying(id) ?: false
+            fun isPlaying(current: Current?, id: String?): Boolean = current?.isPlaying(id) ?: false
         }
     }
 

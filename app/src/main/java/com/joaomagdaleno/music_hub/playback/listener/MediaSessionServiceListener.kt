@@ -27,7 +27,7 @@ class MediaSessionServiceListener(
         ) return
 
         val notificationManagerCompat = NotificationManagerCompat.from(context)
-        context.ensureNotificationChannel(notificationManagerCompat)
+        ensureNotificationChannel(context, notificationManagerCompat)
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_mono)
             .setContentTitle(context.getString(R.string.app_name))
@@ -40,7 +40,8 @@ class MediaSessionServiceListener(
         notificationManagerCompat.notify(NOTIFICATION_ID, builder.build())
     }
 
-    private fun Context.ensureNotificationChannel(
+    private fun ensureNotificationChannel(
+        context: Context,
         notificationManagerCompat: NotificationManagerCompat
     ) {
         if (
@@ -50,7 +51,7 @@ class MediaSessionServiceListener(
 
         val channel = NotificationChannel(
             CHANNEL_ID,
-            getString(R.string.app_name),
+            context.getString(R.string.app_name),
             NotificationManager.IMPORTANCE_DEFAULT,
         )
         notificationManagerCompat.createNotificationChannel(channel)

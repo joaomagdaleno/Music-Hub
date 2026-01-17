@@ -5,18 +5,14 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.paging.LoadState
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.models.Feed
 import com.joaomagdaleno.music_hub.common.models.Playlist
-import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.databinding.FragmentMediaDetailsBinding
-import com.joaomagdaleno.music_hub.ui.feed.FeedData
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
 import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter
 import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
 import com.joaomagdaleno.music_hub.ui.feed.FeedViewModel
-import com.joaomagdaleno.music_hub.ui.media.MediaHeaderAdapter
 import com.joaomagdaleno.music_hub.utils.ContextUtils
 import com.joaomagdaleno.music_hub.utils.ui.FastScrollerHelper
 import kotlinx.coroutines.flow.combine
@@ -40,22 +36,20 @@ class MediaDetailsFragment : Fragment(R.layout.fragment_media_details) {
     private val trackFeedData by lazy {
         feedViewModel.getFeedData(
             "${parent.feedId}_tracks",
-            Feed.Buttons(showPlayAndShuffle = true),
+            com.joaomagdaleno.music_hub.common.models.Feed.Buttons(showPlayAndShuffle = true),
             true,
-            viewModel.tracksLoadedFlow, viewModel.trackSourceCachedFlow,
             cached = { viewModel.trackSourceCachedFlow.value },
-            loader = { viewModel.tracksLoadedFlow.value as? FeedData.State<Feed<Shelf>> }
+            load = { viewModel.tracksLoadedFlow.value as? com.joaomagdaleno.music_hub.ui.feed.FeedData.State<com.joaomagdaleno.music_hub.common.models.Feed<com.joaomagdaleno.music_hub.common.models.Shelf>> }
         )
     }
 
     private val feedData by lazy {
         feedViewModel.getFeedData(
             "${parent.feedId}_feed",
-            Feed.Buttons(),
+            com.joaomagdaleno.music_hub.common.models.Feed.Buttons(),
             false,
-            viewModel.feedSourceCachedFlow, viewModel.feedSourceLoadedFlow,
             cached = { viewModel.feedSourceCachedFlow.value },
-            loader = { viewModel.feedSourceLoadedFlow.value }
+            load = { viewModel.feedSourceLoadedFlow.value }
         )
     }
 
@@ -79,16 +73,16 @@ class MediaDetailsFragment : Fragment(R.layout.fragment_media_details) {
     }
 
     private val trackAdapter by lazy {
-        FeedAdapter.getFeedAdapter(trackFeedData, feedListener, true)
+        FeedAdapter.getFeedAdapter(this, trackFeedData, feedListener, true)
     }
     private val feedAdapter by lazy {
-        FeedAdapter.getFeedAdapter(feedData, feedListener)
+        FeedAdapter.getFeedAdapter(this, feedData, feedListener)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = FragmentMediaDetailsBinding.bind(view)
         FastScrollerHelper.applyTo(binding.recyclerView)
-        UiUtils.applyInsets(this, viewModel.uiResultFlow) {
+        UiUtils.applyInsets(this) {
             val item = viewModel.uiResultFlow.value?.getOrNull()?.item as? Playlist
             val bottom = if (item?.isEditable == true) 72 else 16
             UiUtils.applyContentInsets(binding.recyclerView, it, 20, 8, bottom)

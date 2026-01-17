@@ -15,15 +15,15 @@ import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.databinding.DialogPlayerSleepTimerBinding
-import com.joaomagdaleno.music_hub.utils.ui.createSnack
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.ui.player.PlayerViewModel
-import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue
 import com.joaomagdaleno.music_hub.utils.ui.RulerAdapter
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import java.util.Calendar
 
 class SleepTimerBottomSheet : BottomSheetDialogFragment() {
-    var binding by autoCleared<DialogPlayerSleepTimerBinding>()
+    var binding by AutoClearedValue.autoCleared<DialogPlayerSleepTimerBinding>(this)
     private val viewModel by activityViewModel<PlayerViewModel>()
 
     override fun onCreateView(
@@ -38,7 +38,7 @@ class SleepTimerBottomSheet : BottomSheetDialogFragment() {
             override fun intervalText(value: Int) = value.toString()
             override fun onSelectItem(value: Int) {
                 rulerTime = value
-                binding.sleepTimerValue.text = requireContext().createString(value * 60L * 1000)
+                binding.sleepTimerValue.text = formatTime(requireContext(), value * 60L * 1000)
             }
         })
     }
@@ -105,12 +105,12 @@ class SleepTimerBottomSheet : BottomSheetDialogFragment() {
                 val until = viewModel.browser.value?.run {
                     (duration.takeIf { it != C.TIME_UNSET } ?: 0) - currentPosition
                 } ?: 0
-                getString(R.string.sleep_timer_set_for, requireContext().createString(until))
+                getString(R.string.sleep_timer_set_for, formatTime(requireContext(), until))
             }
 
-            else -> getString(R.string.sleep_timer_set_for, requireContext().createString(timer))
+            else -> getString(R.string.sleep_timer_set_for, formatTime(requireContext(), timer))
         }
-        createSnack(message)
+        UiUtils.createSnack(this, message)
     }
 
     private var rulerTime = 5
@@ -126,18 +126,18 @@ class SleepTimerBottomSheet : BottomSheetDialogFragment() {
             value to (value == MIN || value % INTERVAL == 0)
         }
 
-        private fun Context.createString(ms: Long): String {
+        fun formatTime(context: Context, ms: Long): String {
             val minutes = ms / 1000 / 60
             val hrs = minutes / 60
             val min = minutes % 60
             val str = StringBuilder()
             if (hrs > 0) str.append(
-                runCatching { resources.getQuantityString(R.plurals.number_hour, hrs.toInt(), hrs) }
-                    .getOrNull() ?: getString(R.string.n_hours, hrs)
+                runCatching { context.resources.getQuantityString(R.plurals.number_hour, hrs.toInt(), hrs) }
+                    .getOrNull() ?: context.getString(R.string.n_hours, hrs)
             ).append(if (min > 0) " " else "")
             if (min > 0) str.append(
-                runCatching { resources.getQuantityString(R.plurals.number_min, min.toInt(), min) }
-                    .getOrNull() ?: getString(R.string.n_minutes, min)
+                runCatching { context.resources.getQuantityString(R.plurals.number_min, min.toInt(), min) }
+                    .getOrNull() ?: context.getString(R.string.n_minutes, min)
             )
             return str.toString()
         }

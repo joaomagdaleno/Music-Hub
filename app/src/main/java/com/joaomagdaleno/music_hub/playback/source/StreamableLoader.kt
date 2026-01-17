@@ -4,25 +4,20 @@ import android.net.Uri
 import androidx.media3.common.MediaItem
 import com.joaomagdaleno.music_hub.common.models.Streamable
 import com.joaomagdaleno.music_hub.common.models.NetworkRequest
-import com.joaomagdaleno.music_hub.common.models.Streamable.Stream.Companion.toStream
 import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.download.Downloader
 import com.joaomagdaleno.music_hub.common.models.MediaState
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.backgroundIndex
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.downloaded
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.origin
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.isLoaded
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.serverIndex
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.state
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.track
-import com.joaomagdaleno.music_hub.ui.media.MediaHeaderAdapter.Companion.playableString
 import com.joaomagdaleno.music_hub.utils.FileLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -100,7 +95,7 @@ class StreamableLoader(
             FileLogger.log("StreamableLoader", "loadServer() - using downloaded files")
             return runCatching {
                 Streamable.Media.Server(
-                    downloaded.map { Uri.fromFile(File(it)).toString().toStream() },
+                    downloaded.map { Streamable.Stream.toStream(Uri.fromFile(File(it)).toString()) },
                     true
                 )
             }

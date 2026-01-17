@@ -21,7 +21,6 @@ import com.joaomagdaleno.music_hub.ui.feed.FeedData
 import com.joaomagdaleno.music_hub.ui.feed.FeedViewModel
 import com.joaomagdaleno.music_hub.ui.main.HeaderAdapter
 import com.joaomagdaleno.music_hub.ui.main.MainFragment
-
 import com.joaomagdaleno.music_hub.utils.ContextUtils
 import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
 import kotlinx.coroutines.flow.combine
@@ -45,20 +44,21 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             Feed.Buttons.EMPTY,
             false,
             searchViewModel.queryFlow,
-            cached = { null } // Skip cache
-        ) {
+            cached = { null }
+        ) { repo ->
             val query = searchViewModel.queryFlow.value
             if (query.isBlank()) {
-                FeedData.State("internal", null, Feed.toFeed(emptyList<Shelf>()))
+                val feed = Feed.toFeedFromList<Shelf>(emptyList())
+                FeedData.State("internal", null, feed)
             } else {
-                searchViewModel.saveQuery(query) // Save history
-                val results = repository.search(query)
+                searchViewModel.saveQuery(query)
+                val results = repo.search(query)
                 val tracks = if(results.isEmpty()) {
-                     listOfNotNull(repository.getTrack(query))
+                     listOfNotNull(repo.getTrack(query))
                 } else results
                 
                 val shelf = Shelf.Lists.Tracks("search_results", getString(R.string.search), tracks)
-                val feed = Feed.toFeed(listOf<Shelf>(shelf))
+                val feed = Feed.toFeedFromList<Shelf>(listOf(shelf))
                 FeedData.State("internal", null, feed)
             }
         }
@@ -75,10 +75,12 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = FragmentSearchBinding.bind(view)
         AnimationUtils.setupTransition(this, view, applyBackground = false, axis = MaterialSharedAxis.Y)
-        MainFragment.applyInsets(this, binding.recyclerView, binding.appBarOutline) {
+        MainFragment.applyInsets(this, binding.recyclerView, binding.appBarOutline) { _, it ->
             UiUtils.configureSwipeRefresh(binding.swipeRefresh, it)
         }
         val uiViewModel by activityViewModel<UiViewModel>()
+        val context = requireContext()
+        
         ContextUtils.observe(this, uiViewModel.navigationReselected) {
             if (it != 1) return@observe
             binding.quickSearchView.show()

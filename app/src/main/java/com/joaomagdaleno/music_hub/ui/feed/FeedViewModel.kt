@@ -4,22 +4,24 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.joaomagdaleno.music_hub.common.models.Feed
 import com.joaomagdaleno.music_hub.common.models.Shelf
+import com.joaomagdaleno.music_hub.data.repository.MusicRepository
 import com.joaomagdaleno.music_hub.di.App
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.merge
 
 class FeedViewModel(
     val app: App,
-    private val repository: com.joaomagdaleno.music_hub.data.repository.MusicRepository,
+    private val repository: MusicRepository,
 ) : ViewModel() {
     val feedDataMap = hashMapOf<String, FeedData>()
+    
     fun getFeedData(
         id: String,
         buttons: Feed.Buttons = Feed.Buttons(),
         noVideos: Boolean = false,
         vararg extraLoadFlow: Flow<*>,
-        cached: suspend com.joaomagdaleno.music_hub.data.repository.MusicRepository.() -> FeedData.State<Feed<Shelf>>? = { null },
-        loader: suspend com.joaomagdaleno.music_hub.data.repository.MusicRepository.() -> FeedData.State<Feed<Shelf>>?
+        cached: suspend (MusicRepository) -> FeedData.State<Feed<Shelf>>? = { null },
+        loader: suspend (MusicRepository) -> FeedData.State<Feed<Shelf>>?
     ): FeedData {
         return feedDataMap.getOrPut(id) {
             FeedData(

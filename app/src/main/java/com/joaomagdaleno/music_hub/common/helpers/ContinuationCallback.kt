@@ -36,10 +36,10 @@ class ContinuationCallback(
          * Suspends the current coroutine,
          * performs the network call and resumes the coroutine with the response
          */
-        suspend inline fun Call.await(): Response {
+        suspend fun await(call: Call): Response {
             return suspendCancellableCoroutine { continuation ->
-                val callback = ContinuationCallback(this, continuation)
-                enqueue(callback)
+                val callback = ContinuationCallback(call, continuation)
+                call.enqueue(callback)
                 continuation.invokeOnCancellation(callback)
             }
         }

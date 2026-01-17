@@ -21,16 +21,12 @@ import com.joaomagdaleno.music_hub.playback.MediaItemUtils.track
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.unloadedCover
 import com.joaomagdaleno.music_hub.playback.PlayerState
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
-import com.joaomagdaleno.music_hub.utils.ui.applyHorizontalInsets
-import com.joaomagdaleno.music_hub.utils.ui.applyInsets
-import com.joaomagdaleno.music_hub.ui.player.PlayerColors.Companion.defaultPlayerColors
-import com.joaomagdaleno.music_hub.utils.image.ImageUtils.getCachedDrawable
-import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadWithThumb
-import com.joaomagdaleno.music_hub.utils.ui.GestureListener
-import com.joaomagdaleno.music_hub.utils.ui.GestureListener.Companion.handleGestures
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.utils.ui.UiUtils.dpToPx
 import com.joaomagdaleno.music_hub.utils.ui.UiUtils.isLandscape
 import com.joaomagdaleno.music_hub.utils.ui.UiUtils.isRTL
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils
+import com.joaomagdaleno.music_hub.utils.ui.GestureListener
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.math.max
@@ -115,9 +111,9 @@ class PlayerTrackAdapter(
 
         fun updateInsets() = uiViewModel.run {
             val (v, h) = if (!isLandscape) 64 to 0 else 0 to 24
-            binding.constraintLayout.applyInsets(systemInsets.value, v, h)
+            UiUtils.applyInsets(binding.constraintLayout, systemInsets.value, v, h)
             val insets = if (isLandscape) getCombined() else systemInsets.value
-            binding.playerCollapsed.root.applyHorizontalInsets(insets)
+            UiUtils.applyHorizontalInsets(binding.playerCollapsed.root, insets)
             binding.playerControlsPlaceholder.run {
                 updateLayoutParams {
                     height = playerControlsHeight.value
@@ -133,7 +129,7 @@ class PlayerTrackAdapter(
 
         fun updateColors() {
             binding.playerCollapsed.run {
-                val colors = uiViewModel.playerColors.value ?: context.defaultPlayerColors()
+                val colors = uiViewModel.playerColors.value ?: PlayerColors.defaultPlayerColors(context)
                 collapsedTrackTitle.setTextColor(colors.onBackground)
                 collapsedTrackArtist.setTextColor(colors.onBackground)
             }
@@ -154,11 +150,11 @@ class PlayerTrackAdapter(
                 collapsedTrackTitle.text = item?.track?.title
                 collapsedTrackArtist.text = item?.track?.artists?.joinToString(", ") { it.name }
             }
-            val old = item?.unloadedCover?.getCachedDrawable(binding.root.context)
-            item?.track?.cover.loadWithThumb(binding.playerTrackCover, old) {
+            val old = ImageUtils.getCachedDrawable(item?.unloadedCover, binding.root.context)
+            ImageUtils.loadWithThumb(item?.track?.cover, binding.playerTrackCover, old) {
                 val image = it
                     ?: ResourcesCompat.getDrawable(resources, R.drawable.art_music, context.theme)
-                setImageDrawable(image)
+                binding.playerTrackCover.setImageDrawable(image)
                 coverDrawable = it
                 applyDrawable()
             }
@@ -176,7 +172,7 @@ class PlayerTrackAdapter(
             }
             cover.clipToOutline = true
             cover.doOnLayout { updateInsets() }
-            binding.clickPanel.configureClicking(listener, uiViewModel)
+            configureClicking(binding.clickPanel, listener, uiViewModel)
         }
     }
 
@@ -241,15 +237,15 @@ class PlayerTrackAdapter(
     var currentDrawableListener: ((Drawable?) -> Unit)? = null
 
     companion object {
-        fun ItemClickPanelsBinding.configureClicking(listener: Listener, uiViewModel: UiViewModel) {
-            start.handleGestures(object : GestureListener {
+        fun configureClicking(binding: ItemClickPanelsBinding, listener: Listener, uiViewModel: UiViewModel) {
+            GestureListener.handleGestures(binding.start, object : GestureListener {
                 override val onClick = listener::onClick
                 override val onLongClick = listener::onLongClick
                 override val onDoubleClick: (() -> Unit)?
                     get() = if (uiViewModel.playerSheetState.value != STATE_EXPANDED) null
                     else listener::onStartDoubleClick
             })
-            end.handleGestures(object : GestureListener {
+            GestureListener.handleGestures(binding.end, object : GestureListener {
                 override val onClick = listener::onClick
                 override val onLongClick = listener::onLongClick
                 override val onDoubleClick: (() -> Unit)?

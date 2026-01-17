@@ -11,7 +11,7 @@ import com.joaomagdaleno.music_hub.common.models.Feed
 import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.databinding.ItemFeedButtonsBinding
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.animateVisibility
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimRecyclerAdapter
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
 
@@ -62,7 +62,7 @@ class ButtonsAdapter(
                     viewModel.searchQuery = null
                     viewModel.onSearchClicked()
                 }
-                binding.searchBarContainer.animateVisibility(isChecked)
+                AnimationUtils.animateVisibility(binding.searchBarContainer, isChecked)
             }
             binding.searchBarText.addTextChangedListener { text ->
                 viewModel.searchQuery = text?.toString()?.takeIf { it.isNotBlank() }
@@ -101,7 +101,7 @@ class ButtonsAdapter(
             val showButtons = buttons.run { showPlayAndShuffle || showSort || showSearch }
             binding.searchToggleButton.isChecked = viewModel.searchToggled
             binding.searchBarText.setText(viewModel.searchQuery)
-            binding.chipGroup.configure(feed?.sortState)
+            configureChipGroup(binding.chipGroup, feed?.sortState, viewModel)
             binding.buttonGroup.isVisible = showButtons
             if (!showButtons) return
             binding.playButton.isVisible = buttons.showPlayAndShuffle
@@ -114,32 +114,32 @@ class ButtonsAdapter(
             binding.searchLayout.clearFocus()
         }
 
-        private fun ChipGroup.configure(state: FeedSort.State?) {
-            removeAllViews()
+        private fun configureChipGroup(chipGroup: ChipGroup, state: FeedSort.State?, viewModel: FeedData) {
+            chipGroup.removeAllViews()
             var visible = false
             if (state?.feedSort != null) {
                 visible = true
-                val chip = Chip(context)
-                chip.text = context.getString(state.feedSort.title)
+                val chip = Chip(chipGroup.context)
+                chip.text = chipGroup.context.getString(state.feedSort.title)
                 chip.isCheckable = true
                 chip.isChecked = true
-                addView(chip)
+                chipGroup.addView(chip)
                 chip.setOnClickListener {
                     viewModel.feedSortState.value = state.copy(feedSort = null)
                 }
             }
             if (state?.reversed == true) {
                 visible = true
-                val chip = Chip(context)
-                chip.text = context.getString(R.string.reversed)
+                val chip = Chip(chipGroup.context)
+                chip.text = chipGroup.context.getString(R.string.reversed)
                 chip.isCheckable = true
                 chip.isChecked = true
-                addView(chip)
+                chipGroup.addView(chip)
                 chip.setOnClickListener {
                     viewModel.feedSortState.value = state.copy(reversed = false)
                 }
             }
-            isVisible = visible
+            chipGroup.isVisible = visible
         }
     }
 }

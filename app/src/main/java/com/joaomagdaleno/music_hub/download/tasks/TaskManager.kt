@@ -48,8 +48,8 @@ class TaskManager(private val downloader: Downloader) {
     data class QueueItem(val tasks: List<BaseTask>)
 
     companion object {
-        fun BaseTask.toQueueItem() = QueueItem(listOf(this))
-        fun List<BaseTask>.toQueueItem() = QueueItem(this)
+        fun toQueueItem(task: BaseTask) = QueueItem(listOf(task))
+        fun toQueueItem(tasks: List<BaseTask>) = QueueItem(tasks)
     }
 
     fun enqueue(trackId: Long, items: List<QueueItem>) {
@@ -74,7 +74,7 @@ class TaskManager(private val downloader: Downloader) {
 
     private fun enqueueLoadingWork(trackId: Long) {
         val loadingWorker = LoadingTask(context, downloader, trackId)
-        enqueue(trackId, listOf(QueueItem(listOf(loadingWorker))))
+        enqueue(trackId, listOf(toQueueItem(loadingWorker)))
     }
 
     suspend fun awaitCompletion() {

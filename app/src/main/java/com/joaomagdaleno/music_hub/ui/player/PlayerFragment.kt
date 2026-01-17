@@ -17,7 +17,6 @@ import android.widget.ProgressBar
 import androidx.annotation.OptIn
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.drawable.toBitmap
-import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -42,30 +41,20 @@ import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
 import com.joaomagdaleno.music_hub.common.models.Streamable
 import com.joaomagdaleno.music_hub.databinding.FragmentPlayerBinding
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.background
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.context
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.origin
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.isLiked
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.isLoaded
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.showBackground
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.track
+import com.joaomagdaleno.music_hub.playback.MediaItemUtils
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
 import com.joaomagdaleno.music_hub.ui.player.audiofx.AudioEffectsBottomSheet
 import com.joaomagdaleno.music_hub.ui.media.MediaFragment
-import com.joaomagdaleno.music_hub.ui.player.PlayerColors.Companion.defaultPlayerColors
-import com.joaomagdaleno.music_hub.ui.player.PlayerColors.Companion.getColorsFrom
-import com.joaomagdaleno.music_hub.ui.player.PlayerTrackAdapter.Companion.configureClicking
-import com.joaomagdaleno.music_hub.ui.player.quality.FormatUtils.getDetails
+import com.joaomagdaleno.music_hub.ui.player.quality.FormatUtils
 import com.joaomagdaleno.music_hub.ui.player.quality.QualitySelectionBottomSheet
 import com.joaomagdaleno.music_hub.utils.ContextUtils
 import com.joaomagdaleno.music_hub.utils.image.ImageUtils
 import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
-import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoClearedNullable
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue
 import com.joaomagdaleno.music_hub.utils.ui.CheckBoxListener
 import com.joaomagdaleno.music_hub.utils.ui.SimpleItemSpan
-import com.joaomagdaleno.music_hub.utils.ui.ViewPager2Utils.registerOnUserPageChangeCallback
-import com.joaomagdaleno.music_hub.utils.ui.ViewPager2Utils.supportBottomSheetBehavior
+import com.joaomagdaleno.music_hub.utils.ui.ViewPager2Utils
 import androidx.core.view.HapticFeedbackConstantsCompat
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.SimpleCache
@@ -78,7 +67,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 class PlayerFragment : Fragment() {
-    private var binding by autoClearedNullable<FragmentPlayerBinding>()
+    private var binding by AutoClearedValue.autoClearedNullable<FragmentPlayerBinding>(this)
     private val viewModel by activityViewModel<PlayerViewModel>()
     private val uiViewModel by activityViewModel<UiViewModel>()
     private val adapter by lazy {
@@ -95,7 +84,7 @@ class PlayerFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = binding!!
-        binding.viewPager.supportBottomSheetBehavior()
+        ViewPager2Utils.supportBottomSheetBehavior(binding.viewPager)
         UiUtils.setupPlayerMoreBehavior(uiViewModel, binding.playerMoreContainer)
         configureOutline(binding.root)
         configureCollapsing(binding)
@@ -117,25 +106,27 @@ class PlayerFragment : Fragment() {
             binding, uiViewModel, viewModel, adapter, this, collapseHeight, requireActivity()
         )
         // Additional listeners kept in Fragment just in case, but moved logic to helper covers most
-        binding.bgPanel.configureClicking(adapterListener, uiViewModel)
+        binding.bgPanel.setOnClickListener { adapterListener.onClick() }
     }
 
     private val adapterListener = object : PlayerTrackAdapter.Listener {
-        override fun onClick() = uiViewModel.run {
-            if (playerSheetState.value != STATE_EXPANDED) changePlayerState(STATE_EXPANDED)
-            else {
-                if (moreSheetState.value == STATE_EXPANDED) {
-                    changeMoreState(STATE_COLLAPSED)
-                    return
-                }
-                val shouldBeVisible = !playerBgVisible.value
-                if (shouldBeVisible) {
-                    val binding = binding ?: return@run
-                    if (binding.bgImage.drawable == null && !binding.playerView.player.hasVideo())
+        override fun onClick() {
+            uiViewModel.run {
+                if (playerSheetState.value != STATE_EXPANDED) changePlayerState(STATE_EXPANDED)
+                else {
+                    if (moreSheetState.value == STATE_EXPANDED) {
+                        changeMoreState(STATE_COLLAPSED)
                         return
-                    changeMoreState(STATE_COLLAPSED)
+                    }
+                    val shouldBeVisible = !playerBgVisible.value
+                    if (shouldBeVisible) {
+                        val binding = binding ?: return@run
+                        if (binding.bgImage.drawable == null && !hasVideo(binding.playerView.player))
+                            return
+                        changeMoreState(STATE_COLLAPSED)
+                    }
+                    changeBgVisible(shouldBeVisible)
                 }
-                changeBgVisible(shouldBeVisible)
             }
         }
 
@@ -151,7 +142,7 @@ class PlayerFragment : Fragment() {
     private fun configurePlayerControls() {
         val viewPager = binding!!.viewPager
         viewPager.adapter = adapter
-        viewPager.registerOnUserPageChangeCallback { pos, isUser ->
+        ViewPager2Utils.registerOnUserPageChangeCallback(viewPager) { pos, isUser ->
             val index = viewModel.playerState.current.value?.index
             if (index != pos && isUser) viewModel.seek(pos)
         }
@@ -173,7 +164,7 @@ class PlayerFragment : Fragment() {
 
         val binding = binding!!
         binding.playerControls.trackHeart.addOnCheckedStateChangedListener(likeListener)
-        ContextUtils.observe(this, viewModel.playerState.current) {
+        ContextUtils.observe(this, viewModel.playerState.current) { it ->
             uiViewModel.run {
                 if (it == null) return@run changePlayerState(STATE_HIDDEN)
                 if (!UiUtils.isFinalState(playerSheetState.value)) return@run
@@ -230,8 +221,8 @@ class PlayerFragment : Fragment() {
             }
         }
 
-        ContextUtils.observe(this, viewModel.totalDuration) {
-            val duration = it ?: viewModel.playerState.current.value?.track?.duration ?: 0
+        ContextUtils.observe(this, viewModel.totalDuration) { it ->
+            val duration = it ?: viewModel.playerState.current.value?.let { MediaItemUtils.getTrack(it.mediaItem).duration } ?: 0L
             binding.playerCollapsedContainer.run {
                 collapsedSeekbar.max = duration.toInt()
                 collapsedBuffer.max = duration.toInt()
@@ -328,7 +319,7 @@ class PlayerFragment : Fragment() {
                 QualitySelectionBottomSheet().show(parentFragmentManager, null)
             }
             ContextUtils.observe(this@PlayerFragment, viewModel.serverAndTracks) { (tracks, server, index) ->
-                trackSubtitle.text = tracks?.getDetails(requireContext(), server, index)
+                trackSubtitle.text = tracks?.let { FormatUtils.getDetails(it, requireContext(), server, index) }
                     ?.joinToString(" ⦿ ")?.takeIf { it.isNotBlank() }
             }
         }
@@ -345,9 +336,9 @@ class PlayerFragment : Fragment() {
                 val context = requireContext()
                 uiViewModel.playerDrawable.value = drawable
                 val colors =
-                    if (isDynamic(context)) context.getColorsFrom(drawable?.toBitmap()) else null
+                    if (isDynamic(context)) PlayerColors.getColorsFrom(context, drawable?.toBitmap()) else null
                 uiViewModel.playerColors.value = colors
-                if (showBackground(context)) ImageUtils.loadBlurred(binding!!.bgImage, drawable, 12f)
+                if (MediaItemUtils.showBackground(ContextUtils.getSettings(context))) ImageUtils.loadBlurred(binding!!.bgImage, drawable, 12f)
                 else binding?.bgImage?.setImageDrawable(null)
             }
         }
@@ -356,14 +347,14 @@ class PlayerFragment : Fragment() {
         ContextUtils.observe(this, uiViewModel.playerColors) {
             val context = requireContext()
             if (isPlayerColor(context) && isDynamic(context)) {
-                if (uiViewModel.currentAppColor != viewModel.playerState.current.value?.track?.id) {
+                if (uiViewModel.currentAppColor != viewModel.playerState.current.value?.let { MediaItemUtils.getTrack(it.mediaItem).id }) {
                     uiViewModel.currentAppColor =
-                        viewModel.playerState.current.value?.track?.id
+                        viewModel.playerState.current.value?.let { MediaItemUtils.getTrack(it.mediaItem).id }
                     requireActivity().recreate()
                     return@observe
                 }
             }
-            val colors = it ?: context.defaultPlayerColors()
+            val colors = it ?: PlayerColors.defaultPlayerColors(context)
             val binding = binding!!
             adapter.onColorsUpdated()
 
@@ -403,10 +394,10 @@ class PlayerFragment : Fragment() {
     }
 
     private fun applyCurrent(binding: FragmentPlayerBinding, item: MediaItem) {
-        val track = item.track
-        val origin = item.origin
+        val track = MediaItemUtils.getTrack(item)
+        val origin = MediaItemUtils.getOrigin(item)
         binding.expandedToolbar.run {
-            val itemContext = item.context
+            val itemContext = MediaItemUtils.getContext(item)
             title = if (itemContext != null) context.getString(R.string.playing_from) else null
             subtitle = itemContext?.title
             setOnMenuItemClickListener {
@@ -451,10 +442,10 @@ class PlayerFragment : Fragment() {
             trackArtist.text = span
             trackArtist.movementMethod = LinkMovementMethod.getInstance()
             likeListener.enabled = false
-            trackHeart.isChecked = item.isLiked
+            trackHeart.isChecked = MediaItemUtils.isLiked(item)
             likeListener.enabled = true
             lifecycleScope.launch {
-                val isTrackClient = viewModel.isLikeClient(item.origin)
+                val isTrackClient = viewModel.isLikeClient(MediaItemUtils.getOrigin(item))
                 trackHeart.isVisible = isTrackClient
             }
         }
@@ -466,7 +457,7 @@ class PlayerFragment : Fragment() {
 
     private fun onMoreClicked(item: MediaItem) {
         MediaMoreBottomSheet.newInstance(
-            R.id.navHostFragment, item.origin, item.track, item.isLoaded, true
+            R.id.navHostFragment, MediaItemUtils.getOrigin(item), MediaItemUtils.getTrack(item), MediaItemUtils.isLoaded(item), true
         ).show(requireActivity().supportFragmentManager, null)
     }
 
@@ -487,7 +478,7 @@ class PlayerFragment : Fragment() {
     @OptIn(UnstableApi::class)
     private fun applyPlayer() {
         val mainPlayer = viewModel.browser.value
-        val background = viewModel.playerState.current.value?.mediaItem?.background
+        val background = viewModel.playerState.current.value?.let { MediaItemUtils.getBackground(it.mediaItem) }
         val visible = if (hasVideo(mainPlayer)) {
             binding?.playerView?.player = mainPlayer
             binding?.playerView?.resizeMode = RESIZE_MODE_FIT
@@ -524,7 +515,6 @@ class PlayerFragment : Fragment() {
     }
 
     companion object {
-        private fun showBackground(context: Context) = ContextUtils.getSettings(context).showBackground()
         const val DYNAMIC_PLAYER = "dynamic_player"
         const val PLAYER_COLOR = "player_app_color"
         fun isDynamic(context: Context) =

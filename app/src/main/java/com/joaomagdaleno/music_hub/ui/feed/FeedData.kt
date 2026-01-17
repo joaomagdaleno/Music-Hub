@@ -8,31 +8,17 @@ import com.joaomagdaleno.music_hub.common.models.Feed
 import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.common.models.Tab
 import com.joaomagdaleno.music_hub.di.App
-import kotlinx.coroutines.flow.emptyFlow
+import com.joaomagdaleno.music_hub.data.repository.MusicRepository
 import com.joaomagdaleno.music_hub.ui.common.PagedSource
-import com.joaomagdaleno.music_hub.ui.feed.FeedType.Companion.toFeedType
 import com.joaomagdaleno.music_hub.ui.feed.viewholders.HorizontalListViewHolder
-import com.joaomagdaleno.music_hub.utils.CacheUtils.getFromCache
-import com.joaomagdaleno.music_hub.utils.CacheUtils.saveToCache
-import com.joaomagdaleno.music_hub.utils.CoroutineUtils.combineTransformLatest
-import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadDrawable
+import com.joaomagdaleno.music_hub.utils.CacheUtils
+import com.joaomagdaleno.music_hub.utils.CoroutineUtils
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted.Companion.Lazily
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.lang.ref.WeakReference
@@ -43,17 +29,16 @@ data class FeedData(
     private val feedId: String,
     private val scope: CoroutineScope,
     private val app: App,
-    private val repository: com.joaomagdaleno.music_hub.data.repository.MusicRepository,
-    private val cached: suspend com.joaomagdaleno.music_hub.data.repository.MusicRepository.() -> State<Feed<Shelf>>?,
-    private val load: suspend com.joaomagdaleno.music_hub.data.repository.MusicRepository.() -> State<Feed<Shelf>>?,
+    private val repository: MusicRepository,
+    private val cached: suspend (MusicRepository) -> State<Feed<Shelf>>?,
+    private val load: suspend (MusicRepository) -> State<Feed<Shelf>>?,
     private val defaultButtons: Feed.Buttons,
     private val noVideos: Boolean,
     private val extraLoadFlow: Flow<*>
 ) {
-    // Monolithic: No current source flow, assume always present
     val current = MutableStateFlow<String?>("internal")
     val usersFlow = emptyFlow<Unit>()
-    fun getSource(id: String) = Unit // Placeholder if needed
+    fun getSource(id: String) = Unit
 
     val layoutManagerStates = hashMapOf<Int, Parcelable?>()
     val visibleScrollableViews = hashMapOf<Int, WeakReference<HorizontalListViewHolder>>()
@@ -70,19 +55,19 @@ data class FeedData(
     val searchClickedFlow = MutableSharedFlow<Unit>()
 
     private val stateFlow = cachedState.combine(loadedState) { a, b -> a to b }
-        .stateIn(scope, Lazily, null to null)
+        .stateIn(scope, SharingStarted.Lazily, null to null)
 
-    private val cachedDataFlow = cachedState.combineTransformLatest(selectedTabFlow) { feed, tab ->
+    private val cachedDataFlow = CoroutineUtils.combineTransformLatest(cachedState, selectedTabFlow) { feed, tab ->
         emit(null)
         if (feed == null) return@combineTransformLatest
         emit(getData(feed, tab))
-    }.stateIn(scope, Lazily, null)
+    }.stateIn(scope, SharingStarted.Lazily, null)
 
-    private val loadedDataFlow = loadedState.combineTransformLatest(selectedTabFlow) { feed, tab ->
+    private val loadedDataFlow = CoroutineUtils.combineTransformLatest(loadedState, selectedTabFlow) { feed, tab ->
         emit(null)
         if (feed == null) return@combineTransformLatest
         emit(getData(feed, tab))
-    }.stateIn(scope, Lazily, null)
+    }.stateIn(scope, SharingStarted.Lazily, null)
 
     private suspend fun getData(
         state: Result<State<Feed<Shelf>>?>, tab: Tab?
@@ -99,7 +84,7 @@ data class FeedData(
         searchQuery = null
         searchToggled = false
         val id = "$origin-$feedId-$tabId"
-        feedSortState.value = origin?.let { app.context.getFromCache(id, "sort") }
+        feedSortState.value = origin?.let { CacheUtils.getFromCache<FeedSort.State>(app.context, id, "sort") }
         loadedShelves.value = null
         cached to loaded
     }
@@ -107,7 +92,7 @@ data class FeedData(
     val shouldShowEmpty = dataFlow.map { (cached, loaded) ->
         val data = loaded?.getOrNull() ?: cached?.getOrNull()
         data != null
-    }.stateIn(scope, Lazily, false)
+    }.stateIn(scope, SharingStarted.Lazily, false)
 
     val tabsFlow = stateFlow.map { (cached, loaded) ->
         val state = (loaded?.getOrNull() ?: cached?.getOrNull()) ?: return@map listOf()
@@ -147,25 +132,25 @@ data class FeedData(
 
     private val imageFlow = dataFlow.map { (cached, loaded) ->
         (loaded?.getOrNull() ?: cached?.getOrNull())?.feed?.background
-    }.stateIn(scope, Lazily, null)
+    }.stateIn(scope, SharingStarted.Lazily, null)
 
     val backgroundImageFlow = imageFlow.mapLatest { image ->
-        image?.loadDrawable(app.context)
-    }.flowOn(Dispatchers.IO).stateIn(scope, Lazily, null)
+        if (image != null) ImageUtils.loadDrawable(image, app.context) else null
+    }.flowOn(Dispatchers.IO).stateIn(scope, SharingStarted.Lazily, null)
 
     val cachedFeedTypeFlow =
-        combineTransformLatest(cachedDataFlow, feedSortState, searchClickedFlow) { _ ->
+        CoroutineUtils.combineTransformLatest(cachedDataFlow, feedSortState, searchClickedFlow) { _ ->
             emit(null)
             val cached = cachedDataFlow.value ?: return@combineTransformLatest
             emit(getFeedSourceData(cached))
-        }.stateIn(scope, Lazily, null)
+        }.stateIn(scope, SharingStarted.Lazily, null)
 
     val loadedFeedTypeFlow =
-        combineTransformLatest(loadedDataFlow, feedSortState, searchClickedFlow) { _ ->
+        CoroutineUtils.combineTransformLatest(loadedDataFlow, feedSortState, searchClickedFlow) { _ ->
             emit(null)
             val loaded = loadedDataFlow.value ?: return@combineTransformLatest
             emit(getFeedSourceData(loaded))
-        }.stateIn(scope, Lazily, null)
+        }.stateIn(scope, SharingStarted.Lazily, null)
 
     val pagingFlow =
         cachedFeedTypeFlow.combineTransformLatest(loadedFeedTypeFlow) { cached, loaded ->
@@ -184,7 +169,7 @@ data class FeedData(
 
                 val sortState = feedSortState.value
                 val query = searchQuery
-                var shelves = data.loadTill(2000)
+                var shelves = loadTill(data, 2000)
                 shelves = if (sortState?.feedSort != null || query != null)
                     shelves.flatMap { shelf ->
                         when (shelf) {
@@ -201,13 +186,14 @@ data class FeedData(
                     shelves = sortState.feedSort?.sorter?.invoke(app.context, shelves) ?: shelves
                     if (sortState.reversed) shelves = shelves.reversed()
                     if (sortState.save)
-                        app.context.saveToCache("$origin-$feedId-$tabId", sortState, "sort")
+                        CacheUtils.saveToCache(app.context, "$origin-$feedId-$tabId", sortState, "sort")
                 }
                 if (query != null) {
                     shelves = shelves.filter { it.title.contains(query, true) }
                 }
                 PagedData.Single {
-                    shelves.toFeedType(
+                    FeedType.toFeedType(
+                        shelves,
                         feedId,
                         origin,
                         state.item,
@@ -222,9 +208,9 @@ data class FeedData(
             val data = state.feed.pagedData
             data.loadPage(null)
             var start = 0L
-            data.map { result ->
-                result.map {
-                    val list = it.toFeedType(feedId, origin, state.item, tabId, noVideos, start)
+            data.map { res ->
+                res.map {
+                    val list = FeedType.toFeedType(it, feedId, origin, state.item, tabId, noVideos, start)
                     start += list.size
                     list
                 }.getOrThrow()
@@ -233,12 +219,12 @@ data class FeedData(
         data
     }
 
-    private suspend fun <T : Any> PagedData<T>.loadTill(limit: Long): List<T> {
+    private suspend fun <T : Any> loadTill(pagedData: PagedData<T>, limit: Long): List<T> {
         val list = mutableListOf<T>()
-        var page = loadPage(null)
+        var page = pagedData.loadPage(null)
         list.addAll(page.data)
         while (page.continuation != null && list.size < limit) {
-            page = loadPage(page.continuation)
+            page = pagedData.loadPage(page.continuation)
             list.addAll(page.data)
         }
         return list
@@ -246,13 +232,13 @@ data class FeedData(
 
     val isRefreshingFlow = loadedFeedTypeFlow.map {
         loadedFeedTypeFlow.value == null
-    }.stateIn(scope, Lazily, true)
+    }.stateIn(scope, SharingStarted.Lazily, true)
 
     fun selectTab(origin: String?, pos: Int) {
         val state = stateFlow.value.run { second?.getOrNull() ?: first?.getOrNull() }
         val tab = state?.feed?.tabs?.getOrNull(pos)
             ?.takeIf { state.origin == origin }
-        app.context.saveToCache(feedId, tab?.id, "selected_tab")
+        CacheUtils.saveToCache(app.context, feedId, tab?.id, "selected_tab")
         selectedTabFlow.value = tab
     }
 
@@ -269,7 +255,6 @@ data class FeedData(
                     FileLogger.log("FeedData", "collectLatest triggered for feedId=$feedId")
                     cachedState.value = null
                     loadedState.value = null
-                    // Monolithic: Always load
                     FileLogger.log("FeedData", "Loading cached for feedId=$feedId")
                     cachedState.value = runCatching { cached(repository) }
                     FileLogger.log("FeedData", "Cached result: ${cachedState.value?.isSuccess} for feedId=$feedId")
@@ -283,10 +268,10 @@ data class FeedData(
         }
 
         scope.launch {
-            stateFlow.collect { result ->
-                val feed = result.run { second?.getOrNull() ?: first?.getOrNull() }?.feed?.tabs
+            stateFlow.collect { res ->
+                val feed = res.run { second?.getOrNull() ?: first?.getOrNull() }?.feed?.tabs
                 selectedTabFlow.value = if (feed == null) null else {
-                    val last = app.context.getFromCache<String>(feedId, "selected_tab")
+                    val last = CacheUtils.getFromCache<String>(app.context, feedId, "selected_tab")
                     feed.find { it.id == last } ?: feed.firstOrNull()
                 }
             }

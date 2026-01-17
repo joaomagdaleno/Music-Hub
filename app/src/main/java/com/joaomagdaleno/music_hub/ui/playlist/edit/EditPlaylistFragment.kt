@@ -18,7 +18,7 @@ import com.joaomagdaleno.music_hub.ui.playlist.edit.search.EditPlaylistSearchFra
 import com.joaomagdaleno.music_hub.utils.ContextUtils
 import com.joaomagdaleno.music_hub.utils.Serializer
 import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
-import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue
 import com.joaomagdaleno.music_hub.utils.ui.FastScrollerHelper
 import kotlinx.coroutines.flow.combine
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -40,7 +40,7 @@ class EditPlaylistFragment : Fragment() {
     private val loaded by lazy { args.getBoolean("loaded", false) }
     private val selectedTab by lazy { args.getString("selectedTabId").orEmpty() }
 
-    private var binding: FragmentPlaylistEditBinding by autoCleared()
+    private var binding: FragmentPlaylistEditBinding by AutoClearedValue.autoCleared(this)
     private val vm by viewModel<EditPlaylistViewModel> {
         parametersOf(origin, playlist, loaded, selectedTab, -1)
     }
@@ -60,8 +60,8 @@ class EditPlaylistFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        AnimationUtils.setupTransition(view)
-        UiUtils.applyInsetsWithChild(binding.appBarLayout, binding.recyclerView, 96) {
+        AnimationUtils.setupTransition(this, view)
+        UiUtils.applyInsetsWithChild(this, binding.appBarLayout, binding.recyclerView, 96) {
             UiUtils.applyInsets(binding.fabContainer, it)
         }
 

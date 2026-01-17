@@ -74,7 +74,7 @@ sealed class ImageHolder {
             url: String,
             headers: Map<String, String> = mapOf(),
             crop: Boolean = false
-        ) = NetworkRequestImageHolder(url.toGetRequest(headers), crop)
+        ) = NetworkRequestImageHolder(NetworkRequest.toGetRequest(url, headers), crop)
 
         /**
          * Converts a string to a [ResourceUriImageHolder]

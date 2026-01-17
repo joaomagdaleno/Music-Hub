@@ -7,22 +7,21 @@ import android.graphics.drawable.Drawable
 import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat.checkSelfPermission
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.media3.common.util.NotificationUtil
-import androidx.media3.common.util.NotificationUtil.createNotificationChannel
 import androidx.media3.common.util.UnstableApi
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.common.models.DownloadContext
 import com.joaomagdaleno.music_hub.common.models.Progress
-import com.joaomagdaleno.music_hub.download.DownloadWorker.Companion.getMainIntent
+import com.joaomagdaleno.music_hub.download.DownloadWorker
 import com.joaomagdaleno.music_hub.download.Downloader
 import com.joaomagdaleno.music_hub.download.db.models.TaskType
 import com.joaomagdaleno.music_hub.download.exceptions.DownloadException
 import com.joaomagdaleno.music_hub.data.providers.InternalDownloadProvider
-import com.joaomagdaleno.music_hub.utils.ui.toExceptionData
-import com.joaomagdaleno.music_hub.utils.CoroutineUtils.throttleLatest
-import com.joaomagdaleno.music_hub.utils.Serializer.toJson
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
+import com.joaomagdaleno.music_hub.utils.CoroutineUtils
+import com.joaomagdaleno.music_hub.utils.Serializer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
@@ -37,7 +36,7 @@ abstract class BaseTask(
 ) : KoinComponent {
     abstract val type: TaskType
     val progressFlow = MutableStateFlow(Progress())
-    val throttledProgressFlow = progressFlow.throttleLatest(500L)
+    val throttledProgressFlow = CoroutineUtils.throttleLatest(progressFlow, 500L)
     val running = MutableStateFlow(false)
     val dao = downloader.dao
     
@@ -50,8 +49,8 @@ abstract class BaseTask(
         val download = dao.getDownloadEntity(trackId)
         if (throwable != null && download != null) {
             val exception = DownloadException(type, download, throwable)
-            val exceptionFile = context.exceptionDir().resolve("$trackId.json")
-            exceptionFile.writeText(exception.toExceptionData(context).toJson())
+            val exceptionFile = getExceptionDir(context).resolve("$trackId.json")
+            exceptionFile.writeText(Serializer.toJson(UiUtils.toExceptionData(context, exception)))
             dao.insertDownloadEntity(download.copy(exceptionFile = exceptionFile.absolutePath))
         }
         running.value = false
@@ -74,17 +73,17 @@ abstract class BaseTask(
     abstract suspend fun work(trackId: Long)
 
     companion object {
-        fun Context.getTitle(type: TaskType, title: String) = when (type) {
-            TaskType.Loading -> getString(R.string.loading_x, title)
-            TaskType.Downloading -> getString(R.string.downloading_x, title)
-            TaskType.Merging -> getString(R.string.merging_x, title)
-            TaskType.Tagging -> getString(R.string.tagging_x, title)
-            TaskType.Saving -> getString(R.string.saving_x, title)
+        fun getTitle(context: Context, type: TaskType, title: String) = when (type) {
+            TaskType.Loading -> context.getString(R.string.loading_x, title)
+            TaskType.Downloading -> context.getString(R.string.downloading_x, title)
+            TaskType.Merging -> context.getString(R.string.merging_x, title)
+            TaskType.Tagging -> context.getString(R.string.tagging_x, title)
+            TaskType.Saving -> context.getString(R.string.saving_x, title)
         }
 
         private const val DOWNLOAD_CHANNEL_ID = "download_channel"
 
-        fun Context.exceptionDir() = File(filesDir, "download_exceptions").apply { mkdirs() }
+        fun getExceptionDir(context: Context) = File(context.filesDir, "download_exceptions").apply { mkdirs() }
     }
 
 
@@ -94,7 +93,7 @@ abstract class BaseTask(
         title: String,
         drawable: Drawable?,
     ) {
-        createNotificationChannel(
+        NotificationUtil.createNotificationChannel(
             context, DOWNLOAD_CHANNEL_ID, R.string.download_complete, 0,
             NotificationUtil.IMPORTANCE_DEFAULT
         )
@@ -105,10 +104,10 @@ abstract class BaseTask(
             .setStyle(
                 NotificationCompat.BigPictureStyle().bigLargeIcon(drawable?.toBitmap())
             )
-            .setContentIntent(getMainIntent(context))
+            .setContentIntent(DownloadWorker.getMainIntent(context))
             .setAutoCancel(true)
 
-        if (checkSelfPermission(context, POST_NOTIFICATIONS) != PERMISSION_GRANTED) return
+        if (ContextCompat.checkSelfPermission(context, POST_NOTIFICATIONS) != PERMISSION_GRANTED) return
         NotificationManagerCompat.from(context).notify(
             title.hashCode(),
             notificationBuilder.build()

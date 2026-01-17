@@ -13,13 +13,11 @@ import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.databinding.DialogMediaMoreBinding
 import com.joaomagdaleno.music_hub.download.Downloader
 import com.joaomagdaleno.music_hub.common.models.MediaState
-import com.joaomagdaleno.music_hub.utils.ui.openFragment
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
-import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
 import com.joaomagdaleno.music_hub.ui.download.DownloadViewModel
 import com.joaomagdaleno.music_hub.ui.feed.FeedLoadingAdapter
-import com.joaomagdaleno.music_hub.ui.feed.FeedLoadingAdapter.Companion.createListener
-import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.icon
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder
 import com.joaomagdaleno.music_hub.ui.media.MediaFragment
 import com.joaomagdaleno.music_hub.ui.media.MediaViewModel
 import com.joaomagdaleno.music_hub.ui.media.more.MoreButton.Companion.button
@@ -32,9 +30,8 @@ import com.joaomagdaleno.music_hub.ui.playlist.delete.DeletePlaylistBottomSheet
 import com.joaomagdaleno.music_hub.ui.playlist.edit.EditPlaylistBottomSheet
 import com.joaomagdaleno.music_hub.ui.playlist.edit.EditPlaylistFragment
 import com.joaomagdaleno.music_hub.ui.playlist.save.SaveToPlaylistBottomSheet
-import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
-import com.joaomagdaleno.music_hub.utils.Serializer.getSerialized
-import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized
+import com.joaomagdaleno.music_hub.utils.ContextUtils
+import com.joaomagdaleno.music_hub.utils.Serializer
 import kotlinx.coroutines.flow.combine
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -55,9 +52,9 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
             arguments = Bundle().apply {
                 putInt("contId", contId)
                 putString("origin", origin)
-                putSerialized("item", item)
+                Serializer.putSerialized(this, "item", item)
                 putBoolean("loaded", loaded)
-                putSerialized("context", context)
+                Serializer.putSerialized(this, "context", context)
                 putBoolean("fromPlayer", fromPlayer)
                 putString("tabId", tabId)
                 putInt("pos", pos ?: -1)
@@ -68,13 +65,12 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     private val args by lazy { requireArguments() }
     private val contId by lazy { args.getInt("contId", -1).takeIf { it != -1 }!! }
     private val origin by lazy { args.getString("origin")!! }
-    private val item by lazy { args.getSerialized<EchoMediaItem>("item")!!.getOrThrow() }
+    private val item by lazy { Serializer.getSerialized<EchoMediaItem>(args, "item")!!.getOrThrow() }
     private val loaded by lazy { args.getBoolean("loaded") }
-    private val itemContext by lazy { args.getSerialized<EchoMediaItem?>("context")?.getOrThrow() }
+    private val itemContext by lazy { Serializer.getSerialized<EchoMediaItem?>(args, "context")?.getOrNull() }
     private val tabId by lazy { args.getString("tabId") }
     private val pos by lazy { args.getInt("pos") }
     private val fromPlayer by lazy { args.getBoolean("fromPlayer") }
-    private val delete by lazy { args.getBoolean("delete", false) }
 
     private val vm by viewModel<MediaViewModel> {
         parametersOf(false, origin, item, loaded)
@@ -90,20 +86,19 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     }
 
     private val loadingAdapter by lazy {
-        FeedLoadingAdapter(createListener { vm.refresh() }) {
-            val holder = LyricsItemAdapter.Loading(it)
-            holder
+        FeedLoadingAdapter(FeedLoadingAdapter.createListener(this) { vm.refresh() }) {
+            LyricsItemAdapter.Loading(it)
         }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = DialogMediaMoreBinding.bind(view)
-        observe(playerViewModel.playerState.current) {
+        ContextUtils.observe(this, playerViewModel.playerState.current) {
             headerAdapter.onCurrentChanged(it)
         }
         val actionFlow =
             combine(vm.downloadsFlow, vm.uiResultFlow) { _, _ -> }
-        observe(actionFlow) {
+        ContextUtils.observe(this, actionFlow) {
             val result = vm.uiResultFlow.value?.getOrNull()
             val downloads = vm.downloadsFlow.value.filter { it.download.finalFile != null }
             val loaded = if (result != null) true else loaded
@@ -111,12 +106,12 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
             actionAdapter.submitList(list)
             headerAdapter.item = result?.item ?: item
         }
-        observe(vm.itemResultFlow) { result ->
+        ContextUtils.observe(this, vm.itemResultFlow) { result ->
             loadingAdapter.loadState = result?.map { LoadState.NotLoading(false) }?.getOrElse {
                 LoadState.Error(it)
             } ?: LoadState.Loading
         }
-        configureGridLayout(
+        GridAdapter.configureGridLayout(
             binding.root,
             GridAdapter.Concat(
                 headerAdapter,
@@ -172,8 +167,6 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     ) = run {
         val item = state?.item ?: item
         val isEditable = item is Playlist && item.isEditable
-        // In monolithic mode, always show save to playlist for tracks
-        // and always show edit/delete for editable playlists
         listOfNotNull(
             if (item is Track && loaded) button(
                 "save_to_playlist", R.string.save_to_playlist, R.drawable.ic_library_music
@@ -184,8 +177,8 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
             if (isEditable) button(
                 "edit_playlist", R.string.edit_playlist, R.drawable.ic_edit_note
             ) {
-                openFragment<EditPlaylistFragment>(
-                    EditPlaylistFragment.getBundle(origin, item, loaded)
+                openItemFragment<EditPlaylistFragment>(
+                    origin, item, loaded
                 )
             } else null,
             if (isEditable) button(
@@ -211,7 +204,6 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
             is Track -> downloads.any { it.download.trackId == item.id }
             else -> downloads.any { it.context?.itemId == item.id }
         }
-        // In monolithic mode, everything is downloadable if it's a track
         val downloadable = item is Track
 
         listOfNotNull(
@@ -275,14 +267,9 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
         is EchoMediaItem.Lists -> item.artists
         is Artist -> listOf()
     }.map {
-        button(it.id, it.title, it.icon) {
+        button(it.id, it.title, MediaViewHolder.getIcon(it)) {
             openItemFragment(origin, it)
         }
-    }
-
-    private inline fun <reified T : Fragment> openFragment(bundle: Bundle) {
-        parentFragmentManager.findFragmentById(contId)!!
-            .openFragment<T>(null, bundle)
     }
 
     private fun openItemFragment(
@@ -290,7 +277,18 @@ class MediaMoreBottomSheet : BottomSheetDialogFragment(R.layout.dialog_media_mor
     ) {
         origin ?: return
         item ?: return
-        openFragment<MediaFragment>(MediaFragment.getBundle(origin, item, loaded))
+        val fragment = parentFragmentManager.findFragmentById(contId) ?: return
+        UiUtils.openFragment<MediaFragment>(fragment, null, MediaFragment.getBundle(origin, item, loaded))
+        dismiss()
+    }
+
+    private inline fun <reified T : Fragment> openItemFragment(
+        origin: String?, item: EchoMediaItem?, loaded: Boolean = false
+    ) {
+        origin ?: return
+        item ?: return
+        val fragment = parentFragmentManager.findFragmentById(contId) ?: return
+        UiUtils.openFragment<T>(fragment, null, EditPlaylistFragment.getBundle(origin, item as Playlist, loaded))
         dismiss()
     }
 }

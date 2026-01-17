@@ -23,19 +23,11 @@ import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.download.Downloader
 import com.joaomagdaleno.music_hub.common.models.MediaState
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.serverWithDownloads
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.streamIndex
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.track
-import com.joaomagdaleno.music_hub.playback.PlayerCommands.addToNextCommand
-import com.joaomagdaleno.music_hub.playback.PlayerCommands.addToQueueCommand
-import com.joaomagdaleno.music_hub.playback.PlayerCommands.playCommand
-import com.joaomagdaleno.music_hub.playback.PlayerCommands.radioCommand
-import com.joaomagdaleno.music_hub.playback.PlayerCommands.resumeCommand
-import com.joaomagdaleno.music_hub.playback.PlayerCommands.sleepTimer
-import com.joaomagdaleno.music_hub.playback.PlayerService.Companion.getController
+import com.joaomagdaleno.music_hub.playback.PlayerCommands
+import com.joaomagdaleno.music_hub.playback.PlayerService
 import com.joaomagdaleno.music_hub.playback.PlayerState
-import com.joaomagdaleno.music_hub.utils.ContextUtils.listenFuture
-import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized
+import com.joaomagdaleno.music_hub.utils.ContextUtils
+import com.joaomagdaleno.music_hub.utils.Serializer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,7 +36,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.math.max
 
 @OptIn(UnstableApi::class)
@@ -61,22 +52,22 @@ class PlayerViewModel(
     val browser = MutableStateFlow<MediaController?>(null)
     private fun withBrowser(block: suspend (MediaController) -> Unit) {
         viewModelScope.launch {
-            val browser = browser.first { it != null }!!
-            block(browser)
+            val controller = browser.first { it != null }!!
+            block(controller)
         }
     }
 
     var queue: List<MediaItem> = emptyList()
     val queueFlow = MutableSharedFlow<Unit>()
     private val context = app.context
-    val controllerFutureRelease = getController(context) { player ->
+    val controllerFutureRelease = PlayerService.getController(context) { player ->
         browser.value = player
         player.addListener(PlayerUiListener(player, this))
 
         if (player.mediaItemCount != 0) return@getController
         if (!settings.getBoolean(KEEP_QUEUE, true)) return@getController
 
-        player.sendCustomCommand(resumeCommand, Bundle.EMPTY)
+        player.sendCustomCommand(PlayerCommands.resumeCommand, Bundle.EMPTY)
     }
 
     override fun onCleared() {
@@ -149,13 +140,13 @@ class PlayerViewModel(
 
     fun likeCurrent(isLiked: Boolean) = withBrowser { controller ->
         val future = controller.setRating(ThumbRating(isLiked))
-        app.context.listenFuture(future) { sessionResult ->
+        ContextUtils.listenFuture(app.context, future) { sessionResult ->
             sessionResult.getOrElse { createException(it) }
         }
     }
 
     fun setSleepTimer(timer: Long) {
-        withBrowser { it.sendCustomCommand(sleepTimer, bundleOf("ms" to timer)) }
+        withBrowser { it.sendCustomCommand(PlayerCommands.sleepTimer, bundleOf("ms" to timer)) }
     }
 
     fun changeTrackSelection(trackGroup: TrackGroup, index: Int) {
@@ -179,20 +170,20 @@ class PlayerViewModel(
 
     fun changeServer(server: Streamable) {
         val item = playerState.current.value?.mediaItem ?: return
-        val index = item.serverWithDownloads(app.context).indexOf(server).takeIf { it != -1 }
+        val index = MediaItemUtils.serverWithDownloads(app.context, item).indexOf(server).takeIf { it != -1 }
             ?: return
         changeCurrent(MediaItemUtils.buildServer(item, index))
     }
 
     fun changeBackground(background: Streamable?) {
         val item = playerState.current.value?.mediaItem ?: return
-        val index = item.track.backgrounds.indexOf(background)
+        val index = MediaItemUtils.getTrack(item).backgrounds.indexOf(background)
         changeCurrent(MediaItemUtils.buildBackground(item, index))
     }
 
     fun changeSubtitle(subtitle: Streamable?) {
         val item = playerState.current.value?.mediaItem ?: return
-        val index = item.track.subtitles.indexOf(subtitle)
+        val index = MediaItemUtils.getTrack(item).subtitles.indexOf(subtitle)
         changeCurrent(MediaItemUtils.buildSubtitle(item, index))
     }
 
@@ -211,7 +202,7 @@ class PlayerViewModel(
                     context
                 )
             }
-            controller.setMediaItems(mediaItems, index, list[index].playedDuration ?: 0)
+            controller.setMediaItems(mediaItems, index, (list[index].playedDuration ?: 0L))
             controller.prepare()
         }
     }
@@ -221,9 +212,9 @@ class PlayerViewModel(
             Message(app.context.getString(R.string.loading_radio_for_x, item.title))
         )
         withBrowser {
-            it.sendCustomCommand(radioCommand, Bundle().apply {
+            it.sendCustomCommand(PlayerCommands.radioCommand, Bundle().apply {
                 putString("origin", id)
-                putSerialized("item", item)
+                Serializer.putSerialized(this, "item", item)
                 putBoolean("loaded", loaded)
             })
         }
@@ -234,9 +225,9 @@ class PlayerViewModel(
             Message(app.context.getString(R.string.playing_x, item.title))
         )
         withBrowser {
-            it.sendCustomCommand(playCommand, Bundle().apply {
+            it.sendCustomCommand(PlayerCommands.playCommand, Bundle().apply {
                 putString("origin", id)
-                putSerialized("item", item)
+                Serializer.putSerialized(this, "item", item)
                 putBoolean("loaded", loaded)
                 putBoolean("shuffle", false)
             })
@@ -248,9 +239,9 @@ class PlayerViewModel(
             Message(app.context.getString(R.string.shuffling_x, item.title))
         )
         withBrowser {
-            it.sendCustomCommand(playCommand, Bundle().apply {
+            it.sendCustomCommand(PlayerCommands.playCommand, Bundle().apply {
                 putString("origin", id)
-                putSerialized("item", item)
+                Serializer.putSerialized(this, "item", item)
                 putBoolean("loaded", loaded)
                 putBoolean("shuffle", true)
             })
@@ -263,9 +254,9 @@ class PlayerViewModel(
             Message(app.context.getString(R.string.adding_x_to_queue, item.title))
         )
         withBrowser {
-            it.sendCustomCommand(addToQueueCommand, Bundle().apply {
+            it.sendCustomCommand(PlayerCommands.addToQueueCommand, Bundle().apply {
                 putString("origin", id)
-                putSerialized("item", item)
+                Serializer.putSerialized(this, "item", item)
                 putBoolean("loaded", loaded)
             })
         }
@@ -276,9 +267,9 @@ class PlayerViewModel(
             Message(app.context.getString(R.string.adding_x_to_next, item.title))
         )
         withBrowser {
-            it.sendCustomCommand(addToNextCommand, Bundle().apply {
+            it.sendCustomCommand(PlayerCommands.addToNextCommand, Bundle().apply {
                 putString("origin", id)
-                putSerialized("item", item)
+                Serializer.putSerialized(this, "item", item)
                 putBoolean("loaded", loaded)
             })
         }
@@ -299,7 +290,7 @@ class PlayerViewModel(
     val serverAndTracks = tracksFlow.combine(playerState.serverChanged) { tracks, _ -> tracks }
         .combine(playerState.current) { tracks, current ->
             val server = playerState.servers[current?.mediaItem?.mediaId]?.getOrNull()
-            val index = current?.mediaItem?.streamIndex
+            val index = current?.mediaItem?.let { MediaItemUtils.getStreamIndex(it) } ?: -1
             Triple(tracks, server, index)
         }.stateIn(viewModelScope, SharingStarted.Lazily, Triple(null, null, null))
 

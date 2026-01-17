@@ -7,13 +7,12 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.os.Bundle
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.TrackSelectionParameters
-import androidx.media3.common.TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_DISABLED
-import androidx.media3.common.TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
@@ -24,7 +23,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionToken
-import com.joaomagdaleno.music_hub.MainActivity.Companion.getMainActivity
+import com.joaomagdaleno.music_hub.MainActivity
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.common.models.Streamable
 import com.joaomagdaleno.music_hub.di.App
@@ -33,7 +32,7 @@ import com.joaomagdaleno.music_hub.playback.listener.*
 import com.joaomagdaleno.music_hub.playback.renderer.PlayerBitmapLoader
 import com.joaomagdaleno.music_hub.playback.renderer.RenderersFactory
 import com.joaomagdaleno.music_hub.playback.source.StreamableMediaSource
-import com.joaomagdaleno.music_hub.utils.ContextUtils.listenFuture
+import com.joaomagdaleno.music_hub.utils.ContextUtils
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -130,7 +129,7 @@ class PlayerService : MediaLibraryService() {
     private fun offloadPreferences(moreBrainCapacity: Boolean) =
         TrackSelectionParameters.AudioOffloadPreferences.Builder()
             .setAudioOffloadMode(
-                if (moreBrainCapacity) AUDIO_OFFLOAD_MODE_DISABLED else AUDIO_OFFLOAD_MODE_ENABLED
+                if (moreBrainCapacity) TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_DISABLED else TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED
             ).setIsGaplessSupportRequired(true)
             .setIsSpeedChangeSupportRequired(true)
             .build()
@@ -210,27 +209,30 @@ class PlayerService : MediaLibraryService() {
             streamables.indexOf(streamable)
         } else -1
 
-        fun <E> List<E>.select(
+        fun <E> selectFromList(
+            list: List<E>,
             app: App,
             settings: SharedPreferences,
             quality: (E) -> Int,
             default: String = streamQualities[1],
         ): E? {
             val unmetered = if (app.isUnmetered) selectQuality(
+                list,
                 settings.getString(UNMETERED_STREAM_QUALITY, "off"),
                 quality
             ) else null
             return unmetered ?: selectQuality(
+                list,
                 settings.getString(STREAM_QUALITY, default),
                 quality
             )
         }
 
-        private fun <E> List<E>.selectQuality(final: String?, quality: (E) -> Int): E? {
+        private fun <E> selectQuality(list: List<E>, final: String?, quality: (E) -> Int): E? {
             return when (final) {
-                streamQualities[0] -> maxBy { quality(it) }
-                streamQualities[1] -> sortedBy { quality(it) }[size / 2]
-                streamQualities[2] -> minBy { quality(it) }
+                streamQualities[0] -> list.maxBy { quality(it) }
+                streamQualities[1] -> list.sortedBy { quality(it) }[list.size / 2]
+                streamQualities[2] -> list.minBy { quality(it) }
                 else -> null
             }
         }
@@ -240,7 +242,7 @@ class PlayerService : MediaLibraryService() {
             app: App, origin: String, list: List<T>, quality: (T) -> Int,
         ): T {
             // Simplified: use global settings for now
-            return list.select(app, app.settings, quality)
+            return selectFromList(list, app, app.settings, quality)
                 ?: list.first()
         }
 
@@ -251,7 +253,7 @@ class PlayerService : MediaLibraryService() {
             val sessionToken =
                 SessionToken(context, ComponentName(context, PlayerService::class.java))
             val playerFuture = MediaController.Builder(context, sessionToken).buildAsync()
-            context.listenFuture(playerFuture) { result ->
+            ContextUtils.listenFuture(context, playerFuture) { result ->
                 val controller = result.getOrElse {
                     return@listenFuture it.printStackTrace()
                 }
@@ -272,7 +274,7 @@ class PlayerService : MediaLibraryService() {
         override fun onStart() {
             super.onStart()
             finish()
-            startActivity(Intent(this, getMainActivity()).apply {
+            startActivity(Intent(this, MainActivity.getMainActivity(this)).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 putExtra("fromNotification", true)
             })

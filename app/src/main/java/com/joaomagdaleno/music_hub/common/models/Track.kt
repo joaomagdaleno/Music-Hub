@@ -5,37 +5,6 @@ import java.util.Locale
 
 /**
  * A class representing a track that can be played in Echo.
- *
- * @property id The id of the track
- * @property title The title of the track
- * @property type The type of the track, can be Audio, Video, or HorizontalVideo
- * @property cover The cover of the track
- * @property artists The artists of the track
- * @property album The album of the track
- * @property duration The duration of the track in milliseconds
- * @property playedDuration The duration of the track that has been played, in milliseconds
- * @property plays The number of plays of the track
- * @property releaseDate The release date of the track
- * @property description The description of the track
- * @property background The background image of the track
- * @property isrc The IRSC code of the track
- * @property genres The genres of the track
- * @property albumDiscNumber The disc number of the track in the album
- * @property albumOrderNumber The order number of the track in the album, if [albumDiscNumber] is not null, this is the order number in that disc
- * @property playlistAddedDate The date when the track was added to a playlist
- * @property isExplicit Whether the track is explicit
- * @property subtitle The subtitle of the track, used to display information under the title
- * @property extras Any extra data you want to associate with the track
- * @property isPlayable Whether the track is playable.
- * @property streamables The streamables of the track
- * @property isRadioSupported Whether the track can used to create a radio
- * @property isFollowable Whether the track can be followed
- * @property isSaveable Whether the track can be saved to library
- * @property isLikeable Whether the track can be liked
- * @property isHideable Whether the track can be hidden
- * @property isShareable Whether the track can be shared
- *
- * @see Streamable
  */
 @Serializable
 data class Track(
@@ -72,7 +41,7 @@ data class Track(
 ) : EchoMediaItem {
 
     enum class Type {
-        Song, Podcast, VideoSong, Video, HorizontalVideo
+        Song, Podcast
     }
 
     @Serializable
@@ -90,39 +59,24 @@ data class Track(
         data class No(val reason: String) : Playable
     }
 
-    /**
-     * The streamable subtitles of the track.
-     * @see Streamable.subtitle
-     * @see Streamable.Media.Subtitle
-     */
     val subtitles: List<Streamable> by lazy {
         streamables.filter { it.type == Streamable.MediaType.Subtitle }
     }
 
-    /**
-     * The streamable servers of the track.
-     * @see Streamable.server
-     * @see Streamable.Media.Server
-     */
     val servers: List<Streamable> by lazy {
         streamables.filter { it.type == Streamable.MediaType.Server }
     }
 
-    /**
-     * The streamable backgrounds of the track.
-     * @see Streamable.background
-     * @see Streamable.Media.Background
-     */
     val backgrounds: List<Streamable> by lazy {
         streamables.filter { it.type == Streamable.MediaType.Background }
     }
 
     override val subtitleWithOutE = subtitle ?: buildString {
-        if (duration != null) append(duration.toDurationString())
-        val artists = artists.joinToString(", ") { it.name }
-        if (artists.isNotBlank()) {
+        if (duration != null) append(toDurationString(duration))
+        val artistsStr = artists.joinToString(", ") { it.name }
+        if (artistsStr.isNotBlank()) {
             if (duration != null) append(" • ")
-            append(artists)
+            append(artistsStr)
         }
     }.trim().ifBlank { null }
 
@@ -132,8 +86,8 @@ data class Track(
     }.trim().ifBlank { null }
 
     companion object {
-        fun Long.toDurationString(): String {
-            val seconds = this / 1000
+        fun toDurationString(duration: Long): String {
+            val seconds = duration / 1000
             val minutes = seconds / 60
             val hours = minutes / 60
             return buildString {

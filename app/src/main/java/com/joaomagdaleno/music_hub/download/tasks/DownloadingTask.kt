@@ -3,7 +3,7 @@ package com.joaomagdaleno.music_hub.download.tasks
 import android.content.Context
 import com.joaomagdaleno.music_hub.download.Downloader
 import com.joaomagdaleno.music_hub.download.db.models.TaskType
-import com.joaomagdaleno.music_hub.utils.Serializer.toJson
+import com.joaomagdaleno.music_hub.utils.Serializer
 
 class DownloadingTask(
     context: Context,
@@ -21,7 +21,7 @@ class DownloadingTask(
         val file = downloadProvider.download(progressFlow, downloadContext, source)
         download = getDownload()
         download =
-            download.copy(toMergeFilesData = (download.toMergeFiles + file.toString()).toJson())
+            download.copy(toMergeFilesData = Serializer.toJson(download.toMergeFiles + file.toString()))
         dao.insertDownloadEntity(download)
     }
 }

@@ -7,15 +7,15 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.joaomagdaleno.music_hub.common.models.DownloadContext
 import com.joaomagdaleno.music_hub.common.models.Progress
+import com.joaomagdaleno.music_hub.common.models.NetworkRequest
 import com.joaomagdaleno.music_hub.common.models.Streamable
-import com.joaomagdaleno.music_hub.common.models.Streamable.Media.Companion.toServerMedia
 import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.download.db.DownloadDatabase
 import com.joaomagdaleno.music_hub.download.db.models.ContextEntity
 import com.joaomagdaleno.music_hub.download.db.models.DownloadEntity
+import com.joaomagdaleno.music_hub.utils.Serializer
 import com.joaomagdaleno.music_hub.download.db.models.TaskType
 import com.joaomagdaleno.music_hub.download.tasks.TaskManager
-import com.joaomagdaleno.music_hub.utils.Serializer.toJson
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -58,7 +58,7 @@ class Downloader(
         val concurrentDownloads = app.settings.getInt("concurrent_downloads", 2)
         taskManager.setConcurrency(concurrentDownloads)
         val contexts = downloads.mapNotNull { it.context }.distinctBy { it.id }.associate {
-            it.id to dao.insertContextEntity(ContextEntity(0, it.id, it.toJson()))
+            it.id to dao.insertContextEntity(ContextEntity(0, it.id, Serializer.toJson(it)))
         }
         downloads.forEach {
             dao.insertDownloadEntity(
@@ -68,7 +68,7 @@ class Downloader(
                     it.track.id,
                     contexts[it.context?.id],
                     it.sortOrder,
-                    it.track.toJson(),
+                    Serializer.toJson(it.track),
                     TaskType.Loading,
                 )
             )
@@ -101,7 +101,7 @@ class Downloader(
             } else track
             
             val url = repository.getStreamUrl(effectiveTrack)
-            url.toServerMedia()
+            Streamable.Media.toServerMedia(url)
         }
     }
 

@@ -4,8 +4,7 @@ import android.content.Context
 import com.joaomagdaleno.music_hub.common.models.Progress
 import com.joaomagdaleno.music_hub.download.Downloader
 import com.joaomagdaleno.music_hub.download.db.models.TaskType
-import com.joaomagdaleno.music_hub.download.tasks.TaskManager.Companion.toQueueItem
-import com.joaomagdaleno.music_hub.utils.Serializer.toJson
+import com.joaomagdaleno.music_hub.utils.Serializer
 
 class LoadingTask(
     private val context: Context,
@@ -26,7 +25,7 @@ class LoadingTask(
         
         if (!download.loaded) {
             val track = repository.getTrack(download.trackId) ?: throw Exception("Track not found")
-            download = download.copy(data = track.toJson(), loaded = true)
+            download = download.copy(data = Serializer.toJson(track), loaded = true)
             dao.insertDownloadEntity(download)
         }
 
@@ -39,7 +38,7 @@ class LoadingTask(
             if (server.streams.isNotEmpty()) listOf(0) else emptyList()
         }
         if (indexes.isEmpty()) throw Exception("No files to download")
-        download = download.copy(indexesData = indexes.toJson())
+        download = download.copy(indexesData = Serializer.toJson(indexes))
         dao.insertDownloadEntity(download)
 
         progressFlow.value = Progress(totalSize, 2)
@@ -48,11 +47,11 @@ class LoadingTask(
 
         progressFlow.value = Progress(totalSize, 3)
 
-        val requests = indexes.map { index ->
+        val requests = TaskManager.toQueueItem(indexes.map { index ->
             DownloadingTask(context, downloader, trackId, index)
-        }.toQueueItem()
-        val mergeRequest = MergingTask(context, downloader, trackId).toQueueItem()
-        val taggingRequest = TaggingTask(context, downloader, trackId).toQueueItem()
+        })
+        val mergeRequest = TaskManager.toQueueItem(MergingTask(context, downloader, trackId))
+        val taggingRequest = TaskManager.toQueueItem(TaggingTask(context, downloader, trackId))
 
         manager.enqueue(trackId, listOf(requests, mergeRequest, taggingRequest))
     }

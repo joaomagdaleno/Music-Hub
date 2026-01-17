@@ -8,9 +8,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.common.models.Playlist
 import com.joaomagdaleno.music_hub.databinding.ItemLoadingBinding
-import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
-import com.joaomagdaleno.music_hub.utils.Serializer.getSerialized
-import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized
+import com.joaomagdaleno.music_hub.utils.ContextUtils
+import com.joaomagdaleno.music_hub.utils.Serializer
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 
@@ -21,24 +20,24 @@ class EditPlaylistBottomSheet : BottomSheetDialogFragment(R.layout.item_loading)
         ) = EditPlaylistBottomSheet().apply {
             arguments = Bundle().apply {
                 putString("origin", origin)
-                putSerialized("playlist", playlist)
+                Serializer.putSerialized(this, "playlist", playlist)
                 putString("tabId", tabId)
                 putInt("removeIndex", index)
             }
         }
 
-        fun EditPlaylistViewModel.SaveState.toText(
-            playlist: Playlist, context: Context
-        ) = when (this) {
-            is EditPlaylistViewModel.SaveState.Performing -> when (action) {
+        fun getSaveStateText(
+            context: Context, playlist: Playlist, state: EditPlaylistViewModel.SaveState
+        ) = when (state) {
+            is EditPlaylistViewModel.SaveState.Performing -> when (val action = state.action) {
                 is EditPlaylistViewModel.Action.Add ->
-                    context.getString(R.string.adding_x, tracks.joinToString(", ") { it.title })
+                    context.getString(R.string.adding_x, state.tracks.joinToString(", ") { it.title })
 
                 is EditPlaylistViewModel.Action.Move ->
-                    context.getString(R.string.moving_x, tracks.first().title)
+                    context.getString(R.string.moving_x, state.tracks.first().title)
 
                 is EditPlaylistViewModel.Action.Remove ->
-                    context.getString(R.string.removing_x, tracks.joinToString(", ") { it.title })
+                    context.getString(R.string.removing_x, state.tracks.joinToString(", ") { it.title })
             }
 
             EditPlaylistViewModel.SaveState.Saving ->
@@ -51,7 +50,7 @@ class EditPlaylistBottomSheet : BottomSheetDialogFragment(R.layout.item_loading)
 
     val args by lazy { requireArguments() }
     val origin by lazy { args.getString("origin")!! }
-    val playlist by lazy { args.getSerialized<Playlist>("playlist")!!.getOrThrow() }
+    val playlist by lazy { Serializer.getSerialized<Playlist>(args, "playlist")!!.getOrThrow() }
     val tabId by lazy { args.getString("tabId") }
     val removeIndex by lazy { args.getInt("removeIndex", -1).takeIf { it != -1 }!! }
 
@@ -61,10 +60,10 @@ class EditPlaylistBottomSheet : BottomSheetDialogFragment(R.layout.item_loading)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = ItemLoadingBinding.bind(view)
-        observe(vm.saveState) { save ->
-            binding.textView.text = save.toText(playlist, requireContext())
-            val save = save as? EditPlaylistViewModel.SaveState.Saved ?: return@observe
-            if (save.result.isSuccess) parentFragmentManager.setFragmentResult(
+        ContextUtils.observe(this, vm.saveState) { save ->
+            binding.textView.text = getSaveStateText(requireContext(), playlist, save)
+            val saved = save as? EditPlaylistViewModel.SaveState.Saved ?: return@observe
+            if (saved.result.isSuccess) parentFragmentManager.setFragmentResult(
                 "reload", bundleOf("id" to playlist.id)
             )
             dismiss()

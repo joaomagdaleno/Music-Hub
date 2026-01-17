@@ -8,7 +8,7 @@ import com.joaomagdaleno.music_hub.common.models.Progress
 import com.joaomagdaleno.music_hub.common.models.Streamable
 import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.common.models.ImageHolder
-import com.joaomagdaleno.music_hub.common.helpers.ContinuationCallback.Companion.await
+import com.joaomagdaleno.music_hub.common.helpers.ContinuationCallback
 import com.joaomagdaleno.music_hub.utils.TagInjector
 import kotlinx.coroutines.flow.MutableStateFlow
 import okhttp3.OkHttpClient
@@ -52,7 +52,7 @@ class InternalDownloadProvider(
         source: Streamable.Stream
     ): File {
         val request = Request.Builder().url(source.id).build()
-        val response = client.newCall(request).await()
+        val response = ContinuationCallback.await(client.newCall(request))
         if (!response.isSuccessful) throw Exception("Download failed: ${response.code}")
 
         val totalBytes = response.body?.contentLength() ?: -1L
@@ -125,8 +125,8 @@ class InternalDownloadProvider(
         )
         if (!publicDir.exists()) publicDir.mkdirs()
         
-        val source = "mp3" // Default to mp3 as we don't track source extension on File object easily
-        val fileName = "${track.title} - ${track.artists.firstOrNull()?.name ?: "Unknown"}.$source"
+        val formatSuffix = "mp3" // Default to mp3 as we don't track format suffix on File object easily
+        val fileName = "${track.title} - ${track.artists.firstOrNull()?.name ?: "Unknown"}.$formatSuffix"
             .replace(Regex("[\\\\/:*?\"<>|]"), "_")
             
         val finalFile = File(publicDir, fileName)

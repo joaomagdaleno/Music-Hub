@@ -12,7 +12,7 @@ import com.joaomagdaleno.music_hub.common.models.ImageHolder
 import com.joaomagdaleno.music_hub.databinding.ItemMainHeaderBinding
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
 import com.joaomagdaleno.music_hub.ui.settings.SettingsBottomSheet
-import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadAsCircle
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimRecyclerAdapter
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
 
@@ -40,8 +40,7 @@ class HeaderAdapter(
         val context = root.context
         title.text = context.getString(R.string.app_name)
         
-        // In monolithic mode, just show a generic settings/account icon
-        accounts.loadBigIcon(null, R.drawable.ic_settings_outline_32dp)
+        loadBigIcon(accounts, null, R.drawable.ic_settings_outline_32dp)
     }
 
     class ViewHolder(
@@ -52,7 +51,8 @@ class HeaderAdapter(
     ) : ScrollAnimViewHolder(binding.root)
 
     companion object {
-        fun <T> View.setLoopedLongClick(
+        fun <T> setLoopedLongClick(
+            view: View,
             list: List<T>,
             getCurrent: (View) -> T?,
             onSelect: (T) -> Unit,
@@ -60,20 +60,20 @@ class HeaderAdapter(
             // Disabled in monolithic mode
         }
 
-        fun ImageView.loadBigIcon(image: ImageHolder?, placeholder: Int) {
+        fun loadBigIcon(imageView: ImageView, image: ImageHolder?, placeholder: Int) {
             val color = ColorStateList.valueOf(
                 MaterialColors.getColor(
-                    this,
+                    imageView,
                     androidx.appcompat.R.attr.colorControlNormal
                 )
             )
-            image.loadAsCircle(this) {
+            ImageUtils.loadAsCircle(image, imageView) {
                 if (it == null) {
-                    imageTintList = color
-                    setImageResource(placeholder)
+                    imageView.imageTintList = color
+                    imageView.setImageResource(placeholder)
                 } else {
-                    imageTintList = null
-                    setImageDrawable(it)
+                    imageView.imageTintList = null
+                    imageView.setImageDrawable(it)
                 }
             }
         }

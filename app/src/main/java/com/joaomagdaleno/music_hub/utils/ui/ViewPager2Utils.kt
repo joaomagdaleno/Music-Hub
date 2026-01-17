@@ -8,20 +8,21 @@ import androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback
 
 object ViewPager2Utils {
 
-    fun ViewPager2.supportBottomSheetBehavior() {
-        val recycler = getChildAt(0) as RecyclerView
+    fun supportBottomSheetBehavior(viewPager: ViewPager2) {
+        val recycler = viewPager.getChildAt(0) as RecyclerView
         recycler.run {
             isNestedScrollingEnabled = false
             overScrollMode = View.OVER_SCROLL_NEVER
         }
     }
 
-    fun ViewPager2.registerOnUserPageChangeCallback(
+    fun registerOnUserPageChangeCallback(
+        viewPager: ViewPager2,
         listener: (position: Int, userInitiated: Boolean) -> Unit
     ) {
         var previousState: Int = -1
         var userScrollChange = false
-        registerOnPageChangeCallback(object : OnPageChangeCallback() {
+        viewPager.registerOnPageChangeCallback(object : OnPageChangeCallback() {
 
             override fun onPageSelected(position: Int) {
                 listener(position, userScrollChange)

@@ -75,8 +75,6 @@ sealed interface FeedType {
         override val extras: Map<String, String>? = item.extras
     }
 
-
-
     @Serializable
     data class MediaGrid(
         override val feedId: String,
@@ -105,14 +103,15 @@ sealed interface FeedType {
     }
 
     companion object {
-        fun List<Shelf>.toFeedType(
+        fun toFeedType(
+            list: List<Shelf>,
             feedId: String,
             source: String,
             context: EchoMediaItem?,
             tabId: String?,
             noVideos: Boolean = false,
             start: Long = 0,
-        ): List<FeedType> = mapIndexed { index, shelf ->
+        ): List<FeedType> = list.mapIndexed { index, shelf ->
 
             when (shelf) {
                 is Shelf.Category -> if (shelf.feed == null) listOf(

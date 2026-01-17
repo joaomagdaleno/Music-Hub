@@ -4,9 +4,9 @@ import android.content.Context
 import android.graphics.Bitmap
 import androidx.palette.graphics.Palette
 import com.google.android.material.color.MaterialColors
-import com.joaomagdaleno.music_hub.MainActivity.Companion.isAmoled
+import com.joaomagdaleno.music_hub.MainActivity
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.isNightMode
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 
 data class PlayerColors(
     val background: Int,
@@ -14,11 +14,11 @@ data class PlayerColors(
     val onBackground: Int,
 ) {
     companion object {
-        fun Context.getColorsFrom(bitmap: Bitmap?): PlayerColors? {
+        fun getColorsFrom(context: Context, bitmap: Bitmap?): PlayerColors? {
             bitmap ?: return null
             val palette = Palette.from(bitmap).generate()
-            return if (!isAmoled()) {
-                val lightMode = !isNightMode()
+            return if (!MainActivity.isAmoled(context)) {
+                val lightMode = !UiUtils.isNightMode(context)
                 val lightSwatch = palette.run {
                     lightVibrantSwatch ?: vibrantSwatch ?: lightMutedSwatch
                 }
@@ -30,23 +30,23 @@ data class PlayerColors(
                 bgSwatch?.run {
                     PlayerColors(rgb, accentSwatch?.rgb ?: titleTextColor, bodyTextColor)
                 }
-            } else defaultPlayerColors().let { default ->
+            } else defaultPlayerColors(context).let { default ->
                 val dominantColor = palette.run {
-                    vibrantSwatch?.rgb ?: getDominantColor(0).takeIf { it != 0 }
+                    vibrantSwatch?.rgb ?: getDominantColor(bitmap).takeIf { it != 0 }
                 } ?: return null
                 PlayerColors(default.background, dominantColor, default.onBackground)
             }
         }
 
-        fun Context.defaultPlayerColors(): PlayerColors {
+        fun defaultPlayerColors(context: Context): PlayerColors {
             val background = MaterialColors.getColor(
-                this, R.attr.navBackground, 0
+                context, R.attr.navBackground, 0
             )
             val primary = MaterialColors.getColor(
-                this, androidx.appcompat.R.attr.colorPrimary, 0
+                context, androidx.appcompat.R.attr.colorPrimary, 0
             )
             val onSurface = MaterialColors.getColor(
-                this, com.google.android.material.R.attr.colorOnSurface, 0
+                context, com.google.android.material.R.attr.colorOnSurface, 0
             )
             return PlayerColors(background, primary, onSurface)
         }

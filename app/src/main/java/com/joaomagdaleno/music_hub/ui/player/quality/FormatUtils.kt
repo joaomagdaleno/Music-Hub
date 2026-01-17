@@ -11,43 +11,42 @@ import com.joaomagdaleno.music_hub.common.models.Streamable
 
 object FormatUtils {
     @OptIn(UnstableApi::class)
-    private fun Format.getBitrate() =
-        (bitrate / 1000).takeIf { it > 0 }?.let { " • $it kbps" } ?: ""
+    private fun getBitrate(format: Format) =
+        (format.bitrate / 1000).takeIf { it > 0 }?.let { " • $it kbps" } ?: ""
 
-    private fun Format.getFrameRate() =
-        frameRate.toInt().takeIf { it > 0 }?.let { " • $it fps" } ?: ""
+    private fun getFrameRate(format: Format) =
+        format.frameRate.toInt().takeIf { it > 0 }?.let { " • $it fps" } ?: ""
 
-
-    private fun Format.getMimeType() = when (val mime = sampleMimeType?.replace("audio/", "")) {
+    private fun getMimeType(format: Format) = when (val mime = format.sampleMimeType?.replace("audio/", "")) {
         "mp4a-latm" -> "AAC"
         else -> mime?.uppercase()
     }
 
-    private fun Format.getHertz() =
-        sampleRate.takeIf { it > 0 }?.let { " • $it Hz" } ?: ""
+    private fun getHertz(format: Format) =
+        format.sampleRate.takeIf { it > 0 }?.let { " • $it Hz" } ?: ""
 
-    private fun Format.getChannelCount() =
-        channelCount.takeIf { it > 0 }?.let { " • ${it}ch" } ?: ""
+    private fun getChannelCount(format: Format) =
+        format.channelCount.takeIf { it > 0 }?.let { " • ${it}ch" } ?: ""
 
     @OptIn(UnstableApi::class)
-    fun Format.toAudioDetails() =
-        "${getMimeType()}${getHertz()}${getChannelCount()}${getBitrate()}"
+    fun toAudioDetails(format: Format) =
+        "${getMimeType(format)}${getHertz(format)}${getChannelCount(format)}${getBitrate(format)}"
 
-    fun Format.toVideoDetails() = "${height}p${getFrameRate()}${getBitrate()}"
-    fun Format.toSubtitleDetails() = label ?: language ?: "Unknown"
+    fun toVideoDetails(format: Format) = "${format.height}p${getFrameRate(format)}${getBitrate(format)}"
+    fun toSubtitleDetails(format: Format) = format.label ?: format.language ?: "Unknown"
 
-    private fun List<Tracks.Group>.getSelectedFormat(): Format? {
-        return firstNotNullOfOrNull { trackGroup ->
+    private fun getSelectedFormat(groups: List<Tracks.Group>): Format? {
+        return groups.firstNotNullOfOrNull { trackGroup ->
             val index = (0 until trackGroup.length).firstNotNullOfOrNull { i ->
                 if (trackGroup.isTrackSelected(i)) i else null
-            } ?: return null
+            } ?: return@firstNotNullOfOrNull null
             trackGroup.getTrackFormat(index)
         }
     }
 
-    fun List<Tracks.Group>.getSelected(): Pair<List<Pair<Tracks.Group, Int>>, Int?> {
+    fun getSelected(groups: List<Tracks.Group>): Pair<List<Pair<Tracks.Group, Int>>, Int?> {
         var selected: Pair<Tracks.Group, Int>? = null
-        val trackGroups = map { trackGroup ->
+        val trackGroups = groups.map { trackGroup ->
             (0 until trackGroup.length).map { i ->
                 val pair = Pair(trackGroup, i)
                 val isSelected = trackGroup.isTrackSelected(i)
@@ -59,9 +58,10 @@ object FormatUtils {
         return trackGroups to select
     }
 
-    fun Tracks.getDetails(
-        context: Context, server: Streamable.Media.Server?, index: Int?,
+    fun getDetails(
+        tracks: Tracks, context: Context, server: Streamable.Media.Server?, index: Int?,
     ): List<String> {
+        val groups = tracks.groups
         val audios = groups.filter { it.type == C.TRACK_TYPE_AUDIO }
         val videos = groups.filter { it.type == C.TRACK_TYPE_VIDEO }
         val subtitles = groups.filter { it.type == C.TRACK_TYPE_TEXT }
@@ -70,9 +70,9 @@ object FormatUtils {
             else listOfNotNull(streams.getOrNull(index ?: -1)?.title)
         }.orEmpty()
         return sourceTitle + listOfNotNull(
-            audios.getSelectedFormat()?.toAudioDetails(),
-            videos.getSelectedFormat()?.toVideoDetails(),
-            subtitles.getSelectedFormat()?.toSubtitleDetails()
+            getSelectedFormat(audios)?.let { toAudioDetails(it) },
+            getSelectedFormat(videos)?.let { toVideoDetails(it) },
+            getSelectedFormat(subtitles)?.let { toSubtitleDetails(it) }
         ).ifEmpty { listOf(context.getString(R.string.unknown_quality)) }
     }
 }

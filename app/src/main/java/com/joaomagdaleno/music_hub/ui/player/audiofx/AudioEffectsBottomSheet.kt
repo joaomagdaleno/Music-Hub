@@ -22,14 +22,14 @@ import com.joaomagdaleno.music_hub.playback.listener.EffectsListener
 import com.joaomagdaleno.music_hub.ui.player.PlayerViewModel
 import com.joaomagdaleno.music_hub.utils.ContextUtils
 import com.joaomagdaleno.music_hub.utils.PermsUtils
-import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue
 import com.joaomagdaleno.music_hub.utils.ui.RulerAdapter
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 
 class AudioEffectsBottomSheet : BottomSheetDialogFragment() {
 
-    var binding by autoCleared<DialogPlayerAudioFxBinding>()
+    var binding by AutoClearedValue.autoCleared<DialogPlayerAudioFxBinding>(this)
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -53,7 +53,7 @@ class AudioEffectsBottomSheet : BottomSheetDialogFragment() {
             binding.audioFxDescription.isVisible = mediaId != null
             val mediaSettings =
                 EffectsListener.getFxPrefs(requireContext(), settings, mediaId?.hashCode()) ?: settings
-            Companion.bind(binding.audioFxFragment, mediaSettings) { onEqualizerClicked(this) }
+            Companion.bind(binding.audioFxFragment, mediaSettings) { onEqualizerClicked(this@AudioEffectsBottomSheet) }
         }
         ContextUtils.observe(this, viewModel.playerState.current) {
             mediaId = it?.mediaItem?.mediaId
@@ -122,7 +122,7 @@ class AudioEffectsBottomSheet : BottomSheetDialogFragment() {
             val viewModel by fragment.activityViewModel<PlayerViewModel>()
             val sessionId = viewModel.playerState.session.value
             runCatching { openEqualizer(fragment.requireActivity(), sessionId) }.getOrElse {
-                viewModel.run { viewModelScope.launch { app.throwFlow.emit(it) } }
+                viewModel.viewModelScope.launch { viewModel.app.throwFlow.emit(it) }
             }
         }
     }

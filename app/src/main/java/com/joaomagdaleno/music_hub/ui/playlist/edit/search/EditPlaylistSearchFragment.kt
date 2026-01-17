@@ -44,7 +44,7 @@ class EditPlaylistSearchFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        AnimationUtils.setupTransition(view)
+        AnimationUtils.setupTransition(this, view)
         val behavior = BottomSheetBehavior.from(binding.bottomSheet)
         binding.bottomSheetDragHandle.setOnClickListener { behavior.state = STATE_EXPANDED }
         var topInset = 0
@@ -86,7 +86,7 @@ class EditPlaylistSearchFragment : Fragment() {
         }
         searchFragment.parentFragmentManager.addFragmentOnAttachListener { _, fragment ->
             val arguments = fragment.arguments ?: Bundle()
-            arguments.putAll(searchFragment.arguments)
+            arguments.putAll(searchFragment.arguments ?: Bundle())
             fragment.arguments = arguments
         }
 
