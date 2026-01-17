@@ -21,8 +21,8 @@ import com.joaomagdaleno.music_hub.playback.MediaItemUtils.track
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.unloadedCover
 import com.joaomagdaleno.music_hub.playback.PlayerState
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyHorizontalInsets
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
+import com.joaomagdaleno.music_hub.utils.ui.applyHorizontalInsets
+import com.joaomagdaleno.music_hub.utils.ui.applyInsets
 import com.joaomagdaleno.music_hub.ui.player.PlayerColors.Companion.defaultPlayerColors
 import com.joaomagdaleno.music_hub.utils.image.ImageUtils.getCachedDrawable
 import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadWithThumb

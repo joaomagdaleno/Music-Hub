@@ -25,45 +25,45 @@ object ContextUtils {
             ?: "Unknown"
     }
 
-    fun Context.copyToClipboard(label: String?, string: String) {
-        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    fun copyToClipboard(context: Context, label: String?, string: String) {
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText(label, string)
         clipboard.setPrimaryClip(clip)
     }
 
-    fun <T> LifecycleOwner.observe(flow: Flow<T>, block: suspend (T) -> Unit) =
-        lifecycleScope.launch {
-            flow.flowWithLifecycle(lifecycle).collectLatest(block)
+    fun <T> observe(owner: LifecycleOwner, flow: Flow<T>, block: suspend (T) -> Unit) =
+        owner.lifecycleScope.launch {
+            flow.flowWithLifecycle(owner.lifecycle).collectLatest(block)
         }
 
-    fun <T> LifecycleOwner.collect(flow: Flow<T>, block: suspend (T) -> Unit) =
-        lifecycleScope.launch {
+    fun <T> collect(owner: LifecycleOwner, flow: Flow<T>, block: suspend (T) -> Unit) =
+        owner.lifecycleScope.launch {
             flow.collect {
                 runCatching { block(it) }
             }
         }
 
-    fun <T> Context.listenFuture(future: ListenableFuture<T>, block: (Result<T>) -> Unit) {
+    fun <T> listenFuture(context: Context, future: ListenableFuture<T>, block: (Result<T>) -> Unit) {
         future.addListener({
             val result = runCatching { future.get() }
             block(result)
-        }, ContextCompat.getMainExecutor(this))
+        }, ContextCompat.getMainExecutor(context))
     }
 
-    fun <T> LifecycleOwner.emit(flow: MutableSharedFlow<T>, value: T) {
-        lifecycleScope.launch {
+    fun <T> emit(owner: LifecycleOwner, flow: MutableSharedFlow<T>, value: T) {
+        owner.lifecycleScope.launch {
             flow.emit(value)
         }
     }
 
     const val SETTINGS_NAME = "settings"
-    fun Context.getSettings() = getSharedPreferences(SETTINGS_NAME, Context.MODE_PRIVATE)!!
+    fun getSettings(context: Context) = context.getSharedPreferences(SETTINGS_NAME, Context.MODE_PRIVATE)!!
 
-    private fun Context.getTempDir() = cacheDir.resolve("apks").apply { mkdirs() }
-    fun Context.getTempFile(ext: String = "apk"): File =
-        File.createTempFile("temp", ".$ext", getTempDir())
+    private fun getTempDir(context: Context) = context.cacheDir.resolve("apks").apply { mkdirs() }
+    fun getTempFile(context: Context, ext: String = "apk"): File =
+        File.createTempFile("temp", ".$ext", getTempDir(context))
 
-    fun Context.cleanupTempApks() {
-        getTempDir().deleteRecursively()
+    fun cleanupTempApks(context: Context) {
+        getTempDir(context).deleteRecursively()
     }
 }

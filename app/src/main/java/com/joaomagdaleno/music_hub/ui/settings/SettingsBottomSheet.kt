@@ -12,17 +12,12 @@ import android.widget.Toast
 import androidx.core.view.isVisible
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.joaomagdaleno.music_hub.MainApplication.Companion.getCurrentLanguage
-import com.joaomagdaleno.music_hub.MainApplication.Companion.languages
-import com.joaomagdaleno.music_hub.MainApplication.Companion.setCurrentLanguage
+import com.joaomagdaleno.music_hub.MainApplication
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.databinding.DialogSettingsBinding
-import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.ui.download.DownloadFragment
-import com.joaomagdaleno.music_hub.utils.ContextUtils.appVersion
-import com.joaomagdaleno.music_hub.utils.ContextUtils.copyToClipboard
-import com.joaomagdaleno.music_hub.utils.ContextUtils.getArch
-import com.joaomagdaleno.music_hub.utils.ContextUtils.getSettings
+import com.joaomagdaleno.music_hub.utils.ContextUtils
 import kotlin.random.Random
 
 class SettingsBottomSheet : BottomSheetDialogFragment(R.layout.dialog_settings) {
@@ -45,28 +40,28 @@ class SettingsBottomSheet : BottomSheetDialogFragment(R.layout.dialog_settings) 
 
         binding.player.setOnClickListener {
             dismiss()
-            requireActivity().openFragment<SettingsPlayerFragment>()
+            UiUtils.openFragment<SettingsPlayerFragment>(requireActivity())
         }
 
         binding.lookAndFeel.setOnClickListener {
             dismiss()
-            requireActivity().openFragment<SettingsLookFragment>()
+            UiUtils.openFragment<SettingsLookFragment>(requireActivity())
         }
 
         binding.other.setOnClickListener {
             dismiss()
-            requireActivity().openFragment<SettingsOtherFragment>()
+            UiUtils.openFragment<SettingsOtherFragment>(requireActivity())
         }
 
         binding.downloads.setOnClickListener {
             dismiss()
-            requireActivity().openFragment<DownloadFragment>()
+            UiUtils.openFragment<DownloadFragment>(requireActivity())
         }
 
 
-        val settings = requireContext().getSettings()
-        val language = getCurrentLanguage(settings)
-        val languages = mapOf("system" to getString(R.string.system)) + languages
+        val settings = ContextUtils.getSettings(requireContext())
+        val language = MainApplication.getCurrentLanguage(settings)
+        val languages = mapOf("system" to getString(R.string.system)) + MainApplication.languages
         val langList = languages.entries.toList()
         binding.language.run {
             text = getString(R.string.language_x, languages[language])
@@ -76,7 +71,7 @@ class SettingsBottomSheet : BottomSheetDialogFragment(R.layout.dialog_settings) 
                         langList.map { it.value }.toTypedArray(),
                         langList.indexOfFirst { it.key == language }
                     ) { dialog, which ->
-                        setCurrentLanguage(settings, langList[which].key)
+                        MainApplication.setCurrentLanguage(settings, langList[which].key)
                         dialog.dismiss()
                     }
                     .setNegativeButton(R.string.cancel) { dialog, _ -> dialog.dismiss() }
@@ -89,10 +84,8 @@ class SettingsBottomSheet : BottomSheetDialogFragment(R.layout.dialog_settings) 
 
         binding.wiki.setOnClickListener {
             dismiss()
-            // Placeholder link or removed
         }
 
-        val repo = getString(R.string.app_github_repo)
         binding.contributors.setOnClickListener {
             dismiss()
         }
@@ -114,16 +107,16 @@ class SettingsBottomSheet : BottomSheetDialogFragment(R.layout.dialog_settings) 
         }
 
         binding.version.run {
-            val version = appVersion()
+            val version = ContextUtils.appVersion()
             text = version
             setOnClickListener {
                 val info = buildString {
                     appendLine("Music Hub Version: $version")
                     appendLine("Device: $BRAND $DEVICE")
-                    appendLine("Architecture: ${getArch()}")
+                    appendLine("Architecture: ${ContextUtils.getArch()}")
                     appendLine("OS Version: $CODENAME $RELEASE ($SDK_INT)")
                 }
-                context.copyToClipboard(getString(R.string.version), info)
+                ContextUtils.copyToClipboard(requireContext(), getString(R.string.version), info)
             }
         }
 

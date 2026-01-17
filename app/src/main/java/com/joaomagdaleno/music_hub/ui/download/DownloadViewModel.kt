@@ -10,12 +10,10 @@ import com.joaomagdaleno.music_hub.common.models.Message
 import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.di.App
 import com.joaomagdaleno.music_hub.download.Downloader
-import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -28,9 +26,6 @@ class DownloadViewModel(
     private val app = app.context
     private val messageFlow = app.messageFlow
     private val throwableFlow = app.throwFlow
-
-    // Deprecated source properties
-    // val sources = sourceLoader // Removed
 
     val flow = downloader.flow
 
@@ -64,7 +59,7 @@ class DownloadViewModel(
                 Message(
                     getString(R.string.download_started),
                     Message.Action(getString(R.string.view)) {
-                        openFragment<DownloadFragment>()
+                        UiUtils.openFragment<DownloadFragment>(activity)
                     }
                 )
             )

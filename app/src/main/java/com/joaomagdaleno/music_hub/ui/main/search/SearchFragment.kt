@@ -9,25 +9,21 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDE
 import com.google.android.material.transition.MaterialSharedAxis
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.common.models.Feed
-import com.joaomagdaleno.music_hub.common.models.Feed.Companion.toFeed
-import com.joaomagdaleno.music_hub.common.models.Feed.Buttons.Companion.EMPTY
 import com.joaomagdaleno.music_hub.common.models.QuickSearchItem
 import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.databinding.FragmentSearchBinding
-import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyBackPressCallback
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.configure
-import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getFeedAdapter
-import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getTouchHelper
-import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener.Companion.getFeedListener
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
+import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter
+import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
 import com.joaomagdaleno.music_hub.ui.feed.FeedData
 import com.joaomagdaleno.music_hub.ui.feed.FeedViewModel
 import com.joaomagdaleno.music_hub.ui.main.HeaderAdapter
-import com.joaomagdaleno.music_hub.ui.main.MainFragment.Companion.applyInsets
+import com.joaomagdaleno.music_hub.ui.main.MainFragment
 
-import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
+import com.joaomagdaleno.music_hub.utils.ContextUtils
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
 import kotlinx.coroutines.flow.combine
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -46,59 +42,52 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         val id = "search"
         vm.getFeedData(
             id,
-            EMPTY,
+            Feed.Buttons.EMPTY,
             false,
             searchViewModel.queryFlow,
             cached = { null } // Skip cache
         ) {
             val query = searchViewModel.queryFlow.value
-            // Use searchViewModel or repository directly?
-            // SearchViewModel has searchResults but here we are in a loader lambda.
-            // We can call repository.search(query) directly.
             if (query.isBlank()) {
-                FeedData.State("internal", null, emptyList<Shelf>().toFeed())
+                FeedData.State("internal", null, Feed.toFeed(emptyList<Shelf>()))
             } else {
                 searchViewModel.saveQuery(query) // Save history
                 val results = repository.search(query)
                 val tracks = if(results.isEmpty()) {
-                     // Try loading as ID/Link
                      listOfNotNull(repository.getTrack(query))
                 } else results
                 
-                // search returns List<Track>. Convert to Shelf.
-                // Or maybe SearchClient returned Feed<Shelf>? 
-                // Repository.search returns List<Track>.
-                // We wrap it in a Shelf.
                 val shelf = Shelf.Lists.Tracks("search_results", getString(R.string.search), tracks)
-                val feed = listOf<Shelf>(shelf).toFeed()
+                val feed = Feed.toFeed(listOf<Shelf>(shelf))
                 FeedData.State("internal", null, feed)
             }
         }
     }
 
     private val listener by lazy {
-        getFeedListener(if (argId == null) requireParentFragment() else this)
+        FeedClickListener.getFeedListener(if (argId == null) requireParentFragment() else this)
     }
 
     private val feedAdapter by lazy {
-        getFeedAdapter(feedData, listener)
+        FeedAdapter.getFeedAdapter(feedData, listener)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = FragmentSearchBinding.bind(view)
-        setupTransition(view, false, MaterialSharedAxis.Y)
-        applyInsets(binding.recyclerView, binding.appBarOutline) {
-            binding.swipeRefresh.configure(it)
+        AnimationUtils.setupTransition(this, view, applyBackground = false, axis = MaterialSharedAxis.Y)
+        MainFragment.applyInsets(this, binding.recyclerView, binding.appBarOutline) {
+            UiUtils.configureSwipeRefresh(binding.swipeRefresh, it)
         }
         val uiViewModel by activityViewModel<UiViewModel>()
-        observe(uiViewModel.navigationReselected) {
+        ContextUtils.observe(this, uiViewModel.navigationReselected) {
             if (it != 1) return@observe
             binding.quickSearchView.show()
         }
-        observe(uiViewModel.navigation) {
+        ContextUtils.observe(this, uiViewModel.navigation) {
             binding.quickSearchView.hide()
         }
-        observe(
+        ContextUtils.observe(
+            this,
             uiViewModel.navigation.combine(feedData.backgroundImageFlow) { a, b -> a to b }
         ) { (curr, bg) ->
             if (curr != 1) return@observe
@@ -113,22 +102,22 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         binding.quickSearchView.addTransitionListener { v, _, _ ->
             backCallback.isEnabled = v.isShowing
         }
-        applyBackPressCallback {
+        UiUtils.applyBackPressCallback(this) {
             if (it == STATE_EXPANDED) binding.quickSearchView.hide()
         }
         val searchAdapter = SearchBarAdapter(searchViewModel, binding.quickSearchView)
-        observe(searchViewModel.queryFlow) {
+        ContextUtils.observe(this, searchViewModel.queryFlow) {
             searchAdapter.notifyItemChanged(0)
             binding.quickSearchView.setText(it)
         }
-        getTouchHelper(listener).attachToRecyclerView(binding.recyclerView)
-        configureGridLayout(
+        FeedAdapter.getTouchHelper(listener).attachToRecyclerView(binding.recyclerView)
+        GridAdapter.configureGridLayout(
             binding.recyclerView,
             feedAdapter.withLoading(this, HeaderAdapter(this), searchAdapter)
         )
         binding.swipeRefresh.run {
             setOnRefreshListener { feedData.refresh() }
-            observe(feedData.isRefreshingFlow) {
+            ContextUtils.observe(this@SearchFragment, feedData.isRefreshingFlow) {
                 isRefreshing = it
             }
         }
@@ -188,7 +177,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         })
 
         binding.quickSearchRecyclerView.adapter = quickSearchAdapter
-        observe(searchViewModel.quickFeed) { list ->
+        ContextUtils.observe(this, searchViewModel.quickFeed) { list ->
             quickSearchAdapter.submitList(list.map {
                 QuickSearchAdapter.Item(origin, it)
             })

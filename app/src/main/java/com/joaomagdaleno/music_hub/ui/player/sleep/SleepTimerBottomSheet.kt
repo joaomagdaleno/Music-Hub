@@ -15,7 +15,7 @@ import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.databinding.DialogPlayerSleepTimerBinding
-import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler.Companion.createSnack
+import com.joaomagdaleno.music_hub.utils.ui.createSnack
 import com.joaomagdaleno.music_hub.ui.player.PlayerViewModel
 import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
 import com.joaomagdaleno.music_hub.utils.ui.RulerAdapter

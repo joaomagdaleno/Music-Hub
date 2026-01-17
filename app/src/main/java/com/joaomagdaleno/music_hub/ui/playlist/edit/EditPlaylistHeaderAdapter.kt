@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import androidx.core.view.isVisible
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.databinding.ItemEditPlaylistHeaderBinding
-import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadInto
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimRecyclerAdapter
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
 
@@ -54,7 +54,7 @@ class EditPlaylistHeaderAdapter(
         binding.playlistDescription.setText(desc)
         binding.coverContainer.isVisible = coverEditable
         binding.removeCover.isVisible = cover != null
-        cover.loadInto(binding.cover, R.drawable.art_add_photo)
+        ImageUtils.loadInto(cover, binding.cover, R.drawable.art_add_photo)
     }
 
 }

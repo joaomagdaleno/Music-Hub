@@ -13,8 +13,8 @@ import com.google.android.material.color.MaterialColors
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.databinding.ItemPlaylistTrackBinding
-import com.joaomagdaleno.music_hub.ui.player.more.upnext.QueueAdapter.Companion.bind
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.dpToPx
+import com.joaomagdaleno.music_hub.ui.player.more.upnext.QueueAdapter
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimListAdapter
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
 
@@ -61,12 +61,12 @@ class PlaylistTrackAdapter(
             val color = MaterialColors.getColor(binding.root, R.attr.echoBackground)
             binding.root.backgroundTintList = ColorStateList.valueOf(color)
             binding.playlistItemNowPlaying.isVisible = false
-            binding.playlistItem.updatePaddingRelative(start = 24.dpToPx(binding.root.context))
+            binding.playlistItem.updatePaddingRelative(start = UiUtils.dpToPx(binding.root.context, 24))
         }
 
         fun bind(track: Track) {
             this.track = track
-            binding.bind(track)
+            QueueAdapter.bind(binding, track)
         }
     }
 

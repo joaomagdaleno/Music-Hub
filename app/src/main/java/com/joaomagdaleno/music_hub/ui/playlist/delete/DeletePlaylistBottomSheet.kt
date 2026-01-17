@@ -10,7 +10,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.common.models.Playlist
 import com.joaomagdaleno.music_hub.databinding.ItemLoadingBinding
-import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler.Companion.createSnack
+import com.joaomagdaleno.music_hub.utils.ui.createSnack
 import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
 import com.joaomagdaleno.music_hub.utils.Serializer.getSerialized
 import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized

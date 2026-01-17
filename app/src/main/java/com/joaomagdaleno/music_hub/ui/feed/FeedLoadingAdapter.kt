@@ -9,8 +9,8 @@ import com.joaomagdaleno.music_hub.databinding.ItemShelfErrorBinding
 import com.joaomagdaleno.music_hub.databinding.ItemShelfLoginRequiredBinding
 import com.joaomagdaleno.music_hub.databinding.ItemShelfNotLoadingBinding
 import com.joaomagdaleno.music_hub.common.helpers.ClientException
-import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.getFinalTitle
-import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.getMessage
+import com.joaomagdaleno.music_hub.utils.ui.getFinalExceptionTitle
+import com.joaomagdaleno.music_hub.utils.ui.getExceptionMessage
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
 import com.joaomagdaleno.music_hub.ui.common.PagedSource
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimLoadStateAdapter
@@ -57,7 +57,7 @@ class FeedLoadingAdapter(
             val throwable = loadState.error
             binding.error.run {
                 transitionName = throwable.hashCode().toString()
-                text = context.getFinalTitle(throwable)
+                text = context.getFinalExceptionTitle(throwable)
             }
             binding.errorView.setOnClickListener {
                 listener?.onError(binding.error, throwable)
@@ -79,7 +79,7 @@ class FeedLoadingAdapter(
             val error = (loadState as LoadState.Error).error
             val appError = error as ClientException.LoginRequired
             binding.error.run {
-                text = context.getFinalTitle(appError)
+                text = context.getFinalExceptionTitle(appError)
             }
             binding.login.transitionName = appError.hashCode().toString()
             binding.login.setOnClickListener {
@@ -129,7 +129,7 @@ class FeedLoadingAdapter(
                 }
 
                 override fun onError(view: View, error: Throwable) {
-                    requireActivity().getMessage(error, view).action?.handler?.invoke()
+                    requireActivity().getExceptionMessage(error, retry).action?.handler?.invoke()
                 }
 
                 override fun onLoginRequired(view: View, error: ClientException.LoginRequired) {

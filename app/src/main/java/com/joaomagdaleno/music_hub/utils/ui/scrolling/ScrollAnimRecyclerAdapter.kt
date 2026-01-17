@@ -2,13 +2,13 @@ package com.joaomagdaleno.music_hub.utils.ui.scrolling
 
 import androidx.annotation.CallSuper
 import androidx.recyclerview.widget.RecyclerView
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.applyTranslationYAnimation
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
 
 abstract class ScrollAnimRecyclerAdapter<T: ScrollAnimViewHolder> : RecyclerView.Adapter<T>() {
 
     @CallSuper
     override fun onBindViewHolder(holder: T, position: Int) {
-        holder.itemView.applyTranslationYAnimation(scrollY)
+        AnimationUtils.applyTranslationYAnimation(holder.itemView, scrollY)
     }
 
     var recyclerView: RecyclerView? = null

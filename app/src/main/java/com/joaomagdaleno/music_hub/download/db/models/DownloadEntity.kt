@@ -3,7 +3,7 @@ package com.joaomagdaleno.music_hub.download.db.models
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.joaomagdaleno.music_hub.common.models.Track
-import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils
+import com.joaomagdaleno.music_hub.utils.ui.ExceptionData
 import com.joaomagdaleno.music_hub.utils.Serializer.toData
 import kotlinx.serialization.Serializable
 import java.io.File
@@ -34,7 +34,7 @@ data class DownloadEntity(
     val toMergeFiles by lazy { toMergeFilesData?.toData<List<String>>()?.getOrNull().orEmpty() }
     val exception by lazy {
         runCatching {
-            exceptionFile?.let { File(it) }?.readText()?.toData<ExceptionUtils.Data>()?.getOrThrow()
+            exceptionFile?.let { File(it) }?.readText()?.toData<ExceptionData>()?.getOrThrow()
         }.getOrNull()
     }
     val isFinal by lazy { finalFile != null || exceptionFile != null }

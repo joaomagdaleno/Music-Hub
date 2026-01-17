@@ -8,14 +8,14 @@ import androidx.core.view.isVisible
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.databinding.DialogPlaylistCreateBinding
-import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
-import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized
-import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
+import com.joaomagdaleno.music_hub.utils.ContextUtils
+import com.joaomagdaleno.music_hub.utils.Serializer
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class CreatePlaylistBottomSheet : BottomSheetDialogFragment() {
 
-    var binding by autoCleared<DialogPlaylistCreateBinding>()
+    var binding by AutoClearedValue.autoCleared<DialogPlaylistCreateBinding>(this)
     val viewModel by viewModel<CreatePlaylistViewModel>()
 
     override fun onCreateView(
@@ -39,7 +39,7 @@ class CreatePlaylistBottomSheet : BottomSheetDialogFragment() {
         binding.playlistCreateButton.setOnClickListener { createPlaylist() }
         binding.topAppBar.setNavigationOnClickListener { dismiss() }
 
-        observe(viewModel.createPlaylistStateFlow) {
+        ContextUtils.observe(this, viewModel.createPlaylistStateFlow) {
             when (it) {
                 CreateState.CreatePlaylist -> {
                     binding.nestedScrollView.isVisible = true
@@ -58,7 +58,7 @@ class CreatePlaylistBottomSheet : BottomSheetDialogFragment() {
                         "createPlaylist",
                         Bundle().apply {
                             putString("origin", it.origin)
-                            putSerialized("playlist", it.playlist)
+                            Serializer.putSerialized(this, "playlist", it.playlist)
                         }
                     )
                     viewModel.createPlaylistStateFlow.value = CreateState.CreatePlaylist

@@ -16,8 +16,8 @@ import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
 import com.joaomagdaleno.music_hub.ui.feed.FeedType
 import com.joaomagdaleno.music_hub.ui.feed.viewholders.shelf.ShelfType
 import com.joaomagdaleno.music_hub.ui.feed.viewholders.shelf.ShelfViewHolder
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.applyTranslationAndScaleAnimation
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.dpToPx
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 
 class HorizontalListViewHolder(
     parent: ViewGroup,
@@ -37,9 +37,9 @@ class HorizontalListViewHolder(
 
     override fun bind(feed: FeedType.HorizontalList) {
         val endPadding = if (feed.shelf is Shelf.Lists.Tracks) 8 else 20
-        binding.root.updatePaddingRelative(end = endPadding.dpToPx(binding.root.context))
+        binding.root.updatePaddingRelative(end = UiUtils.dpToPx(binding.root.context, endPadding))
         adapter.tracks = feed.shelf.list.filterIsInstance<Track>()
-        adapter.submitList(feed.shelf.toShelfType(feed.origin, feed.context, feed.tabId)) {
+        adapter.submitList(toShelfType(feed.shelf, feed.origin, feed.context, feed.tabId)) {
             binding.root.adapter = adapter
         }
     }
@@ -48,15 +48,15 @@ class HorizontalListViewHolder(
         adapter.onCurrentChanged(current)
     }
 
-    fun Shelf.Lists<*>.toShelfType(
-        origin: String, context: EchoMediaItem?, tabId: String?
-    ) = when (this) {
-        is Shelf.Lists.Items -> list.map { ShelfType.Media(origin, context, tabId, it) }
-        is Shelf.Lists.Categories -> list.map {
+    private fun toShelfType(
+        shelf: Shelf.Lists<*>, origin: String, context: EchoMediaItem?, tabId: String?
+    ) = when (shelf) {
+        is Shelf.Lists.Items -> shelf.list.map { ShelfType.Media(origin, context, tabId, it) }
+        is Shelf.Lists.Categories -> shelf.list.map {
             ShelfType.Category(origin, context, tabId, it)
         }
 
-        is Shelf.Lists.Tracks -> list.chunked(3).mapIndexed { index, it ->
+        is Shelf.Lists.Tracks -> shelf.list.chunked(3).mapIndexed { index, it ->
             ShelfType.ThreeTracks(
                 origin, context, tabId, index,
                 Triple(
@@ -99,7 +99,7 @@ class HorizontalListViewHolder(
         override fun onBindViewHolder(
             holder: ShelfViewHolder<*>, position: Int
         ) {
-            holder.itemView.applyTranslationAndScaleAnimation(scrollAmountX)
+            AnimationUtils.applyTranslationAndScaleAnimation(holder.itemView, scrollAmountX)
             holder.scrollX = scrollAmountX
             when (holder) {
                 is ShelfViewHolder.Category -> holder.bind(

@@ -10,14 +10,10 @@ import androidx.preference.PreferenceFragmentCompat
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.common.models.ImageHolder
 import com.joaomagdaleno.music_hub.databinding.FragmentGenericCollapsableBinding
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyBackPressCallback
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyContentInsets
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
-import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadAsCircle
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
 import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
 import com.joaomagdaleno.music_hub.utils.ui.FastScrollerHelper
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.configureAppBar
 
 abstract class BaseSettingsFragment : Fragment() {
 
@@ -37,10 +33,10 @@ abstract class BaseSettingsFragment : Fragment() {
 
     @CallSuper
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        setupTransition(view)
+        AnimationUtils.setupTransition(view)
 
-        applyBackPressCallback()
-        binding.appBarLayout.configureAppBar { offset ->
+        UiUtils.applyBackPressCallback(this)
+        UiUtils.configureAppBar(binding.appBarLayout) { offset ->
             binding.toolbarOutline.alpha = offset
         }
         binding.toolBar.setNavigationOnClickListener {
@@ -54,10 +50,10 @@ abstract class BaseSettingsFragment : Fragment() {
     }
 
     companion object {
-        fun PreferenceFragmentCompat.configure() {
-            listView?.apply {
+        fun configure(fragment: PreferenceFragmentCompat) {
+            fragment.listView?.apply {
                 clipToPadding = false
-                applyInsets { applyContentInsets(it) }
+                UiUtils.applyInsets(this) { UiUtils.applyContentInsets(this, it) }
                 isVerticalScrollBarEnabled = false
                 FastScrollerHelper.applyTo(this)
             }

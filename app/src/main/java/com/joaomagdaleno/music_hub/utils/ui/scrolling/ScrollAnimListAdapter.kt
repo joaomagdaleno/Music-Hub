@@ -3,14 +3,14 @@ package com.joaomagdaleno.music_hub.utils.ui.scrolling
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.applyTranslationYAnimation
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
 
 abstract class ScrollAnimListAdapter<T : Any, VH : ScrollAnimViewHolder>(
     diffCallback: DiffUtil.ItemCallback<T>
 ) : ListAdapter<T, VH>(diffCallback) {
 
     override fun onBindViewHolder(holder: VH, position: Int) {
-        holder.itemView.applyTranslationYAnimation(scrollY)
+        AnimationUtils.applyTranslationYAnimation(holder.itemView, scrollY)
     }
 
     var recyclerView: RecyclerView? = null

@@ -1,0 +1,424 @@
+Initialized native services in: C:\Users\joaom\.gradle\native
+Initialized jansi services in: C:\Users\joaom\.gradle\native
+Found daemon DaemonInfo{pid=9680, address=[516097bb-0afb-448b-87b7-cc90e12b6a53 port:63190, addresses:[/127.0.0.1]], state=Idle, lastBusy=1768620893726, context=DefaultDaemonContext[uid=baa15466-be50-4174-813e-f48a9514320d,javaHome=C:\Users\joaom\.antigravity\extensions\redhat.java-1.51.0-win32-x64\jre\21.0.9-win32-x86_64,javaVersion=21,javaVendor=Eclipse Adoptium,daemonRegistryDir=C:\Users\joaom\.gradle\daemon,pid=9680,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-XX:MaxMetaspaceSize=1G,-Xmx4G,-Dfile.encoding=UTF-8,-Duser.country=BR,-Duser.language=pt,-Duser.variant]} however its context does not match the desired criteria.
+JVM is incompatible.
+Wanted: DaemonRequestContext{jvmCriteria=C:\Program Files\Eclipse Adoptium\jdk-17.0.17.10-hotspot (no JDK specified, using current Java home), daemonOpts=[-XX:MaxMetaspaceSize=1G, -Xmx4G, -Dfile.encoding=UTF-8, -Duser.country=BR, -Duser.language=pt, -Duser.variant], applyInstrumentationAgent=true, nativeServicesMode=ENABLED, priority=NORMAL}
+Actual: DefaultDaemonContext[uid=baa15466-be50-4174-813e-f48a9514320d,javaHome=C:\Users\joaom\.antigravity\extensions\redhat.java-1.51.0-win32-x64\jre\21.0.9-win32-x86_64,javaVersion=21,javaVendor=Eclipse Adoptium,daemonRegistryDir=C:\Users\joaom\.gradle\daemon,pid=9680,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-XX:MaxMetaspaceSize=1G,-Xmx4G,-Dfile.encoding=UTF-8,-Duser.country=BR,-Duser.language=pt,-Duser.variant]
+
+  Looking for a different daemon...
+The client will now receive all logging from the daemon (pid: 10624). The daemon log file: C:\Users\joaom\.gradle\daemon\9.0.0\daemon-10624.out.log
+Starting 53rd build in daemon [uptime: 2 hrs 29 mins 47.479 secs, performance: 99%, GC rate: 0.00/s, heap usage: 1% of 4 GiB, non-heap usage: 23% of 1 GiB]
+Using 4 worker leases.
+Configuration on demand is an incubating feature.
+Now considering [C:\Users\joaom\Documents\GitHub\Music_Hub] as hierarchies to watch
+Calculating task graph as configuration cache cannot be reused because file 'gradle.properties' has changed.
+Now considering [C:\Users\joaom\Documents\GitHub\Music_Hub] as hierarchies to watch
+Watching the file system is configured to be enabled
+File system watching is active
+Starting Build
+Settings evaluated using settings file 'C:\Users\joaom\Documents\GitHub\Music_Hub\settings.gradle.kts'.
+Using local directory build cache for the root build (location = C:\Users\joaom\.gradle\caches\build-cache-1, remove unused entries = after 7 days).
+Projects loaded. Root project using build file 'C:\Users\joaom\Documents\GitHub\Music_Hub\build.gradle.kts'.
+Included projects: [root project 'Echo', project ':app']
+
+> Configure project :
+Evaluating root project 'Echo' using build file 'C:\Users\joaom\Documents\GitHub\Music_Hub\build.gradle.kts'.
+Resolved plugin [id: 'com.android.application', version: '8.12.2', apply: false]
+Resolved plugin [id: 'com.android.kotlin.multiplatform.library', version: '8.12.2', apply: false]
+Resolved plugin [id: 'org.jetbrains.kotlin.android', version: '2.2.10', apply: false]
+Resolved plugin [id: 'org.jetbrains.kotlin.multiplatform', version: '2.2.10', apply: false]
+Resolved plugin [id: 'com.google.gms.google-services', version: '4.4.3', apply: false]
+
+> Configure project :app
+Evaluating project ':app' using build file 'C:\Users\joaom\Documents\GitHub\Music_Hub\app\build.gradle.kts'.
+Resolved plugin [id: 'com.android.application', version: '8.12.2']
+Resolved plugin [id: 'org.jetbrains.kotlin.android', version: '2.2.10']
+Resolved plugin [id: 'com.google.devtools.ksp', version: '2.2.10-2.0.2']
+Resolved plugin [id: 'org.jetbrains.kotlin.plugin.serialization', version: '2.2.10']
+Resolved plugin [id: 'com.google.gms.google-services', version: '4.4.3', apply: false]
+Resolved plugin [id: 'com.google.firebase.crashlytics', version: '3.0.6', apply: false]
+Resolved plugin [id: 'org.jetbrains.kotlin.plugin.compose', version: '2.2.10']
+Using default execution profile
+Build e05f526f-c722-433f-80c6-430e57f8659e is started
+Using Kotlin Gradle Plugin gradle813 variant
+Starting process 'command 'git''. Working directory: C:\Users\joaom\Documents\GitHub\Music_Hub Command: git rev-parse HEAD
+Successfully started process 'command 'git''
+Starting process 'command 'git''. Working directory: C:\Users\joaom\Documents\GitHub\Music_Hub Command: git rev-list --count HEAD
+Successfully started process 'command 'git''
+Detected Android Gradle Plugin compose compiler configuration
+Detected Android Gradle Plugin compose compiler configuration
+Detected Android Gradle Plugin compose compiler configuration
+Detected Android Gradle Plugin compose compiler configuration
+Detected Android Gradle Plugin compose compiler configuration
+Detected Android Gradle Plugin compose compiler configuration
+Detected Android Gradle Plugin compose compiler configuration
+Detected Android Gradle Plugin compose compiler configuration
+Detected Android Gradle Plugin compose compiler configuration
+Task name matched 'assembleDebug'
+Selected primary task 'assembleDebug' from project :
+Adding -Xuse-inline-scopes-numbers Kotlin compiler flag for task :app:compileDebugKotlin
+All projects evaluated.
+Tasks to be executed: [task ':app:preBuild', task ':app:preDebugBuild', task ':app:mergeDebugNativeDebugMetadata', task ':app:checkKotlinGradlePluginConfigurationErrors', task ':app:dataBindingMergeDependencyArtifactsDebug', task ':app:generateDebugResValues', task ':app:injectCrashlyticsMappingFileIdDebug', task ':app:injectCrashlyticsVersionControlInfoDebug', task ':app:processDebugGoogleServices', task ':app:extractDebugSupportedLocales', task ':app:generateDebugLocaleConfig', task ':app:generateDebugResources', task ':app:mergeDebugResources', task ':app:packageDebugResources', task ':app:parseDebugLocalResources', task ':app:dataBindingGenBaseClassesDebug', task ':app:generateDebugBuildConfig', task ':app:checkDebugAarMetadata', task ':app:mapDebugSourceSetPaths', task ':app:createDebugCompatibleScreenManifests', task ':app:extractDeepLinksDebug', task ':app:processDebugMainManifest', task ':app:processDebugManifest', task ':app:processDebugManifestForPackage', task ':app:processDebugResources', task ':app:kspDebugKotlin', task ':app:compileDebugKotlin', task ':app:javaPreCompileDebug', task ':app:compileDebugJavaWithJavac', task ':app:mergeDebugShaders', task ':app:compileDebugShaders', task ':app:generateDebugAssets', task ':app:mergeDebugAssets', task ':app:compressDebugAssets', task ':app:desugarDebugFileDependencies', task ':app:dexBuilderDebug', task ':app:mergeDebugGlobalSynthetics', task ':app:processDebugJavaRes', task ':app:mergeDebugJavaResource', task ':app:checkDebugDuplicateClasses', task ':app:mergeExtDexDebug', task ':app:mergeLibDexDebug', task ':app:mergeProjectDexDebug', task ':app:mergeDebugJniLibFolders', task ':app:mergeDebugNativeLibs', task ':app:stripDebugDebugSymbols', task ':app:validateSigningDebug', task ':app:writeDebugAppMetadata', task ':app:writeDebugSigningConfigVersions', task ':app:packageDebug', task ':app:createDebugApkListingFileRedirect', task ':app:assembleDebug']
+Tasks that were excluded: []
+Registered task dependencies: app:debugCompileClasspath
+Skipping misunderstood TO dep string: androidx.compose.ui:ui-tooling
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: androidx.compose.ui:ui-test-manifest
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: androidx.room:room-ktx
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: androidx.compose.ui:ui
+Skipping misunderstood TO dep string: androidx.compose.ui:ui-graphics
+Skipping misunderstood TO dep string: androidx.compose.ui:ui-tooling-preview
+Skipping misunderstood TO dep string: androidx.compose.material3:material3
+Starting dependency analysis
+Adding -Xuse-inline-scopes-numbers Kotlin compiler flag for task :app:compileDebugAndroidTestKotlin
+Registered task dependencies: app:kotlinCompilerPluginClasspathDebug
+Starting dependency analysis
+Registered task dependencies: app:kotlinCompilerClasspath
+Starting dependency analysis
+Registered task dependencies: app:_agp_internal_javaPreCompileDebug_kspClasspath
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib-jdk8
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Skipping misunderstood TO dep string: org.jetbrains.kotlin:kotlin-stdlib
+Starting dependency analysis
+Build e05f526f-c722-433f-80c6-430e57f8659e is closed
+Using local directory build cache for the root build (location = C:\Users\joaom\.gradle\caches\build-cache-1, remove unused entries = after 7 days).
+Ignoring listeners of task graph ready event, as this build (:) has already executed work.
+Resolve mutations for :app:preBuild (Thread[included builds,5,main]) started.
+Resolve mutations for :app:checkKotlinGradlePluginConfigurationErrors (Thread[Execution worker,5,main]) started.
+:app:checkKotlinGradlePluginConfigurationErrors (Thread[Execution worker,5,main]) started.
+Resolve mutations for :app:injectCrashlyticsMappingFileIdDebug (Thread[Execution worker Thread 3,5,main]) started.
+:app:injectCrashlyticsMappingFileIdDebug (Thread[Execution worker Thread 3,5,main]) started.
+:app:preBuild (Thread[included builds,5,main]) started.
+Resolve mutations for :app:injectCrashlyticsVersionControlInfoDebug (Thread[Execution worker Thread 2,5,main]) started.
+:app:injectCrashlyticsVersionControlInfoDebug (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Skipping task ':app:checkKotlinGradlePluginConfigurationErrors' as task onlyIf 'errorDiagnostics are present' is false.
+Resolve mutations for :app:processDebugGoogleServices (Thread[Execution worker,5,main]) started.
+:app:processDebugGoogleServices (Thread[Execution worker,5,main]) started.
+
+> Task :app:preBuild UP-TO-DATE
+Skipping task ':app:preBuild' as it has no actions.
+Resolve mutations for :app:preDebugBuild (Thread[included builds,5,main]) started.
+:app:preDebugBuild (Thread[included builds,5,main]) started.
+
+> Task :app:preDebugBuild UP-TO-DATE
+Skipping task ':app:preDebugBuild' as it has no actions.
+Resolve mutations for :app:mergeDebugNativeDebugMetadata (Thread[included builds,5,main]) started.
+:app:mergeDebugNativeDebugMetadata (Thread[included builds,5,main]) started.
+
+> Task :app:injectCrashlyticsVersionControlInfoDebug UP-TO-DATE
+Build cache key for task ':app:injectCrashlyticsVersionControlInfoDebug' is 870560d56a4fe9a445baddd26705305b
+Skipping task ':app:injectCrashlyticsVersionControlInfoDebug' as it is up-to-date.
+Resolve mutations for :app:dataBindingMergeDependencyArtifactsDebug (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:injectCrashlyticsMappingFileIdDebug UP-TO-DATE
+Build cache key for task ':app:injectCrashlyticsMappingFileIdDebug' is 9bbea51310ec208e1e0cfd3a1fa0d2ed
+Skipping task ':app:injectCrashlyticsMappingFileIdDebug' as it is up-to-date.
+Resolve mutations for :app:generateDebugResValues (Thread[Execution worker Thread 3,5,main]) started.
+:app:dataBindingMergeDependencyArtifactsDebug (Thread[Execution worker Thread 2,5,main]) started.
+:app:generateDebugResValues (Thread[Execution worker Thread 3,5,main]) started.
+
+> Task :app:generateDebugResValues UP-TO-DATE
+Build cache key for task ':app:generateDebugResValues' is ca31d80ef07706cd09cd8a67615319a0
+Skipping task ':app:generateDebugResValues' as it is up-to-date.
+Resolve mutations for :app:generateDebugResources (Thread[Execution worker Thread 3,5,main]) started.
+:app:generateDebugResources (Thread[Execution worker Thread 3,5,main]) started.
+
+> Task :app:generateDebugResources UP-TO-DATE
+Build cache key for task ':app:generateDebugResources' is 06c600b75192fd565dbf4bed8101ce62
+Skipping task ':app:generateDebugResources' as it is up-to-date.
+Resolve mutations for :app:generateDebugBuildConfig (Thread[Execution worker Thread 3,5,main]) started.
+
+> Task :app:processDebugGoogleServices UP-TO-DATE
+Build cache key for task ':app:processDebugGoogleServices' is baaba28f1216768ef30e0843b9997e05
+Skipping task ':app:processDebugGoogleServices' as it is up-to-date.
+Resolve mutations for :app:extractDebugSupportedLocales (Thread[Execution worker,5,main]) started.
+:app:extractDebugSupportedLocales (Thread[Execution worker,5,main]) started.
+:app:generateDebugBuildConfig (Thread[Execution worker Thread 3,5,main]) started.
+
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+Skipping task ':app:mergeDebugNativeDebugMetadata' as it has no source files and no previous output files.
+Resolve mutations for :app:checkDebugAarMetadata (Thread[included builds,5,main]) started.
+:app:checkDebugAarMetadata (Thread[included builds,5,main]) started.
+
+> Task :app:extractDebugSupportedLocales UP-TO-DATE
+Build cache key for task ':app:extractDebugSupportedLocales' is 0c9b147523aa91bd7efd7116cf1e1977
+Skipping task ':app:extractDebugSupportedLocales' as it is up-to-date.
+Resolve mutations for :app:generateDebugLocaleConfig (Thread[Execution worker,5,main]) started.
+:app:generateDebugLocaleConfig (Thread[Execution worker,5,main]) started.
+
+> Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+Caching disabled for task ':app:dataBindingMergeDependencyArtifactsDebug' because:
+  Caching has been disabled for the task
+Skipping task ':app:dataBindingMergeDependencyArtifactsDebug' as it is up-to-date.
+Resolve mutations for :app:mapDebugSourceSetPaths (Thread[Execution worker Thread 2,5,main]) started.
+:app:mapDebugSourceSetPaths (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+Caching disabled for task ':app:checkDebugAarMetadata' because:
+  Caching has been disabled for the task
+Skipping task ':app:checkDebugAarMetadata' as it is up-to-date.
+Resolve mutations for :app:createDebugCompatibleScreenManifests (Thread[included builds,5,main]) started.
+:app:createDebugCompatibleScreenManifests (Thread[included builds,5,main]) started.
+
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+Caching disabled for task ':app:mapDebugSourceSetPaths' because:
+  Caching has been disabled for the task
+Skipping task ':app:mapDebugSourceSetPaths' as it is up-to-date.
+Resolve mutations for :app:extractDeepLinksDebug (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:generateDebugLocaleConfig UP-TO-DATE
+Build cache key for task ':app:generateDebugLocaleConfig' is f44b4b3bed79632530a3f2edbd445350
+Skipping task ':app:generateDebugLocaleConfig' as it is up-to-date.
+Resolve mutations for :app:mergeDebugResources (Thread[Execution worker,5,main]) started.
+Resolve mutations for :app:packageDebugResources (Thread[Execution worker Thread 2,5,main]) started.
+:app:mergeDebugResources (Thread[Execution worker,5,main]) started.
+:app:packageDebugResources (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:packageDebugResources UP-TO-DATE
+Build cache key for task ':app:packageDebugResources' is 837a823c0a72cfcd5396ca669d19a4a5
+Skipping task ':app:packageDebugResources' as it is up-to-date.
+Resolve mutations for :app:parseDebugLocalResources (Thread[Execution worker Thread 2,5,main]) started.
+:app:parseDebugLocalResources (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:mergeDebugResources UP-TO-DATE
+Build cache key for task ':app:mergeDebugResources' is e2a397c14a8a5b0f9eeabeacd56635db
+Skipping task ':app:mergeDebugResources' as it is up-to-date.
+:app:extractDeepLinksDebug (Thread[Execution worker,5,main]) started.
+
+> Task :app:parseDebugLocalResources UP-TO-DATE
+Build cache key for task ':app:parseDebugLocalResources' is a757a4c51755b848a9ac6780f09952d7
+Skipping task ':app:parseDebugLocalResources' as it is up-to-date.
+Resolve mutations for :app:dataBindingGenBaseClassesDebug (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+Build cache key for task ':app:extractDeepLinksDebug' is f09750a79880e70d45bb65104a910e13
+Skipping task ':app:extractDeepLinksDebug' as it is up-to-date.
+:app:dataBindingGenBaseClassesDebug (Thread[Execution worker Thread 2,5,main]) started.
+Resolve mutations for :app:processDebugMainManifest (Thread[Execution worker,5,main]) started.
+:app:processDebugMainManifest (Thread[Execution worker,5,main]) started.
+
+> Task :app:createDebugCompatibleScreenManifests
+Caching disabled for task ':app:createDebugCompatibleScreenManifests' because:
+  Caching has been disabled for the task
+Task ':app:createDebugCompatibleScreenManifests' is not up-to-date because:
+  Value of input property 'variantOutputs.$0.versionCode' has changed for task ':app:createDebugCompatibleScreenManifests'
+  Value of input property 'variantOutputs.$0.versionName' has changed for task ':app:createDebugCompatibleScreenManifests'
+Resolve mutations for :app:javaPreCompileDebug (Thread[included builds,5,main]) started.
+:app:javaPreCompileDebug (Thread[included builds,5,main]) started.
+
+> Task :app:javaPreCompileDebug UP-TO-DATE
+Build cache key for task ':app:javaPreCompileDebug' is a85f0c76b3236b0610c8aa5ffb983685
+Skipping task ':app:javaPreCompileDebug' as it is up-to-date.
+Resolve mutations for :app:mergeDebugShaders (Thread[included builds,5,main]) started.
+:app:mergeDebugShaders (Thread[included builds,5,main]) started.
+
+> Task :app:mergeDebugShaders UP-TO-DATE
+Caching disabled for task ':app:mergeDebugShaders' because:
+  Simple merging task
+Skipping task ':app:mergeDebugShaders' as it is up-to-date.
+Resolve mutations for :app:compileDebugShaders (Thread[included builds,5,main]) started.
+:app:compileDebugShaders (Thread[included builds,5,main]) started.
+
+> Task :app:compileDebugShaders NO-SOURCE
+Skipping task ':app:compileDebugShaders' as it has no source files and no previous output files.
+Resolve mutations for :app:generateDebugAssets (Thread[included builds,5,main]) started.
+:app:generateDebugAssets (Thread[included builds,5,main]) started.
+
+> Task :app:generateDebugAssets UP-TO-DATE
+Skipping task ':app:generateDebugAssets' as it has no actions.
+Resolve mutations for :app:mergeDebugAssets (Thread[included builds,5,main]) started.
+:app:mergeDebugAssets (Thread[included builds,5,main]) started.
+
+> Task :app:mergeDebugAssets UP-TO-DATE
+Caching disabled for task ':app:mergeDebugAssets' because:
+  Simple merging task
+Skipping task ':app:mergeDebugAssets' as it is up-to-date.
+Resolve mutations for :app:compressDebugAssets (Thread[included builds,5,main]) started.
+:app:compressDebugAssets (Thread[included builds,5,main]) started.
+
+> Task :app:compressDebugAssets UP-TO-DATE
+Build cache key for task ':app:compressDebugAssets' is 5eb51b2380b0618333dcc2f32d2e48c3
+Skipping task ':app:compressDebugAssets' as it is up-to-date.
+Resolve mutations for :app:desugarDebugFileDependencies (Thread[included builds,5,main]) started.
+:app:desugarDebugFileDependencies (Thread[included builds,5,main]) started.
+
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+Build cache key for task ':app:desugarDebugFileDependencies' is 9cbfb931f4f037554d19c80c1857366a
+Skipping task ':app:desugarDebugFileDependencies' as it is up-to-date.
+Resolve mutations for :app:checkDebugDuplicateClasses (Thread[included builds,5,main]) started.
+
+> Task :app:dataBindingGenBaseClassesDebug UP-TO-DATE
+Build cache key for task ':app:dataBindingGenBaseClassesDebug' is 19ac47725fed78dbd3730332b01b66a6
+Skipping task ':app:dataBindingGenBaseClassesDebug' as it is up-to-date.
+:app:checkDebugDuplicateClasses (Thread[included builds,5,main]) started.
+Resolve mutations for :app:mergeDebugJniLibFolders (Thread[Execution worker Thread 2,5,main]) started.
+:app:mergeDebugJniLibFolders (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+Caching disabled for task ':app:mergeDebugJniLibFolders' because:
+  Simple merging task
+Skipping task ':app:mergeDebugJniLibFolders' as it is up-to-date.
+Resolve mutations for :app:mergeDebugNativeLibs (Thread[Execution worker Thread 2,5,main]) started.
+:app:mergeDebugNativeLibs (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+Caching disabled for task ':app:checkDebugDuplicateClasses' because:
+  Caching has been disabled for the task
+Skipping task ':app:checkDebugDuplicateClasses' as it is up-to-date.
+Resolve mutations for :app:mergeExtDexDebug (Thread[included builds,5,main]) started.
+:app:mergeExtDexDebug (Thread[included builds,5,main]) started.
+
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+Caching disabled for task ':app:mergeDebugNativeLibs' because:
+  Caching has been disabled for the task
+Skipping task ':app:mergeDebugNativeLibs' as it is up-to-date.
+Resolve mutations for :app:mergeLibDexDebug (Thread[Execution worker Thread 2,5,main]) started.
+:app:mergeLibDexDebug (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:mergeLibDexDebug UP-TO-DATE
+Build cache key for task ':app:mergeLibDexDebug' is cab81a50b4beaad75d21f0db0aa2ebdb
+Skipping task ':app:mergeLibDexDebug' as it is up-to-date.
+Resolve mutations for :app:stripDebugDebugSymbols (Thread[Execution worker Thread 2,5,main]) started.
+:app:stripDebugDebugSymbols (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+Caching disabled for task ':app:stripDebugDebugSymbols' because:
+  Caching has been disabled for the task
+Skipping task ':app:stripDebugDebugSymbols' as it is up-to-date.
+Resolve mutations for :app:validateSigningDebug (Thread[Execution worker Thread 2,5,main]) started.
+:app:validateSigningDebug (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:validateSigningDebug UP-TO-DATE
+Caching disabled for task ':app:validateSigningDebug' because:
+  Caching has been disabled for the task
+Skipping task ':app:validateSigningDebug' as it is up-to-date.
+Resolve mutations for :app:writeDebugAppMetadata (Thread[Execution worker Thread 2,5,main]) started.
+:app:writeDebugAppMetadata (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+Caching disabled for task ':app:writeDebugAppMetadata' because:
+  Caching has been disabled for the task
+Skipping task ':app:writeDebugAppMetadata' as it is up-to-date.
+Resolve mutations for :app:writeDebugSigningConfigVersions (Thread[Execution worker Thread 2,5,main]) started.
+:app:writeDebugSigningConfigVersions (Thread[Execution worker Thread 2,5,main]) started.
+
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+Caching disabled for task ':app:writeDebugSigningConfigVersions' because:
+  Caching has been disabled for the task
+Skipping task ':app:writeDebugSigningConfigVersions' as it is up-to-date.
+
+> Task :app:generateDebugBuildConfig FROM-CACHE
+Build cache key for task ':app:generateDebugBuildConfig' is c41cebf43d8d65eebfb576a234c080ad
+Task ':app:generateDebugBuildConfig' is not up-to-date because:
+  Value of input property 'versionCode' has changed for task ':app:generateDebugBuildConfig'
+  Value of input property 'versionName' has changed for task ':app:generateDebugBuildConfig'
+Loaded cache entry for task ':app:generateDebugBuildConfig' with cache key c41cebf43d8d65eebfb576a234c080ad
+
+> Task :app:processDebugMainManifest FROM-CACHE
+Build cache key for task ':app:processDebugMainManifest' is 0eab5797be73062ada4fcf6c82067a91
+Task ':app:processDebugMainManifest' is not up-to-date because:
+  Value of input property 'versionCode' has changed for task ':app:processDebugMainManifest'
+  Value of input property 'versionName' has changed for task ':app:processDebugMainManifest'
+Loaded cache entry for task ':app:processDebugMainManifest' with cache key 0eab5797be73062ada4fcf6c82067a91
+Resolve mutations for :app:processDebugManifest (Thread[Execution worker,5,main]) started.
+:app:processDebugManifest (Thread[Execution worker,5,main]) started.
+
+> Task :app:mergeExtDexDebug UP-TO-DATE
+Build cache key for task ':app:mergeExtDexDebug' is 5a946b1b60558a75c43b7d9b627d87d4
+Skipping task ':app:mergeExtDexDebug' as it is up-to-date.
+
+> Task :app:processDebugManifest FROM-CACHE
+Build cache key for task ':app:processDebugManifest' is a9209338ce6f545dd9947adfe360a03f
+Task ':app:processDebugManifest' is not up-to-date because:
+  Value of input property 'outputsHandler.variantOutputs.$0.versionCode' has changed for task ':app:processDebugManifest'
+  Value of input property 'outputsHandler.variantOutputs.$0.versionName' has changed for task ':app:processDebugManifest'
+Loaded cache entry for task ':app:processDebugManifest' with cache key a9209338ce6f545dd9947adfe360a03f
+Resolve mutations for :app:processDebugManifestForPackage (Thread[Execution worker,5,main]) started.
+:app:processDebugManifestForPackage (Thread[Execution worker,5,main]) started.
+
+> Task :app:processDebugManifestForPackage FROM-CACHE
+Build cache key for task ':app:processDebugManifestForPackage' is 5697bf0c10c5cc1770f46142166718a4
+Task ':app:processDebugManifestForPackage' is not up-to-date because:
+  Input property 'mergedManifests' file C:\Users\joaom\Documents\GitHub\Music_Hub\app\build\intermediates\merged_manifests\debug\processDebugManifest\AndroidManifest.xml has changed.
+  Input property 'mergedManifests' file C:\Users\joaom\Documents\GitHub\Music_Hub\app\build\intermediates\merged_manifests\debug\processDebugManifest\output-metadata.json has changed.
+Loaded cache entry for task ':app:processDebugManifestForPackage' with cache key 5697bf0c10c5cc1770f46142166718a4
+Resolve mutations for :app:processDebugResources (Thread[Execution worker,5,main]) started.
+:app:processDebugResources (Thread[Execution worker,5,main]) started.
+
+> Task :app:processDebugResources FROM-CACHE
+Build cache key for task ':app:processDebugResources' is f75b10717d2dbdc654744058ac421ee8
+Task ':app:processDebugResources' is not up-to-date because:
+  Value of input property 'outputsHandler.variantOutputs.$0.versionCode' has changed for task ':app:processDebugResources'
+  Value of input property 'outputsHandler.variantOutputs.$0.versionName' has changed for task ':app:processDebugResources'
+Loaded cache entry for task ':app:processDebugResources' with cache key f75b10717d2dbdc654744058ac421ee8
+Resolve mutations for :app:kspDebugKotlin (Thread[included builds,5,main]) started.
+:app:kspDebugKotlin (Thread[included builds,5,main]) started.
+
+> Task :app:kspDebugKotlin
+Build cache key for task ':app:kspDebugKotlin' is 7f0d3607a0a0528a4d30b2e52a087691
+Task ':app:kspDebugKotlin' is not up-to-date because:
+  Task has failed previously.
+The input changes require a full rebuild for incremental task ':app:kspDebugKotlin'.
+file or directory 'C:\Users\joaom\Documents\GitHub\Music_Hub\app\src\debug\kotlin', not found
+file or directory 'C:\Users\joaom\Documents\GitHub\Music_Hub\app\src\debug\java', not found
+file or directory 'C:\Users\joaom\Documents\GitHub\Music_Hub\app\src\main\kotlin', not found
+file or directory 'C:\Users\joaom\Documents\GitHub\Music_Hub\app\src\debug\java', not found
+file or directory 'C:\Users\joaom\Documents\GitHub\Music_Hub\app\src\debug\kotlin', not found
+file or directory 'C:\Users\joaom\Documents\GitHub\Music_Hub\app\src\debug\java', not found
+file or directory 'C:\Users\joaom\Documents\GitHub\Music_Hub\app\src\main\kotlin', not found
+i: [ksp] loaded provider(s): [androidx.room.RoomKspProcessor$Provider]
+e: [ksp] [MissingType]: Element 'com.joaomagdaleno.music_hub.download.db.models.DownloadEntity' references a type that is not present
+e: [ksp] androidx.room.RoomKspProcessor was unable to process 'com.joaomagdaleno.music_hub.download.db.DownloadDatabase' because not all of its dependencies could be resolved. Check for compilation errors or a circular dependency with generated code.
+
+> Task :app:kspDebugKotlin FAILED
+Build 68229433-be89-400e-8405-e7a3cc7dcc08 is started
+Build 68229433-be89-400e-8405-e7a3cc7dcc08 is closed
+
+See the complete report at file:///C:/Users/joaom/Documents/GitHub/Music_Hub/build/reports/configuration-cache/37l7zjrdtmy72n4xxbiryklly/381x1f18nv2gj5y97kfsojrtz/configuration-cache-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:kspDebugKotlin'.
+> A failure occurred while executing com.google.devtools.ksp.gradle.KspAAWorkerAction
+   > KSP failed with exit code: PROCESSING_ERROR
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --debug option to get more log output.
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 21s
+36 actionable tasks: 2 executed, 5 from cache, 29 up-to-date
+Watched directory hierarchies: [C:\Users\joaom\Documents\GitHub\Music_Hub]
+Configuration cache entry stored.
+Configuration Cache (C:\Users\joaom\Documents\GitHub\Music_Hub\.gradle\configuration-cache) [subdir: C:\Users\joaom\Documents\GitHub\Music_Hub\.gradle\configuration-cache\2bb3dda5-c257-4a2d-a1b6-eeb5740996e8] cleanup deleted 8 files/directories.

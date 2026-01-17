@@ -1,0 +1,120 @@
+Configuration on demand is an incubating feature.
+Reusing configuration cache.
+> Task :app:preBuild UP-TO-DATE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:injectCrashlyticsVersionControlInfoDebug UP-TO-DATE
+> Task :app:injectCrashlyticsMappingFileIdDebug UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:processDebugGoogleServices UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:extractDebugSupportedLocales UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:generateDebugLocaleConfig UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+
+> Task :app:kspDebugKotlin
+i: [ksp] loaded provider(s): [androidx.room.RoomKspProcessor$Provider]
+
+> Task :app:compileDebugKotlin
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/MainActivity.kt:67:21 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun FragmentActivity.configureAppUpdater(): Unit
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/common/UiViewModel.kt:247:30 Unresolved reference 'first'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/common/UiViewModel.kt:247:38 Unresolved reference 'it'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/common/UiViewModel.kt:277:70 Unresolved reference 'viewModel'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/common/UiViewModel.kt:280:13 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/common/UiViewModel.kt:280:13 Not enough information to infer type argument for 'T'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/common/UiViewModel.kt:280:31 Unresolved reference 'installFileFlow'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/common/UiViewModel.kt:280:48 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/common/UiViewModel.kt:282:27 Unresolved reference 'installedFlow'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/common/UiViewModel.kt:282:41 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/common/UiViewModel.kt:282:49 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/common/UiViewModel.kt:292:36 Unresolved reference 'installedFlow'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/common/UiViewModel.kt:292:50 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/common/UiViewModel.kt:299:23 Unresolved reference 'checkForUpdates'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/compose/components/TrackItem.kt:6:50 Conflicting import: imported name 'Track' is ambiguous.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/compose/components/TrackItem.kt:13:39 Conflicting import: imported name 'TextOverflow' is ambiguous.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/compose/components/TrackItem.kt:14:18 Conflicting import: imported name 'Locale' is ambiguous.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/compose/components/TrackItem.kt:25:39 Conflicting import: imported name 'TextOverflow' is ambiguous.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/compose/components/TrackItem.kt:29:50 Conflicting import: imported name 'Track' is ambiguous.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/compose/components/TrackItem.kt:30:18 Conflicting import: imported name 'Locale' is ambiguous.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/compose/feed/Shelf.kt:22:28 Conflicting import: imported name 'Alignment' is ambiguous.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/compose/feed/Shelf.kt:23:28 Conflicting import: imported name 'Modifier' is ambiguous.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/compose/feed/Shelf.kt:38:28 Conflicting import: imported name 'Alignment' is ambiguous.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/compose/feed/Shelf.kt:39:28 Conflicting import: imported name 'Modifier' is ambiguous.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadFragment.kt:39:26 Class '<anonymous>' is not abstract and does not implement abstract member:
+fun onExceptionClicked(data: <ERROR TYPE REF: Symbol not found for ExceptionUtils>): Unit
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadFragment.kt:42:13 'onExceptionClicked' overrides nothing. Potential signatures for overriding:
+fun onExceptionClicked(data: <ERROR TYPE REF: Symbol not found for ExceptionUtils>): Unit
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadFragment.kt:42:51 Unresolved reference 'ExceptionData'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:44:38 Unresolved reference 'ExceptionUtils'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/download/DownloadsAdapter.kt:72:94 Argument type mismatch: actual type is 'ExceptionData', but 'Throwable?' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/feed/FeedLoadingAdapter.kt:132:66 Argument type mismatch: actual type is 'Function0<Unit>', but 'View?' was expected.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/PlayerFragment.kt:60:54 Conflicting import: imported name 'AudioEffectsBottomSheet' is ambiguous.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/ui/player/PlayerFragment.kt:66:54 Conflicting import: imported name 'AudioEffectsBottomSheet' is ambiguous.
+
+> Task :app:compileDebugKotlin FAILED
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:117:46 Unresolved reference 'BACKGROUND_GRADIENT'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:133:66 Unresolved reference 'UI_MODE_NIGHT_NO'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:190:42 Unresolved reference 'BACKGROUND_GRADIENT'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:213:45 Unresolved reference 'dpToPx'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:227:40 Unresolved reference 'dpToPx'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:228:36 Unresolved reference 'dpToPx'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:231:59 Unresolved reference 'dpToPx'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:238:36 Unresolved reference 'dpToPx'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:239:40 Unresolved reference 'dpToPx'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:240:32 Unresolved reference 'dpToPx'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:250:29 Unresolved reference 'dpToPx'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:267:29 Unresolved reference 'dpToPx'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:291:44 Unresolved reference 'dpToPx'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:305:31 Unresolved reference 'dpToPx'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:584:21 Unresolved reference 'dpToPx'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:679:62 No type arguments expected for fun View.updateLayoutParams(block: ViewGroup.LayoutParams.() -> Unit): Unit.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:679:63 Unresolved reference 'MarginLayoutParams'.
+e: file:///C:/Users/joaom/Documents/GitHub/Music_Hub/app/src/main/java/com/joaomagdaleno/music_hub/utils/ui/UiUtils.kt:680:17 Unresolved reference 'bottomMargin'.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 52s
+37 actionable tasks: 2 executed, 35 up-to-date
+Configuration cache entry reused.

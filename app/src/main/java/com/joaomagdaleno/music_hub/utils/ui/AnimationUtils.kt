@@ -37,7 +37,7 @@ object AnimationUtils {
     ) = view.run {
         clearAnimation()
         val interpolator = getInterpolator(context)
-        val duration = animationDuration * durationMultiplier
+        val duration = getAnimationDuration(view) * durationMultiplier
         animation.setInterpolator(interpolator).setDuration(duration.toLong()).start()
     }
 
@@ -46,65 +46,68 @@ object AnimationUtils {
         FastOutSlowInInterpolator()
     )
 
-    fun View.animateMarginTop(hide: Boolean, onEnd: (() -> Unit)? = null) {
-        if (!animations) {
-            isVisible = hide
+    fun animateMarginTop(view: View, hide: Boolean, onEnd: (() -> Unit)? = null) {
+        if (!getIsEnabled(view)) {
+            view.isVisible = hide
             return
         }
-        isVisible = true
-        val fromMargin = (layoutParams as ViewGroup.MarginLayoutParams).topMargin
-        val toMargin = if (hide) 0 else -height
-        val fromAlpha = alpha
+        view.isVisible = true
+        val fromMargin = (view.layoutParams as ViewGroup.MarginLayoutParams).topMargin
+        val toMargin = if (hide) 0 else -view.height
+        val fromAlpha = view.alpha
         val toAlpha = if (hide) 1f else 0f
 
         val animator = ValueAnimator.ofFloat(0f, 1f)
         animator.addUpdateListener { valueAnimator ->
             val fraction = valueAnimator.animatedFraction
-            val params = layoutParams as ViewGroup.MarginLayoutParams
+            val params = view.layoutParams as ViewGroup.MarginLayoutParams
             params.topMargin = (fromMargin + (toMargin - fromMargin) * fraction).toInt()
-            layoutParams = params
-            alpha = fromAlpha + (toAlpha - fromAlpha) * fraction
+            view.layoutParams = params
+            view.alpha = fromAlpha + (toAlpha - fromAlpha) * fraction
         }
-        animator.duration = animationDuration
-        animator.interpolator = getInterpolator(context)
+        animator.duration = getAnimationDuration(view)
+        animator.interpolator = getInterpolator(view.context)
         animator.doOnEnd {
-            isVisible = hide
+            view.isVisible = hide
             onEnd?.invoke()
         }
         animator.start()
     }
 
-    fun NavigationBarView.animateTranslation(
+    fun animateTranslation(
+        navView: NavigationBarView,
         isRail: Boolean,
         isMainFragment: Boolean,
         isPlayerCollapsed: Boolean,
         animate: Boolean = true,
         action: (Float) -> Unit
-    ) = doOnLayout {
+    ) = navView.doOnLayout {
         val visible = isMainFragment && isPlayerCollapsed
         val value = if (visible) 0f
-        else if (isRail) -width.toFloat() else height.toFloat()
-        if (animations && animate) {
-            var animation = if (isRail) animate().translationX(value)
-            else animate().translationY(value)
+        else if (isRail) -navView.width.toFloat() else navView.height.toFloat()
+        if (getIsEnabled(navView) && animate) {
+            var animation = if (isRail) navView.animate().translationX(value)
+            else navView.animate().translationY(value)
             animation = if (visible) animation.withStartAction { action(value) }
             else animation.withEndAction { action(value) }
-            startAnimation(this, animation)
+            startAnimation(navView, animation)
 
-            val delay = if (!visible) 0L else animationDurationSmall
-            menu.forEachIndexed { index, item ->
-                val view = findViewById<View>(item.itemId)
-                val anim = view.animate().setStartDelay(index * delay)
-                if (isRail) anim.translationX(value)
-                else anim.translationY(value)
-                startAnimation(view, anim, 0.5f)
+            val delay = if (!visible) 0L else getAnimationDurationSmall(navView)
+            navView.menu.forEachIndexed { index, item ->
+                val view = navView.findViewById<View>(item.itemId)
+                if (view != null) {
+                    val anim = view.animate().setStartDelay(index * delay)
+                    if (isRail) anim.translationX(value)
+                    else anim.translationY(value)
+                    startAnimation(view, anim, 0.5f)
+                }
             }
         } else {
-            if (isRail) translationX = value
-            else translationY = value
+            if (isRail) navView.translationX = value
+            else navView.translationY = value
 
-            menu.forEach {
-                findViewById<View>(it.itemId).apply {
+            navView.menu.forEach {
+                navView.findViewById<View>(it.itemId)?.apply {
                     translationX = 0f
                     translationY = 0f
                 }
@@ -113,39 +116,37 @@ object AnimationUtils {
         }
     }
 
-    fun View.animateVisibility(visible: Boolean, animate: Boolean = true) {
-        if (animations && animate && isVisible != visible) {
-            isVisible = true
+    fun animateVisibility(view: View, visible: Boolean, animate: Boolean = true) {
+        if (getIsEnabled(view) && animate && view.isVisible != visible) {
+            view.isVisible = true
             startAnimation(
-                this,
-                animate().alpha(if (visible) 1f else 0f).withEndAction {
-                    alpha = if (visible) 1f else 0f
-                    isVisible = visible
+                view,
+                view.animate().alpha(if (visible) 1f else 0f).withEndAction {
+                    view.alpha = if (visible) 1f else 0f
+                    view.isVisible = visible
                 }
             )
         } else {
-            alpha = if (visible) 1f else 0f
-            isVisible = visible
+            view.alpha = if (visible) 1f else 0f
+            view.isVisible = visible
         }
     }
 
     fun animateTranslation(view: View, old: Int, newHeight: Int) = view.run {
-        if (view.animations) {
+        if (getIsEnabled(view)) {
             clearAnimation()
             view.translationY = newHeight.toFloat() - old
             startAnimation(this, animate().translationY(0f))
         }
     }
 
-    private val View.animationDuration: Long
-        get() = context.applicationContext.run {
+    private fun getAnimationDuration(view: View): Long = view.context.applicationContext.run {
             MotionUtils.resolveThemeDuration(
                 this, com.google.android.material.R.attr.motionDurationMedium1, 350
             ).toLong()
         }
 
-    private val View.animationDurationSmall: Long
-        get() = context.applicationContext.run {
+    private fun getAnimationDurationSmall(view: View): Long = view.context.applicationContext.run {
             MotionUtils.resolveThemeDuration(
                 this, com.google.android.material.R.attr.motionDurationShort1, 100
             ).toLong()
@@ -154,90 +155,78 @@ object AnimationUtils {
     const val ANIMATIONS_KEY = "animations"
     const val SCROLL_ANIMATIONS_KEY = "shared_element"
 
-    private val View.animations
-        get() = context.applicationContext.run {
+    private fun getIsEnabled(view: View): Boolean = view.context.applicationContext.run {
             getSharedPreferences(SETTINGS_NAME, MODE_PRIVATE).getBoolean(ANIMATIONS_KEY, true)
         }
 
-    private val View.scrollAnimations
-        get() = context.applicationContext.run {
+    private fun getScrollIsEnabled(view: View): Boolean = view.context.applicationContext.run {
             getSharedPreferences(SETTINGS_NAME, MODE_PRIVATE)
                 .getBoolean(SCROLL_ANIMATIONS_KEY, false)
         }
 
-    fun Fragment.setupTransition(
-        view: View, applyBackground: Boolean = true, axis: Int = MaterialSharedAxis.Z
+    fun setupTransition(
+        fragment: Fragment, view: View, applyBackground: Boolean = true, axis: Int = MaterialSharedAxis.Z
     ) {
         if (applyBackground) {
             val color = MaterialColors.getColor(view, R.attr.echoBackground, 0)
             view.setBackgroundColor(color)
         }
 
-        if (view.animations) {
-//        val transitionName = arguments?.getString("transitionName")
-//        if (transitionName != null) {
-//            view.transitionName = transitionName
-//            val transition = MaterialContainerTransform().apply {
-//                drawingViewId = id
-//                setAllContainerColors(color)
-//                duration = view.animationDuration
-//            }
-//            sharedElementEnterTransition = transition
-//        }
+        if (getIsEnabled(view)) {
             (view as? ViewGroup)?.isTransitionGroup = true
-            exitTransition = MaterialSharedAxis(axis, true)
-            reenterTransition = MaterialSharedAxis(axis, false)
-            enterTransition = MaterialSharedAxis(axis, true)
-            returnTransition = MaterialSharedAxis(axis, false)
+            fragment.exitTransition = MaterialSharedAxis(axis, true)
+            fragment.reenterTransition = MaterialSharedAxis(axis, false)
+            fragment.enterTransition = MaterialSharedAxis(axis, true)
+            fragment.returnTransition = MaterialSharedAxis(axis, false)
 
-            postponeEnterTransition()
-            view.doOnPreDraw { startPostponedEnterTransition() }
+            fragment.postponeEnterTransition()
+            view.doOnPreDraw { fragment.startPostponedEnterTransition() }
         }
     }
 
-    fun View.animatedWithAlpha(delay: Long = 0, vararg anim: Animation) {
-        if (!animations) return
+    fun animatedWithAlpha(view: View, delay: Long = 0, vararg anim: Animation) {
+        if (!getIsEnabled(view)) return
         val set = AnimationSet(true)
-        set.interpolator = getInterpolator(context) as Interpolator
+        set.interpolator = getInterpolator(view.context) as Interpolator
         val alpha = AlphaAnimation(0.0f, 1.0f)
-        alpha.duration = animationDurationSmall
+        alpha.duration = getAnimationDurationSmall(view)
         alpha.startOffset = delay
         set.addAnimation(alpha)
         anim.forEach { set.addAnimation(it) }
-        startAnimation(set)
+        view.startAnimation(set)
     }
 
-    fun View.applyTranslationAndScaleAnimation(
-        amount: Int, delay: Long = 0
+    fun applyTranslationAndScaleAnimation(
+        view: View, amount: Int, delay: Long = 0
     ) {
-        if (!animations) return
-        if (!scrollAnimations) return
+        if (!getIsEnabled(view)) return
+        if (!getScrollIsEnabled(view)) return
         val multiplier = amount.sign
         val rotateAnimation = RotateAnimation(
             5f * multiplier, 0f,
-            width.toFloat() / 2, height.toFloat() / 2
+            view.width.toFloat() / 2, view.height.toFloat() / 2
         )
-        rotateAnimation.duration = animationDuration
+        rotateAnimation.duration = getAnimationDuration(view)
         val translate = TranslateAnimation(
             Animation.RELATIVE_TO_SELF, multiplier * 0.5f,
             Animation.RELATIVE_TO_SELF, 0f,
             Animation.RELATIVE_TO_SELF, 0f,
             Animation.RELATIVE_TO_SELF, 0f,
         )
-        translate.duration = animationDuration
+        translate.duration = getAnimationDuration(view)
         val from = 1f - 0.5f * multiplier.absoluteValue
         val scale = ScaleAnimation(
             from, 1f, from, 1f,
             Animation.RELATIVE_TO_SELF, 0.5f,
             Animation.RELATIVE_TO_SELF, 0.5f
         )
-        scale.duration = animationDuration
-        animatedWithAlpha(delay, rotateAnimation, translate, scale)
+        scale.duration = getAnimationDuration(view)
+        animatedWithAlpha(view, delay, rotateAnimation, translate, scale)
     }
 
-    fun View.applyTranslationYAnimation(amount: Int, delay: Long = 0) {
-        if (!animations) return
-        if (!scrollAnimations) return
+    fun applyTranslationYAnimation(view: View, amount: Int, delay: Long = 0) {
+        if (!getIsEnabled(view)) return
+        if (!getScrollIsEnabled(view)) return
         val multiplier = amount.sign
         val translate = TranslateAnimation(
             Animation.RELATIVE_TO_SELF, 0f,
@@ -245,8 +234,8 @@ object AnimationUtils {
             Animation.RELATIVE_TO_SELF, multiplier * 1.5f,
             Animation.RELATIVE_TO_SELF, 0f,
         )
-        translate.duration = animationDuration
+        translate.duration = getAnimationDuration(view)
         translate.startOffset = delay
-        animatedWithAlpha(delay, translate)
+        animatedWithAlpha(view, delay, translate)
     }
 }

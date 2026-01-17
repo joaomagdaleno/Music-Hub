@@ -9,17 +9,17 @@ import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.di.App
 
 fun configureAppShortcuts(app: App) {
-    val searchShortcut = ShortcutInfoCompat.Builder(app, "search")
-        .setShortLabel(app.getString(R.string.search))
-        .setIcon(IconCompat.createWithResource(app, R.drawable.ic_search))
+    val searchShortcut = ShortcutInfoCompat.Builder(app.context, "search")
+        .setShortLabel(app.context.getString(R.string.search))
+        .setIcon(IconCompat.createWithResource(app.context, R.drawable.ic_search_outline))
         .setIntent(Intent(Intent.ACTION_VIEW, "echo://search".toUri()))
         .build()
 
-    val libraryShortcut = ShortcutInfoCompat.Builder(app, "library")
-        .setShortLabel(app.getString(R.string.library))
-        .setIcon(IconCompat.createWithResource(app, R.drawable.ic_library))
+    val libraryShortcut = ShortcutInfoCompat.Builder(app.context, "library")
+        .setShortLabel(app.context.getString(R.string.library))
+        .setIcon(IconCompat.createWithResource(app.context, R.drawable.ic_library_music))
         .setIntent(Intent(Intent.ACTION_VIEW, "echo://library".toUri()))
         .build()
 
-    ShortcutManagerCompat.setDynamicShortcuts(app, listOf(searchShortcut, libraryShortcut))
+    ShortcutManagerCompat.setDynamicShortcuts(app.context, listOf(searchShortcut, libraryShortcut))
 }

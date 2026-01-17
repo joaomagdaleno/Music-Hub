@@ -6,18 +6,15 @@ import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.preference.PreferenceFragmentCompat
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.models.ImageHolder.Companion.toResourceImageHolder
-import com.joaomagdaleno.music_hub.utils.ContextUtils.SETTINGS_NAME
-import com.joaomagdaleno.music_hub.utils.PermsUtils.registerActivityResultLauncher
-import com.joaomagdaleno.music_hub.utils.exportSettings
-import com.joaomagdaleno.music_hub.utils.importSettings
-import com.joaomagdaleno.music_hub.utils.ui.prefs.SwitchLongClickPreference
+import com.joaomagdaleno.music_hub.common.models.ImageHolder
+import com.joaomagdaleno.music_hub.utils.ContextUtils
+import com.joaomagdaleno.music_hub.utils.PermsUtils
+import com.joaomagdaleno.music_hub.utils.PrefsUtils
 import com.joaomagdaleno.music_hub.utils.ui.prefs.TransitionPreference
-import org.koin.androidx.viewmodel.ext.android.activityViewModel
 
 class SettingsOtherFragment : BaseSettingsFragment() {
     override val title get() = getString(R.string.other_settings)
-    override val icon get() = R.drawable.ic_more_horiz.toResourceImageHolder()
+    override val icon get() = ImageHolder.toResourceImageHolder(R.drawable.ic_more_horiz)
     override val creator = { OtherPreference() }
 
     class OtherPreference : PreferenceFragmentCompat() {
@@ -29,7 +26,7 @@ class SettingsOtherFragment : BaseSettingsFragment() {
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             val context = preferenceManager.context
-            preferenceManager.sharedPreferencesName = SETTINGS_NAME
+            preferenceManager.sharedPreferencesName = ContextUtils.SETTINGS_NAME
             preferenceManager.sharedPreferencesMode = Context.MODE_PRIVATE
             val screen = preferenceManager.createPreferenceScreen(context)
             preferenceScreen = screen
@@ -45,8 +42,8 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                 screen.addPreference(this)
                 setOnPreferenceClickListener {
                     val contract = ActivityResultContracts.CreateDocument("application/json")
-                    requireActivity().registerActivityResultLauncher(contract) { uri ->
-                        uri?.let { context.exportSettings(it) }
+                    PermsUtils.registerActivityResultLauncher(requireActivity(), contract) { uri ->
+                        uri?.let { PrefsUtils.exportSettings(context, it) }
                     }.launch("echo-settings.json")
                     true
                 }
@@ -61,9 +58,9 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                 screen.addPreference(this)
                 setOnPreferenceClickListener {
                     val contract = ActivityResultContracts.OpenDocument()
-                    requireActivity().registerActivityResultLauncher(contract) {
-                        it?.let {
-                            context.importSettings(it)
+                    PermsUtils.registerActivityResultLauncher(requireActivity(), contract) { uri ->
+                        uri?.let {
+                            PrefsUtils.importSettings(context, it)
                             requireActivity().recreate()
                         }
                     }.launch(arrayOf("application/json"))

@@ -11,14 +11,12 @@ import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
 import com.joaomagdaleno.music_hub.common.models.Playlist
 import com.joaomagdaleno.music_hub.databinding.DialogPlaylistSaveBinding
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
-import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
 import com.joaomagdaleno.music_hub.ui.playlist.SelectableMediaAdapter
 import com.joaomagdaleno.music_hub.ui.playlist.create.CreatePlaylistBottomSheet
-import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
-import com.joaomagdaleno.music_hub.utils.Serializer.getSerialized
-import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized
-import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.configureBottomBar
+import com.joaomagdaleno.music_hub.utils.ContextUtils
+import com.joaomagdaleno.music_hub.utils.Serializer
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import kotlinx.coroutines.flow.combine
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
@@ -30,14 +28,14 @@ class SaveToPlaylistBottomSheet : BottomSheetDialogFragment() {
             SaveToPlaylistBottomSheet().apply {
                 arguments = Bundle().apply {
                     putString("origin", origin)
-                    putSerialized("item", item)
+                    Serializer.putSerialized(this, "item", item)
                 }
             }
     }
 
     private val args by lazy { requireArguments() }
     private val origin by lazy { args.getString("origin")!! }
-    private val item by lazy { args.getSerialized<EchoMediaItem>("item")!!.getOrThrow() }
+    private val item by lazy { Serializer.getSerialized<EchoMediaItem>(args, "item").getOrThrow() }
 
     private val itemAdapter by lazy {
         MediaItemAdapter { _, _ -> }
@@ -56,7 +54,7 @@ class SaveToPlaylistBottomSheet : BottomSheetDialogFragment() {
         )
     }
 
-    private var binding by autoCleared<DialogPlaylistSaveBinding>()
+    private var binding by AutoClearedValue.autoCleared<DialogPlaylistSaveBinding>(this)
     private val viewModel by viewModel<SaveToPlaylistViewModel> {
         parametersOf(origin, item)
     }
@@ -69,7 +67,7 @@ class SaveToPlaylistBottomSheet : BottomSheetDialogFragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        configureBottomBar(binding.saveCont)
+        UiUtils.configureBottomBar(this, binding.saveCont)
         binding.save.setOnClickListener {
             viewModel.saveTracks()
         }
@@ -77,7 +75,7 @@ class SaveToPlaylistBottomSheet : BottomSheetDialogFragment() {
         val combined = viewModel.playlistsFlow.combine(viewModel.saveFlow) { playlists, save ->
             playlists to save
         }
-        configureGridLayout(
+        GridAdapter.configureGridLayout(
             binding.recyclerView,
             GridAdapter.Concat(
                 topBarAdapter,
@@ -86,7 +84,7 @@ class SaveToPlaylistBottomSheet : BottomSheetDialogFragment() {
             ),
             false
         )
-        observe(combined) { (state, save) ->
+        ContextUtils.observe(this, combined) { (state, save) ->
             val playlistLoading = state !is SaveToPlaylistViewModel.PlaylistState.Loaded
             val saving = save != SaveToPlaylistViewModel.SaveState.Initial
             val loading = playlistLoading || saving

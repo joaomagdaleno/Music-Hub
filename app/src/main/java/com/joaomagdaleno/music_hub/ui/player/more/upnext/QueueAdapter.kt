@@ -13,12 +13,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.databinding.ItemPlaylistTrackBinding
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.isLoaded
-import com.joaomagdaleno.music_hub.playback.MediaItemUtils.track
-import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.subtitle
-import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadInto
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.applyTranslationYAnimation
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.marquee
+import com.joaomagdaleno.music_hub.playback.MediaItemUtils
+import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
 
 class QueueAdapter(
@@ -80,22 +79,22 @@ class QueueAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.onBind(position)
-        holder.itemView.applyTranslationYAnimation(scrollAmount)
+        onBind(holder, position)
+        AnimationUtils.applyTranslationYAnimation(holder.itemView, scrollAmount)
     }
 
-    private fun ViewHolder.onBind(position: Int) {
+    private fun onBind(holder: ViewHolder, position: Int) {
         val (current, item) = getItem(position)
         val isCurrent = current != null
         val isPlaying = current == true
-        val track = item.track
-        binding.bind(track)
-        binding.isPlaying(isPlaying)
-        binding.playlistItemClose.isVisible = !inactive
-        binding.playlistItemDrag.isVisible = !inactive
-        binding.playlistCurrentItem.isVisible = isCurrent
-        binding.playlistProgressBar.isVisible = isCurrent && !item.isLoaded
-        binding.playlistItem.alpha = if (inactive) 0.5f else 1f
+        val track = MediaItemUtils.track(item)
+        bind(holder.binding, track)
+        isPlaying(holder.binding, isPlaying)
+        holder.binding.playlistItemClose.isVisible = !inactive
+        holder.binding.playlistItemDrag.isVisible = !inactive
+        holder.binding.playlistCurrentItem.isVisible = isCurrent
+        holder.binding.playlistProgressBar.isVisible = isCurrent && !MediaItemUtils.isLoaded(item)
+        holder.binding.playlistItem.alpha = if (inactive) 0.5f else 1f
     }
 
     private var scrollAmount: Int = 0
@@ -117,24 +116,24 @@ class QueueAdapter(
     }
 
     companion object {
-        fun ItemPlaylistTrackBinding.bind(track: Track) {
-            playlistItemTitle.run {
+        fun bind(binding: ItemPlaylistTrackBinding, track: Track) {
+            binding.playlistItemTitle.run {
                 text = track.title
-                marquee()
+                UiUtils.marquee(this)
             }
 
-            track.cover.loadInto(playlistItemImageView, R.drawable.art_music)
-            val subtitle = track.subtitle(root.context)
-            playlistItemAuthor.run {
+            ImageUtils.loadInto(track.cover, binding.playlistItemImageView, R.drawable.art_music)
+            val subtitle = MediaViewHolder.subtitle(track, binding.root.context)
+            binding.playlistItemAuthor.run {
                 isVisible = !subtitle.isNullOrEmpty()
                 text = subtitle
-                marquee()
+                UiUtils.marquee(this)
             }
         }
 
-        fun ItemPlaylistTrackBinding.isPlaying(isPlaying: Boolean) {
-            playlistItemNowPlaying.isVisible = isPlaying
-            (playlistItemNowPlaying.drawable as Animatable).start()
+        fun isPlaying(binding: ItemPlaylistTrackBinding, isPlaying: Boolean) {
+            binding.playlistItemNowPlaying.isVisible = isPlaying
+            (binding.playlistItemNowPlaying.drawable as Animatable).start()
         }
     }
 }

@@ -13,11 +13,8 @@ import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.common.models.Feed.Companion.toFeed
 import com.joaomagdaleno.music_hub.databinding.FragmentLibraryBinding
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
-import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler.Companion.createSnack
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyBackPressCallback
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.configure
 import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getFeedAdapter
 import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getTouchHelper
 import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener.Companion.getFeedListener
@@ -61,11 +58,11 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
             if (curr != 2) return@observe
             uiViewModel.currentNavBackground.value = bg
         }
-        applyInsets(binding.recyclerView, binding.appBarOutline, 72) {
-            binding.createPlaylistContainer.applyInsets(it)
-            binding.swipeRefresh.configure(it)
+        applyInsets(this, binding.recyclerView, binding.appBarOutline, 72) {
+            UiUtils.applyInsets(binding.createPlaylistContainer, it)
+            UiUtils.configureSwipeRefresh(binding.swipeRefresh, it)
         }
-        applyBackPressCallback()
+        UiUtils.applyBackPressCallback(this)
         getTouchHelper(listener).attachToRecyclerView(binding.recyclerView)
         configureGridLayout(
             binding.recyclerView,
@@ -89,7 +86,8 @@ class LibraryFragment : Fragment(R.layout.fragment_library) {
         parent.parentFragmentManager.setFragmentResultListener("createPlaylist", this) { _, data ->
             val origin = data.getString("origin")
             val playlist = data.getSerialized<Playlist>("playlist")?.getOrNull()
-            if (origin != null && playlist != null) createSnack(
+            if (origin != null && playlist != null) UiUtils.createSnack(
+                this,
                 Message(
                     getString(R.string.x_created, playlist.title),
                     Message.Action(getString(R.string.view)) {

@@ -1,50 +1,53 @@
 Configuration on demand is an incubating feature.
 Reusing configuration cache.
 > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :app:injectCrashlyticsVersionControlInfoDebug UP-TO-DATE
 > Task :app:preBuild UP-TO-DATE
 > Task :app:preDebugBuild UP-TO-DATE
-> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:injectCrashlyticsVersionControlInfoDebug UP-TO-DATE
 > Task :app:processDebugGoogleServices UP-TO-DATE
 > Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:injectCrashlyticsMappingFileIdDebug UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
 > Task :app:generateDebugBuildConfig UP-TO-DATE
 > Task :app:generateDebugResources UP-TO-DATE
-> Task :app:injectCrashlyticsMappingFileIdDebug UP-TO-DATE
 > Task :app:extractDebugSupportedLocales UP-TO-DATE
-> Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
 > Task :app:checkDebugAarMetadata UP-TO-DATE
-> Task :app:mapDebugSourceSetPaths UP-TO-DATE
 > Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
 > Task :app:javaPreCompileDebug UP-TO-DATE
 > Task :app:mergeDebugShaders UP-TO-DATE
 > Task :app:desugarDebugFileDependencies UP-TO-DATE
 > Task :app:compileDebugShaders NO-SOURCE
 > Task :app:generateDebugAssets UP-TO-DATE
-> Task :app:extractDeepLinksDebug UP-TO-DATE
 > Task :app:generateDebugLocaleConfig UP-TO-DATE
 > Task :app:mergeDebugAssets UP-TO-DATE
 > Task :app:mergeDebugResources UP-TO-DATE
 > Task :app:compressDebugAssets UP-TO-DATE
 > Task :app:packageDebugResources UP-TO-DATE
-> Task :app:mergeDebugJniLibFolders UP-TO-DATE
 > Task :app:parseDebugLocalResources UP-TO-DATE
 > Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
 > Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
 > Task :app:processDebugManifest UP-TO-DATE
 > Task :app:processDebugManifestForPackage UP-TO-DATE
 > Task :app:mergeDebugNativeLibs UP-TO-DATE
-> Task :app:mergeLibDexDebug UP-TO-DATE
 > Task :app:stripDebugDebugSymbols UP-TO-DATE
-> Task :app:validateSigningDebug UP-TO-DATE
 > Task :app:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
 > Task :app:writeDebugAppMetadata UP-TO-DATE
 > Task :app:writeDebugSigningConfigVersions UP-TO-DATE
-> Task :app:processDebugResources UP-TO-DATE
 > Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
 
-> Task :app:kspDebugKotlin FAILED
+> Task :app:kspDebugKotlin
+i: [ksp] loaded provider(s): [androidx.room.RoomKspProcessor$Provider]
 e: [ksp] [MissingType]: Element 'com.joaomagdaleno.music_hub.download.db.models.DownloadEntity' references a type that is not present
 e: [ksp] androidx.room.RoomKspProcessor was unable to process 'com.joaomagdaleno.music_hub.download.db.DownloadDatabase' because not all of its dependencies could be resolved. Check for compilation errors or a circular dependency with generated code.
+
+> Task :app:kspDebugKotlin FAILED
 
 FAILURE: Build failed with an exception.
 
@@ -59,6 +62,6 @@ Execution failed for task ':app:kspDebugKotlin'.
 > Run with --scan to generate a Build Scan (Powered by Develocity).
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 20s
+BUILD FAILED in 21s
 36 actionable tasks: 1 executed, 35 up-to-date
 Configuration cache entry reused.

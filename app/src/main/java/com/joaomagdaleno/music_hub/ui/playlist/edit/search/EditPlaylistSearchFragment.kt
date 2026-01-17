@@ -14,15 +14,14 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDE
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.databinding.FragmentPlaylistSearchBinding
-import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter
 import com.joaomagdaleno.music_hub.ui.main.search.SearchFragment
 import com.joaomagdaleno.music_hub.ui.playlist.SelectableMediaAdapter
-import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
-import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
-import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.dpToPx
+import com.joaomagdaleno.music_hub.utils.ContextUtils
+import com.joaomagdaleno.music_hub.utils.Serializer
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
+import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 
 class EditPlaylistSearchFragment : Fragment() {
     companion object {
@@ -31,7 +30,7 @@ class EditPlaylistSearchFragment : Fragment() {
         }
     }
 
-    private var binding by autoCleared<FragmentPlaylistSearchBinding>()
+    private var binding by AutoClearedValue.autoCleared<FragmentPlaylistSearchBinding>(this)
     private val viewModel by viewModels<EditPlaylistSearchViewModel>()
 
     private val args by lazy { requireArguments() }
@@ -45,15 +44,15 @@ class EditPlaylistSearchFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        setupTransition(view)
+        AnimationUtils.setupTransition(view)
         val behavior = BottomSheetBehavior.from(binding.bottomSheet)
         binding.bottomSheetDragHandle.setOnClickListener { behavior.state = STATE_EXPANDED }
         var topInset = 0
-        applyInsets {
-            topInset = it.top
-            behavior.peekHeight = 72.dpToPx(requireContext()) + it.bottom
-            binding.playlistSearchContainer.updatePadding(bottom = it.bottom)
-            binding.recyclerView.updatePadding(top = it.top)
+        UiUtils.applyInsets(this) { insets ->
+            topInset = insets.top
+            behavior.peekHeight = UiUtils.dpToPx(requireContext(), 72) + insets.bottom
+            binding.playlistSearchContainer.updatePadding(bottom = insets.bottom)
+            binding.recyclerView.updatePadding(top = insets.top)
         }
 
         val backCallback = object : OnBackPressedCallback(false) {
@@ -94,16 +93,16 @@ class EditPlaylistSearchFragment : Fragment() {
         val adapter = SelectableMediaAdapter { _, item ->
             viewModel.toggleTrack(item as Track)
         }
-        configureGridLayout(binding.recyclerView, adapter, false)
+        GridAdapter.configureGridLayout(binding.recyclerView, adapter, false)
         binding.addTracks.setOnClickListener {
             parentFragmentManager.setFragmentResult("searchedTracks", Bundle().apply {
-                putSerialized("tracks", viewModel.selectedTracks.value)
+                Serializer.putSerialized(this, "tracks", viewModel.selectedTracks.value)
             })
             viewModel.selectedTracks.value = emptyList()
             parentFragmentManager.popBackStack()
         }
 
-        observe(viewModel.selectedTracks) { list ->
+        ContextUtils.observe(this, viewModel.selectedTracks) { list ->
             val items = list.map {
                 it to (it in viewModel.selectedTracks.value)
             }

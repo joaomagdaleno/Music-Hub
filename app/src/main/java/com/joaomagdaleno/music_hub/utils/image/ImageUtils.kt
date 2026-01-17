@@ -41,104 +41,105 @@ object ImageUtils {
         }
     }
 
-    private fun View.enqueue(builder: ImageRequest.Builder) =
-        context.imageLoader.enqueue(builder.build())
+    private fun enqueue(view: View, builder: ImageRequest.Builder) =
+        view.context.imageLoader.enqueue(builder.build())
 
-    fun ImageHolder?.loadInto(
-        imageView: ImageView, placeholder: Int? = null, errorDrawable: Int? = null
+    fun loadInto(
+        holder: ImageHolder?, imageView: ImageView, placeholder: Int? = null, errorDrawable: Int? = null
     ) = tryWith {
-        val request = createRequest(imageView.context, placeholder, errorDrawable)
+        val request = createRequestBuilder(holder, imageView.context, placeholder, errorDrawable)
         request.target(imageView)
-        imageView.enqueue(request)
+        enqueue(imageView, request)
     }
 
-    fun ImageHolder.getCachedDrawable(context: Context): Drawable? {
-        val key = diskId ?: return null
+    fun getCachedDrawable(holder: ImageHolder, context: Context): Drawable? {
+        val key = getDiskId(holder) ?: return null
         return context.imageLoader.diskCache?.openSnapshot(key)?.use {
             Drawable.createFromPath(it.data.toFile().absolutePath)
         }
     }
 
-    fun <T : View> ImageHolder?.loadWithThumb(
-        view: T, thumbnail: Drawable? = null,
-        error: Int? = null, onDrawable: T.(Drawable?) -> Unit
+    fun <T : View> loadWithThumb(
+        holder: ImageHolder?, view: T, thumbnail: Drawable? = null,
+        error: Int? = null, onDrawable: (T, Drawable?) -> Unit
     ) = tryWith(true) {
         tryWith(false) { onDrawable(view, thumbnail) }
-        val request = createRequest(view.context, null, error)
+        val request = createRequestBuilder(holder, view.context, null, error)
         fun setDrawable(image: Image?) {
             val drawable = image?.asDrawable(view.resources)
             tryWith(false) { onDrawable(view, drawable) }
         }
         request.target({}, ::setDrawable, ::setDrawable)
-        view.enqueue(request)
+        enqueue(view, request)
     }
 
     private val circleCrop = CircleCropTransformation()
     private val squareCrop = SquareCropTransformation()
-    fun <T : View> ImageHolder?.loadAsCircle(
+    fun <T : View> loadAsCircle(
+        holder: ImageHolder?,
         view: T,
         placeholder: Int? = null,
         error: Int? = null,
         onDrawable: (Drawable?) -> Unit
     ) = tryWith {
-        val request = createRequest(view.context, placeholder, error, circleCrop)
+        val request = createRequestBuilder(holder, view.context, placeholder, error, circleCrop)
         fun setDrawable(image: Image?) {
             val drawable = image?.asDrawable(view.resources)
             tryWith(false) { onDrawable(drawable) }
         }
         request.target(::setDrawable, ::setDrawable, ::setDrawable)
-        view.enqueue(request)
+        enqueue(view, request)
     }
 
-    suspend fun ImageHolder?.loadDrawable(
-        context: Context
+    suspend fun loadDrawable(
+        holder: ImageHolder?, context: Context
     ) = tryWithSuspend {
-        val request = createRequest(context, null, null)
+        val request = createRequestBuilder(holder, context, null, null)
         context.imageLoader.execute(request.build()).image?.asDrawable(context.resources)
     }
 
-    suspend fun ImageHolder?.loadAsCircleDrawable(
-        context: Context
+    suspend fun loadAsCircleDrawable(
+        holder: ImageHolder?, context: Context
     ) = tryWithSuspend {
-        val request = createRequest(context, null, null, circleCrop)
+        val request = createRequestBuilder(holder, context, null, null, circleCrop)
         context.imageLoader.execute(request.build()).image?.asDrawable(context.resources)
     }
 
-    fun ImageView.loadBlurred(drawable: Drawable?, radius: Float) = tryWith {
-        if (drawable == null) setImageDrawable(null)
-        load(drawable) {
-            transformations(BlurTransformation(context, radius))
+    fun loadBlurred(imageView: ImageView, drawable: Drawable?, radius: Float) = tryWith {
+        if (drawable == null) imageView.setImageDrawable(null)
+        imageView.load(drawable) {
+            transformations(BlurTransformation(imageView.context, radius))
         }
     }
 
-    private val ImageHolder.diskId
-        get() = when (this) {
-            is ImageHolder.NetworkRequestImageHolder -> request.toString().hashCode().toString()
+    private fun getDiskId(holder: ImageHolder) = when (holder) {
+            is ImageHolder.NetworkRequestImageHolder -> holder.request.toString().hashCode().toString()
             else -> null
         }
 
-    private fun createRequest(
-        imageHolder: ImageHolder,
+    private fun applyHolderToRequest(
+        holder: ImageHolder,
         builder: ImageRequest.Builder,
-    ) = imageHolder.run {
-        builder.diskCacheKey(diskId)
-        when (this) {
-            is ImageHolder.ResourceUriImageHolder -> builder.data(uri)
+    ) {
+        builder.diskCacheKey(getDiskId(holder))
+        when (holder) {
+            is ImageHolder.ResourceUriImageHolder -> builder.data(holder.uri)
             is ImageHolder.NetworkRequestImageHolder -> {
                 val headerBuilder = NetworkHeaders.Builder()
-                request.headers.forEach { (key, value) ->
+                holder.request.headers.forEach { (key, value) ->
                     headerBuilder[key] = value
                 }
                 builder.httpHeaders(headerBuilder.build())
-                builder.data(request.url)
+                builder.data(holder.request.url)
             }
 
-            is ImageHolder.ResourceIdImageHolder -> builder.data(resId)
-            is ImageHolder.HexColorImageHolder -> builder.data(hex.toColorInt().toDrawable())
+            is ImageHolder.ResourceIdImageHolder -> builder.data(holder.resId)
+            is ImageHolder.HexColorImageHolder -> builder.data(holder.hex.toColorInt().toDrawable())
         }
     }
 
-    private fun ImageHolder?.createRequest(
+    private fun createRequestBuilder(
+        holder: ImageHolder?,
         context: Context,
         placeholder: Int?,
         errorDrawable: Int?,
@@ -148,14 +149,14 @@ object ImageUtils {
         var error = errorDrawable
         if (error == null) error = placeholder
 
-        if (this == null) {
+        if (holder == null) {
             if (error != null) builder.data(error)
             return builder
         }
-        createRequest(this, builder)
+        applyHolderToRequest(holder, builder)
         placeholder?.let { builder.placeholder(it) }
         error?.let { builder.error(it) }
-        val list = if (crop) listOf(squareCrop, *transformations) else transformations.toList()
+        val list = if (holder.crop) listOf(squareCrop, *transformations) else transformations.toList()
         if (list.isNotEmpty()) builder.transformations(list)
         return builder
     }

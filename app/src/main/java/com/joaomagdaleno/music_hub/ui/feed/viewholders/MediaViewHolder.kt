@@ -18,11 +18,10 @@ import com.joaomagdaleno.music_hub.common.models.Radio
 import com.joaomagdaleno.music_hub.common.models.Track
 import com.joaomagdaleno.music_hub.databinding.ItemShelfMediaBinding
 import com.joaomagdaleno.music_hub.playback.PlayerState
-import com.joaomagdaleno.music_hub.playback.PlayerState.Current.Companion.isPlaying
 import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
 import com.joaomagdaleno.music_hub.ui.feed.FeedType
-import com.joaomagdaleno.music_hub.ui.media.MediaHeaderAdapter.Companion.playableString
-import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadInto
+import com.joaomagdaleno.music_hub.ui.media.MediaHeaderAdapter
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils
 
 class MediaViewHolder(
     parent: ViewGroup,
@@ -73,52 +72,50 @@ class MediaViewHolder(
 
     override fun bind(feed: FeedType.Media) {
         this.feed = feed
-        binding.bind(feed.item, feed.number?.toInt())
+        Companion.bind(binding, feed.item, feed.number?.toInt())
     }
 
     override fun canBeSwiped() = feed?.item is Track
     override fun onSwipe() = feed
 
     override fun onCurrentChanged(current: PlayerState.Current?) {
-        val isPlaying = current.isPlaying(feed?.item?.id)
+        val isPlaying = PlayerState.Current.isPlaying(current, feed?.item?.id)
         binding.coverContainer.isPlaying.isVisible = isPlaying
         (binding.coverContainer.isPlaying.icon as Animatable).start()
     }
 
     companion object {
-        fun ItemShelfMediaBinding.bind(item: EchoMediaItem, index: Int? = null) {
-            title.text = if (index == null) item.title
-            else root.context.getString(R.string.n_dot_x, index + 1, item.title)
-            val subtitleText = item.subtitle(root.context)
-            subtitle.text = subtitleText
-            subtitle.isVisible = !subtitleText.isNullOrBlank()
-            coverContainer.run {
+        fun bind(binding: ItemShelfMediaBinding, item: EchoMediaItem, index: Int? = null) {
+            binding.title.text = if (index == null) item.title
+            else binding.root.context.getString(R.string.n_dot_x, index + 1, item.title)
+            val subtitleText = subtitle(item, binding.root.context)
+            binding.subtitle.text = subtitleText
+            binding.subtitle.isVisible = !subtitleText.isNullOrBlank()
+            binding.coverContainer.run {
                 applyCover(item, cover, listBg1, listBg2, icon)
                 isPlaying.setBackgroundResource(
                     if (item is Artist) R.drawable.rounded_rectangle_cover_profile
                     else R.drawable.rounded_rectangle_cover
                 )
             }
-            play.isVisible = item !is Track
+            binding.play.isVisible = item !is Track
         }
 
-        val EchoMediaItem.placeHolder
-            get() = when (this) {
-                is Track -> R.drawable.art_music
-                is Artist -> R.drawable.art_artist
-                is Album -> R.drawable.art_album
-                is Playlist -> R.drawable.art_library_music
-                is Radio -> R.drawable.art_sensors
-            }
+        fun getPlaceHolder(item: EchoMediaItem) = when (item) {
+            is Track -> R.drawable.art_music
+            is Artist -> R.drawable.art_artist
+            is Album -> R.drawable.art_album
+            is Playlist -> R.drawable.art_library_music
+            is Radio -> R.drawable.art_sensors
+        }
 
-        val EchoMediaItem.icon
-            get() = when (this) {
-                is Track -> R.drawable.ic_music
-                is Artist -> R.drawable.ic_artist
-                is Album -> R.drawable.ic_album
-                is Playlist -> R.drawable.ic_library_music
-                is Radio -> R.drawable.ic_sensors
-            }
+        fun getIcon(item: EchoMediaItem) = when (item) {
+            is Track -> R.drawable.ic_music
+            is Artist -> R.drawable.ic_artist
+            is Album -> R.drawable.ic_album
+            is Playlist -> R.drawable.ic_library_music
+            is Radio -> R.drawable.ic_sensors
+        }
 
         fun applyCover(
             item: EchoMediaItem,
@@ -131,7 +128,7 @@ class MediaViewHolder(
                 is Track, is Artist, is Album -> false
                 else -> true
             }
-            icon.setImageResource(item.icon)
+            icon.setImageResource(getIcon(item))
             cover.setBackgroundResource(
                 if (item is Artist) R.drawable.rounded_rectangle_cover_profile
                 else R.drawable.rounded_rectangle_cover
@@ -142,12 +139,12 @@ class MediaViewHolder(
             cover.updateLayoutParams {
                 height = if (item is Artist) width else WRAP_CONTENT
             }
-            item.cover.loadInto(cover, item.placeHolder)
+            ImageUtils.loadInto(item.cover, cover, getPlaceHolder(item))
         }
 
-        fun EchoMediaItem.subtitle(context: Context) = when (this) {
-            is Track -> playableString(context) ?: subtitleWithE
-            else -> subtitleWithE
+        fun subtitle(item: EchoMediaItem, context: Context) = when (item) {
+            is Track -> MediaHeaderAdapter.playableString(item, context) ?: item.subtitleWithE
+            else -> item.subtitleWithE
         }
     }
 }

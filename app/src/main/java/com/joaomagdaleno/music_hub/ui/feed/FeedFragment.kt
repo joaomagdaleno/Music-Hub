@@ -14,16 +14,13 @@ import com.joaomagdaleno.music_hub.common.models.Feed
 import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.databinding.FragmentGenericCollapsableBinding
 import com.joaomagdaleno.music_hub.databinding.FragmentRecyclerWithRefreshBinding
-import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyContentInsets
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.configure
+import com.joaomagdaleno.music_hub.ui.common.GridAdapter
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.common.models.Feed.Companion.toFeed
-import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getFeedAdapter
-import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getTouchHelper
-import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener.Companion.getFeedListener
-import com.joaomagdaleno.music_hub.ui.main.MainFragment.Companion.applyPlayerBg
-import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter
+import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
+import com.joaomagdaleno.music_hub.ui.main.MainFragment
+import com.joaomagdaleno.music_hub.utils.ContextUtils
 import com.joaomagdaleno.music_hub.utils.ui.FastScrollerHelper
 import kotlinx.coroutines.flow.combine
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -77,7 +74,7 @@ class FeedFragment : Fragment(R.layout.fragment_generic_collapsable) {
         binding.toolBar.setNavigationOnClickListener { requireActivity().onBackPressed() }
         binding.toolBar.title = title
         binding.toolBar.subtitle = subtitle
-        applyPlayerBg(view) {
+        MainFragment.applyPlayerBg(this, view) {
             mainBgDrawable.combine(feedData.backgroundImageFlow) { a, b -> b ?: a }
         }
         if (savedInstanceState == null) childFragmentManager.commit {
@@ -85,33 +82,33 @@ class FeedFragment : Fragment(R.layout.fragment_generic_collapsable) {
         }
     }
 
-    class Actual() : Fragment(R.layout.fragment_recycler_with_refresh) {
+    class Actual : Fragment(R.layout.fragment_recycler_with_refresh) {
         private val feedData by lazy {
             val vm by requireParentFragment().viewModel<FeedViewModel>()
             vm.feedDataMap.values.first()
         }
 
-        private val listener by lazy { requireParentFragment().getFeedListener() }
+        private val listener by lazy { FeedClickListener.getFeedListener(requireParentFragment()) }
         private val feedAdapter by lazy {
-            getFeedAdapter(feedData, listener)
+            FeedAdapter.getFeedAdapter(this, feedData, listener)
         }
 
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             val binding = FragmentRecyclerWithRefreshBinding.bind(view)
-            applyInsets {
-                binding.recyclerView.applyContentInsets(it, 20, 8, 16)
+            UiUtils.applyInsets(this) { insets ->
+                UiUtils.applyContentInsets(binding.recyclerView, insets, 20, 8, 16)
             }
             FastScrollerHelper.applyTo(binding.recyclerView)
-            configureGridLayout(
+            GridAdapter.configureGridLayout(
                 binding.recyclerView,
                 feedAdapter.withLoading(this)
             )
-            getTouchHelper(listener).attachToRecyclerView(binding.recyclerView)
+            FeedAdapter.getTouchHelper(listener).attachToRecyclerView(binding.recyclerView)
             binding.swipeRefresh.run {
-                configure()
+                UiUtils.configureSwipeRefresh(this)
                 setOnRefreshListener { feedData.refresh() }
-                observe(feedData.isRefreshingFlow) {
-                    isRefreshing = it
+                ContextUtils.observe(this@Actual, feedData.isRefreshingFlow) { refreshing ->
+                    isRefreshing = refreshing
                 }
             }
         }

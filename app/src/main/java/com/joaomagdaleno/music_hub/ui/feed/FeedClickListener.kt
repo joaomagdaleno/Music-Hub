@@ -10,8 +10,7 @@ import com.joaomagdaleno.music_hub.common.models.Feed
 import com.joaomagdaleno.music_hub.common.models.Radio
 import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.common.models.Track
-import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
-import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler.Companion.createSnack
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.ui.media.MediaFragment
 import com.joaomagdaleno.music_hub.ui.media.MediaFragment.Companion.getBundle
 import com.joaomagdaleno.music_hub.ui.media.more.MediaMoreBottomSheet
@@ -26,15 +25,16 @@ open class FeedClickListener(
     private val afterOpen: () -> Unit = {}
 ) {
     companion object {
-        fun Fragment.getFeedListener(
-            navFragment: Fragment = this,
+        fun getFeedListener(
+            fragment: Fragment,
+            navFragment: Fragment = fragment,
             afterOpen: () -> Unit = {}
         ): FeedClickListener {
-            val key = arguments?.getString("feedListener")
+            val key = fragment.arguments?.getString("feedListener")
             return when (key) {
-                "playlist_search" -> EditPlaylistSearchClickListener(this)
+                "playlist_search" -> EditPlaylistSearchClickListener(fragment)
                 else -> FeedClickListener(
-                    this,
+                    fragment,
                     navFragment.parentFragmentManager,
                     navFragment.id,
                     afterOpen
@@ -93,20 +93,20 @@ open class FeedClickListener(
         subtitle: String?,
         feed: Feed<Shelf>?
     ): Boolean {
-        val fragment = fragmentManager.findFragmentById(containerId)
+        val fragmentInstance = fragmentManager.findFragmentById(containerId)
             ?: return notFoundSnack(R.string.view)
-        val vm by fragment.activityViewModels<FeedFragment.VM>()
+        val vm by fragmentInstance.activityViewModels<FeedFragment.VM>()
         vm.origin = origin ?: return notFoundSnack(R.string.sources)
         vm.feedId = feedId ?: return notFoundSnack(R.string.item)
         vm.feed = feed ?: return notFoundSnack(R.string.feed)
-        fragment.openFragment<FeedFragment>(view, FeedFragment.getBundle(title.orEmpty(), subtitle))
+        UiUtils.openFragment<FeedFragment>(fragmentInstance, view, FeedFragment.getBundle(title.orEmpty(), subtitle))
         afterOpen()
         return true
     }
 
     fun notFoundSnack(id: Int): Boolean = with(fragment) {
         val notFound = getString(R.string.no_x_found, getString(id))
-        createSnack(notFound)
+        UiUtils.createSnack(this, notFound)
         false
     }
 
@@ -123,9 +123,9 @@ open class FeedClickListener(
             }
 
             else -> {
-                val fragment = fragmentManager.findFragmentById(containerId)
+                val fragmentInstance = fragmentManager.findFragmentById(containerId)
                     ?: return notFoundSnack(R.string.view)
-                fragment.openFragment<MediaFragment>(view, getBundle(origin, item, false))
+                UiUtils.openFragment<MediaFragment>(fragmentInstance, view, getBundle(origin, item, false))
                 afterOpen()
                 true
             }

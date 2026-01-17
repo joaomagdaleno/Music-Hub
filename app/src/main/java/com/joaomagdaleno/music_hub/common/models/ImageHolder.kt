@@ -1,15 +1,10 @@
 package com.joaomagdaleno.music_hub.common.models
 
-import com.joaomagdaleno.music_hub.common.models.ImageHolder.Companion.toImageHolder
 import com.joaomagdaleno.music_hub.common.models.NetworkRequest.Companion.toGetRequest
 import kotlinx.serialization.Serializable
 
 /**
  * A class representing an image.
- *
- * Use [toImageHolder] to convert a string to a [NetworkRequestImageHolder].
- *
- * @see [NetworkRequestImageHolder]
  */
 @Serializable
 sealed class ImageHolder {
@@ -71,33 +66,35 @@ sealed class ImageHolder {
         /**
          * Converts a string to a [NetworkRequestImageHolder]
          *
+         * @param url The URL of the image
          * @param headers The headers to be sent with the request
          * @param crop Whether to crop the image
          */
-        fun String.toImageHolder(
+        fun toImageHolder(
+            url: String,
             headers: Map<String, String> = mapOf(),
             crop: Boolean = false
-        ) = NetworkRequestImageHolder(this.toGetRequest(headers), crop)
+        ) = NetworkRequestImageHolder(url.toGetRequest(headers), crop)
 
         /**
          * Converts a string to a [ResourceUriImageHolder]
          *
+         * @param uri The URI of the image
          * @param crop Whether to crop the image
          */
-        fun String.toResourceUriImageHolder(crop: Boolean = false) = ResourceUriImageHolder(this, crop)
+        fun toResourceUriImageHolder(uri: String, crop: Boolean = false) = ResourceUriImageHolder(uri, crop)
 
         /**
          * Converts an integer to a [ResourceIdImageHolder]
          *
+         * @param resId The resource ID of the image
          * @param crop Whether to crop the image
          */
-        fun Int.toResourceImageHolder(crop: Boolean = false) = ResourceIdImageHolder(this, crop)
+        fun toResourceImageHolder(resId: Int, crop: Boolean = false) = ResourceIdImageHolder(resId, crop)
 
         /**
          * Converts a hex color code to a [HexColorImageHolder]
-         *
-         * @param crop Whether to crop the image
          */
-        fun String.toHexColorImageHolder() = HexColorImageHolder(this)
+        fun toHexColorImageHolder(hex: String) = HexColorImageHolder(hex)
     }
 }

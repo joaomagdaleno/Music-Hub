@@ -34,15 +34,11 @@ import com.joaomagdaleno.music_hub.databinding.ItemLineBinding
 import com.joaomagdaleno.music_hub.databinding.ItemMediaHeaderBinding
 import com.joaomagdaleno.music_hub.databinding.ItemShelfErrorBinding
 import com.joaomagdaleno.music_hub.common.models.MediaState
-import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.getFinalTitle
-import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.getMessage
-import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
 import com.joaomagdaleno.music_hub.ui.media.MediaFragment.Companion.getBundle
 import com.joaomagdaleno.music_hub.ui.player.PlayerViewModel
 import com.joaomagdaleno.music_hub.utils.ui.SimpleItemSpan
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.dpToPx
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.toTimeString
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimRecyclerAdapter
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
 
@@ -158,13 +154,13 @@ class MediaHeaderAdapter(
                 button.isEnabled = true
                 if (index == 0 && isNotOne) button.run {
                     updatePaddingRelative(
-                        start = if (icon != null) 16.dpToPx(context) else 24.dpToPx(context),
-                        end = 24.dpToPx(context)
+                        start = if (icon != null) UiUtils.dpToPx(context, 16) else UiUtils.dpToPx(context, 24),
+                        end = UiUtils.dpToPx(context, 24)
                     )
-                    iconPadding = 8.dpToPx(context)
+                    iconPadding = UiUtils.dpToPx(context, 8)
                     text = contentDescription
                 } else button.run {
-                    updatePaddingRelative(start = 12.dpToPx(context), end = 12.dpToPx(context))
+                    updatePaddingRelative(start = UiUtils.dpToPx(context, 12), end = UiUtils.dpToPx(context, 12))
                     iconPadding = 0
                     text = null
                 }
@@ -172,10 +168,10 @@ class MediaHeaderAdapter(
             binding.buttonGroup.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                 width = if (isNotOne) ViewGroup.LayoutParams.MATCH_PARENT
                 else ViewGroup.LayoutParams.WRAP_CONTENT
-                bottomMargin = if (isNotOne) 0 else (-56).dpToPx(binding.root.context)
+                bottomMargin = if (isNotOne) 0 else UiUtils.dpToPx(binding.root.context, -56)
             }
             binding.description.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                marginEnd = if (isNotOne) 0 else 48.dpToPx(binding.root.context)
+                marginEnd = if (isNotOne) 0 else UiUtils.dpToPx(binding.root.context, 48)
             }
         }
 
@@ -220,7 +216,7 @@ class MediaHeaderAdapter(
                 root.context.getString(R.string.x_followers, formatter.format(it))
             }
             val span =
-                root.context.getSpan(true, state.origin, state.item) { id, item ->
+                getSpan(root.context, true, state.origin, state.item) { id, item ->
                     clickEnabled = false
                     listener.openMediaItem(id, item)
                     description.post { clickEnabled = true }
@@ -265,7 +261,7 @@ class MediaHeaderAdapter(
             this.throwable = throwable
             binding.error.run {
                 transitionName = throwable.hashCode().toString()
-                text = context.getFinalTitle(throwable)
+                text = UiUtils.getFinalExceptionTitle(context, throwable)
             }
         }
     }
@@ -283,12 +279,13 @@ class MediaHeaderAdapter(
 
     companion object {
         private const val MAX_DESC_TEXT = 144
-        private fun String.ellipsize() = if (length > MAX_DESC_TEXT) {
-            substring(0, MAX_DESC_TEXT) + "..."
-        } else this
+        private fun ellipsize(text: String) = if (text.length > MAX_DESC_TEXT) {
+            text.substring(0, MAX_DESC_TEXT) + "..."
+        } else text
 
         private const val DIVIDER = " • "
-        fun Context.getSpan(
+        fun getSpan(
+            context: Context,
             compact: Boolean,
             origin: String,
             item: EchoMediaItem,
@@ -298,23 +295,23 @@ class MediaHeaderAdapter(
                 val madeBy = item.artists.joinToString(", ") { it.name }
                 val span = SpannableString(buildString {
                     val firstRow = listOfNotNull(
-                        getString(item.typeInt),
+                        context.getString(getTypeInt(item)),
                         item.date?.toString(),
                     ).joinToString(DIVIDER)
                     val secondRow = listOfNotNull(
-                        item.toTrackString(this@getSpan),
-                        item.duration?.toTimeString()
+                        toTrackString(item, context),
+                        item.duration?.let { UiUtils.toTimeString(it) }
                     ).joinToString(DIVIDER)
                     if (firstRow.isNotEmpty()) appendLine(firstRow)
                     if (secondRow.isNotEmpty()) appendLine(secondRow)
                     val desc = item.description
                     if (desc != null) {
                         appendLine()
-                        appendLine(if (compact) desc.ellipsize() else desc)
+                        appendLine(if (compact) ellipsize(desc) else desc)
                     }
                     if (madeBy.isNotEmpty()) {
                         appendLine()
-                        appendLine(getString(R.string.by_x, madeBy))
+                        appendLine(context.getString(R.string.by_x, madeBy))
                     }
                     if (item.label != null) {
                         appendLine()
@@ -326,7 +323,7 @@ class MediaHeaderAdapter(
                     val start = span.indexOf(it.name, madeByIndex)
                     if (start != -1) {
                         val end = start + it.name.length
-                        val clickableSpan = SimpleItemSpan(this) {
+                        val clickableSpan = SimpleItemSpan(context) {
                             openMediaItem(origin, it)
                         }
                         span.setSpan(
@@ -338,14 +335,14 @@ class MediaHeaderAdapter(
             }
 
             is Artist -> {
-                val desc = if (compact) item.bio?.ellipsize() else item.bio
+                val desc = if (compact) item.bio?.let { ellipsize(it) } else item.bio
                 SpannableString(desc ?: "")
             }
 
             is Track -> {
                 SpannableString(buildString {
                     val firstRow = listOfNotNull(
-                        getString(
+                        context.getString(
                             when (item.type) {
                                 Track.Type.Song, Track.Type.VideoSong -> R.string.song
                                 Track.Type.Video, Track.Type.HorizontalVideo -> R.string.video
@@ -355,15 +352,15 @@ class MediaHeaderAdapter(
                         item.releaseDate
                     ).joinToString(DIVIDER)
                     val secondRow = listOfNotNull(
-                        item.duration?.toTimeString(),
+                        item.duration?.let { UiUtils.toTimeString(it) },
                         if (item.plays != null) {
                             val formatter = CompactDecimalFormat.getInstance()
-                            getString(R.string.x_plays, formatter.format(item.plays))
+                            context.getString(R.string.x_plays, formatter.format(item.plays))
                         } else null
                     ).joinToString(DIVIDER)
                     if (firstRow.isNotEmpty()) appendLine(firstRow)
                     if (secondRow.isNotEmpty()) appendLine(secondRow)
-                    val notPlayable = item.playableString(this@getSpan)
+                    val notPlayable = playableString(item, context)
                     if (!notPlayable.isNullOrEmpty()) {
                         appendLine()
                         appendLine(notPlayable)
@@ -371,16 +368,16 @@ class MediaHeaderAdapter(
                     val desc = item.description
                     if (desc != null) {
                         appendLine()
-                        appendLine(if (compact) desc.ellipsize() else desc)
+                        appendLine(if (compact) ellipsize(desc) else desc)
                         appendLine()
                     }
                     val genres = item.genres.joinToString(", ")
                     if (genres.isNotEmpty()) {
-                        appendLine(getString(R.string.genres_x, genres))
+                        appendLine(context.getString(R.string.genres_x, genres))
                     }
                     val isrc = item.isrc
                     if (isrc != null) {
-                        appendLine(getString(R.string.isrc_x, isrc))
+                        appendLine(context.getString(R.string.isrc_x, isrc))
                     }
                     val label = item.album?.label
                     if (label != null) {
@@ -389,10 +386,10 @@ class MediaHeaderAdapter(
                     }
                     val lastRow = listOfNotNull(
                         item.albumDiscNumber?.let {
-                            getString(R.string.disc_number_n, it)
+                            context.getString(R.string.disc_number_n, it)
                         },
                         item.albumOrderNumber?.let {
-                            getString(R.string.album_order_n, it)
+                            context.getString(R.string.album_order_n, it)
                         }
                     ).joinToString(DIVIDER)
                     if (lastRow.isNotEmpty()) {
@@ -403,24 +400,24 @@ class MediaHeaderAdapter(
             }
         }
 
-        fun Context.unfuckedString(
-            numberStringId: Int, nStringId: Int, count: Int,
+        fun unfuckedString(
+            context: Context, numberStringId: Int, nStringId: Int, count: Int,
         ) = runCatching {
-            resources.getQuantityString(numberStringId, count, count)
-        }.getOrNull() ?: getString(nStringId, count)
+            context.resources.getQuantityString(numberStringId, count, count)
+        }.getOrNull() ?: context.getString(nStringId, count)
 
-        fun Fragment.getMediaHeaderListener(viewModel: MediaDetailsViewModel) = object : Listener {
+        fun getMediaHeaderListener(fragment: Fragment, viewModel: MediaDetailsViewModel) = object : Listener {
             override fun onRetry(view: View) {
                 viewModel.refresh()
             }
 
             override fun onError(view: View, error: Throwable?) {
                 error ?: return
-                requireActivity().getMessage(error, view).action?.handler?.invoke()
+                UiUtils.getExceptionMessage(fragment.requireActivity(), error, view).action?.handler?.invoke()
             }
 
             override fun openMediaItem(origin: String, item: EchoMediaItem) {
-                openFragment<MediaFragment>(null, getBundle(origin, item, false))
+                UiUtils.openFragment<MediaFragment>(fragment, null, getBundle(origin, item, false))
             }
 
             override fun onFollowClicked(view: View, follow: Boolean) {
@@ -441,13 +438,13 @@ class MediaHeaderAdapter(
 
             override fun onPlayClicked(view: View) {
                 val (origin, item, loaded) = viewModel.getItem() ?: return
-                val vm by activityViewModels<PlayerViewModel>()
+                val vm by fragment.activityViewModels<PlayerViewModel>()
                 vm.play(origin, item, loaded)
             }
 
             override fun onRadioClicked(view: View) {
                 val (origin, item, loaded) = viewModel.getItem() ?: return
-                val vm by activityViewModels<PlayerViewModel>()
+                val vm by fragment.activityViewModels<PlayerViewModel>()
                 vm.radio(origin, item, loaded)
             }
 
@@ -460,15 +457,15 @@ class MediaHeaderAdapter(
             ) {
                 item ?: return
                 origin ?: return
-                val context = requireContext()
+                val context = fragment.requireContext()
                 var dialog: AlertDialog? = null
                 val builder = MaterialAlertDialogBuilder(context)
                 builder.setTitle(item.title)
-                builder.setMessage(context.getSpan(false, origin, item) { m, n ->
+                builder.setMessage(getSpan(context, false, origin, item) { m, n ->
                     openMediaItem(m, n)
                     dialog?.dismiss()
                 })
-                builder.setPositiveButton(getString(R.string.okay)) { d, _ ->
+                builder.setPositiveButton(context.getString(R.string.okay)) { d, _ ->
                     d.dismiss()
                 }
                 dialog = builder.create()
@@ -478,52 +475,51 @@ class MediaHeaderAdapter(
             }
         }
 
-        val EchoMediaItem.Lists.typeInt
-            get() = when (this) {
-                is Album -> when (type) {
-                    PreRelease -> R.string.pre_release
-                    Single -> R.string.single
-                    EP -> R.string.ep
-                    LP -> R.string.lp
-                    Compilation -> R.string.compilation
-                    Show -> R.string.show
-                    Book -> R.string.book
-                    null -> R.string.album
-                }
-
-                is Playlist -> R.string.playlist
-                is Radio -> R.string.radio
+        fun getTypeInt(item: EchoMediaItem.Lists) = when (item) {
+            is Album -> when (item.type) {
+                PreRelease -> R.string.pre_release
+                Single -> R.string.single
+                EP -> R.string.ep
+                LP -> R.string.lp
+                Compilation -> R.string.compilation
+                Show -> R.string.show
+                Book -> R.string.book
+                null -> R.string.album
             }
 
-        fun EchoMediaItem.Lists.toTrackString(context: Context) = context.run {
-            val tracks = trackCount?.toInt()
+            is Playlist -> R.string.playlist
+            is Radio -> R.string.radio
+        }
+
+        fun toTrackString(item: EchoMediaItem.Lists, context: Context) = context.run {
+            val tracks = item.trackCount?.toInt()
             if (tracks != null) {
-                when (type) {
+                when (item.type) {
                     PreRelease, Single, EP, LP, Compilation -> unfuckedString(
-                        R.plurals.number_songs, R.string.n_songs, tracks
+                        context, R.plurals.number_songs, R.string.n_songs, tracks
                     )
 
                     Show -> unfuckedString(
-                        R.plurals.number_episodes, R.string.n_episodes, tracks
+                        context, R.plurals.number_episodes, R.string.n_episodes, tracks
                     )
 
                     Book -> unfuckedString(
-                        R.plurals.number_chapters, R.string.n_chapters, tracks
+                        context, R.plurals.number_chapters, R.string.n_chapters, tracks
                     )
 
                     null -> unfuckedString(
-                        R.plurals.number_tracks, R.string.n_tracks, tracks
+                        context, R.plurals.number_tracks, R.string.n_tracks, tracks
                     )
                 }
             } else null
         }
 
-        fun Track.playableString(context: Context) = when (val play = isPlayable) {
+        fun playableString(item: Track, context: Context) = when (val play = item.isPlayable) {
             is Track.Playable.No -> context.getString(R.string.not_playable_x, play.reason)
             Track.Playable.Yes -> null
             Track.Playable.RegionLocked -> context.getString(R.string.unavailable_in_your_region)
-            Track.Playable.Unreleased -> if (releaseDate != null) context.getString(
-                R.string.releases_on_x, releaseDate.toString()
+            Track.Playable.Unreleased -> if (item.releaseDate != null) context.getString(
+                R.string.releases_on_x, item.releaseDate.toString()
             ) else context.getString(R.string.not_yet_released)
         }
     }

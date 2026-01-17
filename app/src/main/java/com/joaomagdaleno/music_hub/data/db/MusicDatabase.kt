@@ -15,11 +15,9 @@ import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.common.models.Date
 import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
 import com.joaomagdaleno.music_hub.common.models.ImageHolder
-import com.joaomagdaleno.music_hub.common.models.ImageHolder.Companion.toResourceUriImageHolder
 import com.joaomagdaleno.music_hub.common.models.Playlist
 import com.joaomagdaleno.music_hub.common.models.Track
-import com.joaomagdaleno.music_hub.utils.Serializer.toData
-import com.joaomagdaleno.music_hub.utils.Serializer.toJson
+import com.joaomagdaleno.music_hub.utils.Serializer
 import java.io.File
 import java.util.Calendar
 
@@ -28,10 +26,10 @@ const val INTERNAL_ID = "internal"
 
 fun Playlist.toEntity(): PlaylistEntity = PlaylistEntity(
     id.toLong(),
-    creationDate.toJson(),
+    Serializer.toJson(creationDate),
     title,
     description ?: "",
-    cover?.toJson(),
+    Serializer.toJson(cover),
     extras["listData"] ?: "[]",
     extras["actualId"] ?: ""
 )
@@ -39,11 +37,11 @@ fun Playlist.toEntity(): PlaylistEntity = PlaylistEntity(
 fun Track.toTrackEntity(): PlaylistTrackEntity {
     val pId = extras["pId"]!!.toLong()
     val eId = extras["eId"]!!.toLong()
-    return PlaylistTrackEntity(eId, pId, id, origin, this.toJson())
+    return PlaylistTrackEntity(eId, pId, id, origin, Serializer.toJson(this))
 }
 
 fun EchoMediaItem.toEntity(): SavedEntity {
-    return SavedEntity(id, INTERNAL_ID, this.toJson())
+    return SavedEntity(id, INTERNAL_ID, Serializer.toJson(this))
 }
 
 
@@ -103,7 +101,7 @@ abstract class MusicDatabase : RoomDatabase() {
         return if (liked == null) {
             val playlist = PlaylistEntity(
                 0,
-                getDateNow().toJson(),
+                Serializer.toJson(getDateNow()),
                 "Liked",
                 context.getString(R.string.internal_liked_playlist_summary),
                 null,
@@ -122,10 +120,10 @@ abstract class MusicDatabase : RoomDatabase() {
     ): Playlist {
         val playlist = PlaylistEntity(
             0,
-            getDateNow().toJson(),
+            Serializer.toJson(getDateNow()),
             title,
             description ?: "",
-            cover?.toJson(),
+            Serializer.toJson(cover),
             "[]",
             actualId
         )
@@ -144,9 +142,9 @@ abstract class MusicDatabase : RoomDatabase() {
     }
 
     suspend fun editPlaylistCover(playlist: Playlist, file: File?) {
-        val image: ImageHolder? = file?.toUri()?.toString()?.toResourceUriImageHolder(true)
+        val image: ImageHolder? = file?.toUri()?.toString()?.let { ImageHolder.toResourceUriImageHolder(it, true) }
         val entity = playlist.toEntity().copy(
-            cover = image?.toJson()
+            cover = Serializer.toJson(image)
         )
         dao.insertPlaylist(entity)
     }
@@ -177,14 +175,14 @@ abstract class MusicDatabase : RoomDatabase() {
         val entity = dao.getPlaylist(playlist.toEntity().id)
         val newTracks = new.map {
             val trackEntity = PlaylistTrackEntity(
-                0, entity.id, it.id, INTERNAL_ID, it.toJson()
+                0, entity.id, it.id, INTERNAL_ID, Serializer.toJson(it)
             )
             dao.insertPlaylistTrack(trackEntity)
         }
         val newEntity = entity.copy(
-            listData = entity.list.toMutableList().apply {
+            listData = Serializer.toJson(entity.list.toMutableList().apply {
                 addAll(index, newTracks)
-            }.toJson()
+            })
         )
         dao.insertPlaylist(newEntity)
     }
@@ -196,12 +194,12 @@ abstract class MusicDatabase : RoomDatabase() {
         tracksToEntities.forEach { dao.deletePlaylistTrack(it) }
         val entity = dao.getPlaylist(playlist.toEntity().id)
         val newEntity = entity.copy(
-            listData = entity.list.toMutableList().apply {
+            listData = Serializer.toJson(entity.list.toMutableList().apply {
                 tracksToEntities.forEach { trackEntity ->
                     val index = indexOf(trackEntity.eid)
                     if (index != -1) removeAt(index)
                 }
-            }.toJson()
+            })
         )
         dao.insertPlaylist(newEntity)
     }
@@ -209,9 +207,9 @@ abstract class MusicDatabase : RoomDatabase() {
     suspend fun moveTrack(playlist: Playlist, fromIndex: Int, toIndex: Int) {
         val entity = dao.getPlaylist(playlist.toEntity().id)
         val newEntity = entity.copy(
-            listData = entity.list.toMutableList().apply {
+            listData = Serializer.toJson(entity.list.toMutableList().apply {
                 add(toIndex, removeAt(fromIndex))
-            }.toJson()
+            })
         )
         dao.insertPlaylist(newEntity)
     }
@@ -311,7 +309,7 @@ data class PlaylistEntity(
     val actualId: String = "",
 ) {
     val list by lazy {
-        listData.toData<List<Long>>().getOrThrow()
+        Serializer.toData<List<Long>>(listData).getOrThrow()
     }
 
     val playlist by lazy {
@@ -319,8 +317,8 @@ data class PlaylistEntity(
             id.toString(),
             name,
             true,
-            cover = cover?.toData<ImageHolder?>()?.getOrNull(),
-            creationDate = modified.toData<Date>().getOrNull(),
+            cover = Serializer.toData<ImageHolder?>(cover ?: "").getOrNull(),
+            creationDate = Serializer.toData<Date>(modified).getOrNull(),
             description = description.takeIf { it.isNotBlank() },
             extras = mapOf(
                 ORIGIN to INTERNAL_ID,
@@ -342,7 +340,7 @@ data class PlaylistTrackEntity(
 )
 
 fun PlaylistTrackEntity.toTrack(): Track {
-    return data.toData<Track>().getOrThrow().run {
+    return Serializer.toData<Track>(data).getOrThrow().run {
         this.copy(
             type = type,
             extras = extras + mapOf(
@@ -359,5 +357,5 @@ data class SavedEntity(
     val origin: String,
     val data: String,
 ) {
-    val item by lazy { data.toData<EchoMediaItem>() }
+    val item by lazy { Serializer.toData<EchoMediaItem>(data) }
 }

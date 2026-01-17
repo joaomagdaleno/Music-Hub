@@ -8,8 +8,8 @@ import com.joaomagdaleno.music_hub.databinding.ItemLoadingBinding
 import com.joaomagdaleno.music_hub.databinding.ItemLyricBinding
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
 import com.joaomagdaleno.music_hub.ui.feed.FeedLoadingAdapter
-import com.joaomagdaleno.music_hub.ui.player.PlayerColors.Companion.defaultPlayerColors
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.applyTranslationYAnimation
+import com.joaomagdaleno.music_hub.ui.player.PlayerColors
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimListAdapter
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
 
@@ -37,9 +37,9 @@ class LyricAdapter(
         }
     }
 
-    private fun ViewHolder.updateColors() {
-        binding.root.run {
-            val colors = uiViewModel.playerColors.value ?: context.defaultPlayerColors()
+    private fun updateColors(holder: ViewHolder) {
+        holder.binding.root.run {
+            val colors = uiViewModel.playerColors.value ?: PlayerColors.defaultPlayerColors(context)
             val alphaStrippedColor = colors.onBackground or -0x1000000
             setTextColor(alphaStrippedColor)
         }
@@ -48,10 +48,10 @@ class LyricAdapter(
     private fun getItemOrNull(position: Int) = runCatching { getItem(position) }.getOrNull()
 
     private var currentPos = -1
-    private fun ViewHolder.updateCurrent() {
+    private fun updateCurrent(holder: ViewHolder) {
         val currentTime = getItemOrNull(currentPos)?.startTime ?: 0
-        val time = getItemOrNull(bindingAdapterPosition)?.startTime ?: 0
-        binding.root.alpha = if (currentTime >= time) 1f else 0.5f
+        val time = getItemOrNull(holder.bindingAdapterPosition)?.startTime ?: 0
+        holder.binding.root.alpha = if (currentTime >= time) 1f else 0.5f
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -63,22 +63,22 @@ class LyricAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val lyric = getItem(position) ?: return
         holder.binding.root.text = lyric.text.trim().trim('\n').ifEmpty { "♪" }
-        holder.updateColors()
-        holder.updateCurrent()
-        holder.itemView.applyTranslationYAnimation(scrollY)
+        updateColors(holder)
+        updateCurrent(holder)
+        AnimationUtils.applyTranslationYAnimation(holder.itemView, scrollY)
     }
 
     override fun onViewAttachedToWindow(holder: ViewHolder) {
-        holder.updateColors()
+        updateColors(holder)
     }
 
     fun updateColors() {
-        onEachViewHolder { updateColors() }
+        onEachViewHolder { updateColors(this) }
     }
 
     fun updateCurrent(currentPos: Int) {
         this.currentPos = currentPos
-        onEachViewHolder { updateCurrent() }
+        onEachViewHolder { updateCurrent(this) }
     }
     class Loading(
         parent: ViewGroup,

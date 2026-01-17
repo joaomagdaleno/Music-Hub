@@ -14,22 +14,15 @@ import com.google.android.material.color.DynamicColors
 import com.google.android.material.color.DynamicColorsOptions
 import com.google.android.material.navigation.NavigationBarView
 import com.joaomagdaleno.music_hub.databinding.ActivityMainBinding
-import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.setupExceptionHandler
-import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.setupIntents
-import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler.Companion.setupSnackBar
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.setupNavBarAndInsets
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.setupPlayerBehavior
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.configureAppUpdater
 import com.joaomagdaleno.music_hub.ui.main.MainFragment
 import com.joaomagdaleno.music_hub.ui.player.PlayerFragment
 import com.joaomagdaleno.music_hub.ui.player.PlayerFragment.Companion.PLAYER_COLOR
-import com.joaomagdaleno.music_hub.utils.ContextUtils.getSettings
-import com.joaomagdaleno.music_hub.utils.PermsUtils.checkAppPermissions
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.isNightMode
-import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.android.viewModel
+import com.joaomagdaleno.music_hub.utils.ContextUtils
+import com.joaomagdaleno.music_hub.utils.PermsUtils
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.utils.FileLogger
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 open class MainActivity : AppCompatActivity() {
 
@@ -42,7 +35,7 @@ open class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FileLogger.log("MainActivity", "onCreate() called. savedInstanceState=${savedInstanceState != null}")
-        setTheme(getAppTheme())
+        setTheme(getAppTheme(this))
         DynamicColors.applyToActivityIfAvailable(
             this, applyUiChanges(this, uiViewModel)
         )
@@ -51,20 +44,20 @@ open class MainActivity : AppCompatActivity() {
 
         enableEdgeToEdge(
             SystemBarStyle.auto(TRANSPARENT, TRANSPARENT),
-            if (isNightMode()) SystemBarStyle.dark(TRANSPARENT)
+            if (UiUtils.isNightMode(this)) SystemBarStyle.dark(TRANSPARENT)
             else SystemBarStyle.light(TRANSPARENT, TRANSPARENT)
         )
 
-        setupNavBarAndInsets(uiViewModel, binding.root, binding.navView as NavigationBarView)
-        setupPlayerBehavior(uiViewModel, binding.playerFragmentContainer)
-        setupExceptionHandler(setupSnackBar(uiViewModel, binding.root))
+        UiUtils.setupNavBarAndInsets(this, uiViewModel, binding.root, binding.navView as NavigationBarView)
+        UiUtils.setupPlayerBehavior(this, uiViewModel, binding.playerFragmentContainer)
+        UiUtils.setupExceptionHandler(this, UiUtils.setupSnackBar(this, uiViewModel, binding.root))
         
         // Auto-refresh home feed when storage permission is granted
-        checkAppPermissions {
+        PermsUtils.checkAppPermissions(this) {
             FileLogger.log("MainActivity", "Storage permission granted - refreshing home feed")
             feedViewModel.feedDataMap["home"]?.refresh()
         }
-        configureAppUpdater()
+        UiViewModel.configureAppUpdater(this)
         
         supportFragmentManager.commit {
             if (savedInstanceState != null) return@commit
@@ -72,7 +65,7 @@ open class MainActivity : AppCompatActivity() {
             add<MainFragment>(R.id.navHostFragment, "main")
             add<PlayerFragment>(R.id.playerFragmentContainer, "player")
         }
-        setupIntents(uiViewModel)
+        UiUtils.setupIntents(this, uiViewModel)
         FileLogger.log("MainActivity", "onCreate() complete")
     }
 
@@ -83,8 +76,8 @@ open class MainActivity : AppCompatActivity() {
         const val CUSTOM_THEME_KEY = "custom_theme"
         const val COLOR_KEY = "color"
 
-        fun Context.getAppTheme(): Int {
-            val settings = getSettings()
+        fun getAppTheme(context: Context): Int {
+            val settings = ContextUtils.getSettings(context)
             val bigCover = settings.getBoolean(BIG_COVER, false)
             val amoled = settings.getBoolean(AMOLED_KEY, false)
             return when {
@@ -95,13 +88,13 @@ open class MainActivity : AppCompatActivity() {
             }
         }
 
-        fun Context.defaultColor() =
-            ContextCompat.getColor(this, R.color.app_color)
+        fun defaultColor(context: Context) =
+            ContextCompat.getColor(context, R.color.app_color)
 
-        fun Context.isAmoled() = getSettings().getBoolean(AMOLED_KEY, false)
+        fun isAmoled(context: Context) = ContextUtils.getSettings(context).getBoolean(AMOLED_KEY, false)
 
         fun applyUiChanges(context: Context, uiViewModel: UiViewModel): DynamicColorsOptions {
-            val settings = context.getSettings()
+            val settings = ContextUtils.getSettings(context)
             val mode = when (settings.getString(THEME_KEY, "system")) {
                 "light" -> AppCompatDelegate.MODE_NIGHT_NO
                 "dark" -> AppCompatDelegate.MODE_NIGHT_YES
@@ -110,7 +103,7 @@ open class MainActivity : AppCompatActivity() {
             AppCompatDelegate.setDefaultNightMode(mode)
 
             val custom = settings.getBoolean(CUSTOM_THEME_KEY, true)
-            val color = if (custom) settings.getInt(COLOR_KEY, context.defaultColor()) else null
+            val color = if (custom) settings.getInt(COLOR_KEY, defaultColor(context)) else null
             val playerColor = settings.getBoolean(PLAYER_COLOR, false)
             val customColor = uiViewModel.playerColors.value?.accent?.takeIf { playerColor }
 
@@ -120,7 +113,7 @@ open class MainActivity : AppCompatActivity() {
         }
 
         const val BACK_ANIM = "back_anim"
-        fun Context.getMainActivity() = if (getSettings().getBoolean(BACK_ANIM, false))
+        fun getMainActivity(context: Context) = if (ContextUtils.getSettings(context).getBoolean(BACK_ANIM, false))
             Back::class.java else MainActivity::class.java
     }
 }

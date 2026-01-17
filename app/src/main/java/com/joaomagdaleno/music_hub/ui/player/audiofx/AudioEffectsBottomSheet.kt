@@ -18,17 +18,10 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.databinding.DialogPlayerAudioFxBinding
 import com.joaomagdaleno.music_hub.databinding.FragmentAudioFxBinding
-import com.joaomagdaleno.music_hub.playback.listener.EffectsListener.Companion.BASS_BOOST
-import com.joaomagdaleno.music_hub.playback.listener.EffectsListener.Companion.CHANGE_PITCH
-import com.joaomagdaleno.music_hub.playback.listener.EffectsListener.Companion.CUSTOM_EFFECTS
-import com.joaomagdaleno.music_hub.playback.listener.EffectsListener.Companion.PLAYBACK_SPEED
-import com.joaomagdaleno.music_hub.playback.listener.EffectsListener.Companion.deleteFxPrefs
-import com.joaomagdaleno.music_hub.playback.listener.EffectsListener.Companion.getFxPrefs
-import com.joaomagdaleno.music_hub.playback.listener.EffectsListener.Companion.globalFx
-import com.joaomagdaleno.music_hub.playback.listener.EffectsListener.Companion.speedRange
+import com.joaomagdaleno.music_hub.playback.listener.EffectsListener
 import com.joaomagdaleno.music_hub.ui.player.PlayerViewModel
-import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
-import com.joaomagdaleno.music_hub.utils.PermsUtils.registerActivityResultLauncher
+import com.joaomagdaleno.music_hub.utils.ContextUtils
+import com.joaomagdaleno.music_hub.utils.PermsUtils
 import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
 import com.joaomagdaleno.music_hub.utils.ui.RulerAdapter
 import kotlinx.coroutines.launch
@@ -52,17 +45,17 @@ class AudioEffectsBottomSheet : BottomSheetDialogFragment() {
         var mediaId: String? = null
 
         fun bind() {
-            val settings = requireContext().globalFx()
+            val settings = EffectsListener.globalFx(requireContext())
             settings.edit {
-                val customEffects = settings.getStringSet(CUSTOM_EFFECTS, null) ?: emptySet()
-                putStringSet(CUSTOM_EFFECTS, customEffects + mediaId?.hashCode()?.toString())
+                val customEffects = settings.getStringSet(EffectsListener.CUSTOM_EFFECTS, null) ?: emptySet()
+                putStringSet(EffectsListener.CUSTOM_EFFECTS, customEffects + mediaId?.hashCode()?.toString())
             }
             binding.audioFxDescription.isVisible = mediaId != null
             val mediaSettings =
-                requireContext().getFxPrefs(settings, mediaId?.hashCode()) ?: settings
-            binding.audioFxFragment.bind(mediaSettings) { onEqualizerClicked() }
+                EffectsListener.getFxPrefs(requireContext(), settings, mediaId?.hashCode()) ?: settings
+            Companion.bind(binding.audioFxFragment, mediaSettings) { onEqualizerClicked(this) }
         }
-        observe(viewModel.playerState.current) {
+        ContextUtils.observe(this, viewModel.playerState.current) {
             mediaId = it?.mediaItem?.mediaId
             bind()
         }
@@ -72,7 +65,7 @@ class AudioEffectsBottomSheet : BottomSheetDialogFragment() {
                 R.id.menu_refresh -> {
                     val context = requireContext()
                     val id = mediaId ?: return@setOnMenuItemClickListener false
-                    context.deleteFxPrefs(id.hashCode())
+                    EffectsListener.deleteFxPrefs(context, id.hashCode())
                     bind()
                     true
                 }
@@ -84,33 +77,35 @@ class AudioEffectsBottomSheet : BottomSheetDialogFragment() {
 
     companion object {
         @SuppressLint("SetTextI18n")
-        fun FragmentAudioFxBinding.bind(
-            settings: SharedPreferences, onEqualizerClicked: () -> Unit
+        fun bind(
+            binding: FragmentAudioFxBinding,
+            settings: SharedPreferences, 
+            onEqualizerClicked: () -> Unit
         ) {
-            val speed = settings.getInt(PLAYBACK_SPEED, speedRange.indexOf(1f))
+            val speed = settings.getInt(EffectsListener.PLAYBACK_SPEED, EffectsListener.speedRange.indexOf(1f))
             val adapter = RulerAdapter(object : RulerAdapter.Listener<Int> {
-                override fun intervalText(value: Int) = "${speedRange.getOrNull(value) ?: 1f}x"
+                override fun intervalText(value: Int) = "${EffectsListener.speedRange.getOrNull(value) ?: 1f}x"
                 override fun onSelectItem(value: Int) {
-                    speedValue.text = "${speedRange.getOrNull(value) ?: 1f}x"
-                    settings.edit { putInt(PLAYBACK_SPEED, value) }
+                    binding.speedValue.text = "${EffectsListener.speedRange.getOrNull(value) ?: 1f}x"
+                    settings.edit { putInt(EffectsListener.PLAYBACK_SPEED, value) }
                 }
             })
 
-            speedRecycler.adapter = adapter
-            adapter.submitList(List(speedRange.size) { index -> index to (index % 2 == 0) }, speed)
+            binding.speedRecycler.adapter = adapter
+            adapter.submitList(List(EffectsListener.speedRange.size) { index -> index to (index % 2 == 0) }, speed)
 
-            pitchSwitch.isChecked = settings.getBoolean(CHANGE_PITCH, true)
-            pitch.setOnClickListener {
-                pitchSwitch.isChecked = !pitchSwitch.isChecked
+            binding.pitchSwitch.isChecked = settings.getBoolean(EffectsListener.CHANGE_PITCH, true)
+            binding.pitch.setOnClickListener {
+                binding.pitchSwitch.isChecked = !binding.pitchSwitch.isChecked
             }
-            pitchSwitch.setOnCheckedChangeListener { _, isChecked ->
-                settings.edit { putBoolean(CHANGE_PITCH, isChecked) }
+            binding.pitchSwitch.setOnCheckedChangeListener { _, isChecked ->
+                settings.edit { putBoolean(EffectsListener.CHANGE_PITCH, isChecked) }
             }
-            bassBoostSlider.value = settings.getInt(BASS_BOOST, 0).toFloat()
-            bassBoostSlider.addOnChangeListener { _, value, _ ->
-                settings.edit { putInt(BASS_BOOST, value.toInt()) }
+            binding.bassBoostSlider.value = settings.getInt(EffectsListener.BASS_BOOST, 0).toFloat()
+            binding.bassBoostSlider.addOnChangeListener { _, value, _ ->
+                settings.edit { putInt(EffectsListener.BASS_BOOST, value.toInt()) }
             }
-            equalizer.setOnClickListener { onEqualizerClicked() }
+            binding.equalizer.setOnClickListener { onEqualizerClicked() }
         }
 
         private fun openEqualizer(activity: ComponentActivity, sessionId: Int) {
@@ -120,13 +115,13 @@ class AudioEffectsBottomSheet : BottomSheetDialogFragment() {
                 putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
             }
             val contract = ActivityResultContracts.StartActivityForResult()
-            activity.registerActivityResultLauncher(contract) {}.launch(intent)
+            PermsUtils.registerActivityResultLauncher(activity, contract) {}.launch(intent)
         }
 
-        fun Fragment.onEqualizerClicked() {
-            val viewModel by activityViewModel<PlayerViewModel>()
+        fun onEqualizerClicked(fragment: Fragment) {
+            val viewModel by fragment.activityViewModel<PlayerViewModel>()
             val sessionId = viewModel.playerState.session.value
-            runCatching { openEqualizer(requireActivity(), sessionId) }.getOrElse {
+            runCatching { openEqualizer(fragment.requireActivity(), sessionId) }.getOrElse {
                 viewModel.run { viewModelScope.launch { app.throwFlow.emit(it) } }
             }
         }

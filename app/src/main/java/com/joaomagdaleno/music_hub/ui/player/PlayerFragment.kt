@@ -3,7 +3,6 @@ package com.joaomagdaleno.music_hub.ui.player
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
-import android.graphics.Outline
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.graphics.drawable.Drawable
@@ -14,12 +13,10 @@ import android.text.method.LinkMovementMethod
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewOutlineProvider
 import android.widget.ProgressBar
 import androidx.annotation.OptIn
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.drawable.toBitmap
-import androidx.core.net.toUri
 import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -31,9 +28,6 @@ import androidx.media3.common.Player.REPEAT_MODE_ALL
 import androidx.media3.common.Player.REPEAT_MODE_OFF
 import androidx.media3.common.Player.REPEAT_MODE_ONE
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.datasource.cache.CacheDataSource
-import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
@@ -55,37 +49,28 @@ import com.joaomagdaleno.music_hub.playback.MediaItemUtils.isLiked
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.isLoaded
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.showBackground
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.track
-import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyHorizontalInsets
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.isFinalState
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.setupPlayerMoreBehavior
-import com.joaomagdaleno.music_hub.ui.media.MediaFragment
 import com.joaomagdaleno.music_hub.ui.player.audiofx.AudioEffectsBottomSheet
-import com.joaomagdaleno.music_hub.ui.media.more.MediaMoreBottomSheet
+import com.joaomagdaleno.music_hub.ui.media.MediaFragment
 import com.joaomagdaleno.music_hub.ui.player.PlayerColors.Companion.defaultPlayerColors
 import com.joaomagdaleno.music_hub.ui.player.PlayerColors.Companion.getColorsFrom
 import com.joaomagdaleno.music_hub.ui.player.PlayerTrackAdapter.Companion.configureClicking
 import com.joaomagdaleno.music_hub.ui.player.quality.FormatUtils.getDetails
 import com.joaomagdaleno.music_hub.ui.player.quality.QualitySelectionBottomSheet
-import com.joaomagdaleno.music_hub.utils.ContextUtils.emit
-import com.joaomagdaleno.music_hub.utils.ContextUtils.getSettings
-import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
-import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadBlurred
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.animateVisibility
+import com.joaomagdaleno.music_hub.utils.ContextUtils
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
 import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoClearedNullable
 import com.joaomagdaleno.music_hub.utils.ui.CheckBoxListener
 import com.joaomagdaleno.music_hub.utils.ui.SimpleItemSpan
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.dpToPx
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.hideSystemUi
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.isLandscape
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.isRTL
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.marquee
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.toTimeString
 import com.joaomagdaleno.music_hub.utils.ui.ViewPager2Utils.registerOnUserPageChangeCallback
 import com.joaomagdaleno.music_hub.utils.ui.ViewPager2Utils.supportBottomSheetBehavior
 import androidx.core.view.HapticFeedbackConstantsCompat
+import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.cache.SimpleCache
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.core.net.toUri
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import kotlin.math.abs
@@ -111,7 +96,7 @@ class PlayerFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = binding!!
         binding.viewPager.supportBottomSheetBehavior()
-        setupPlayerMoreBehavior(uiViewModel, binding.playerMoreContainer)
+        UiUtils.setupPlayerMoreBehavior(uiViewModel, binding.playerMoreContainer)
         configureOutline(binding.root)
         configureCollapsing(binding)
         configureColors()
@@ -124,12 +109,12 @@ class PlayerFragment : Fragment() {
     }
 
     private fun configureOutline(view: View) {
-        view.configurePlayerOutline(uiViewModel, this, collapseHeight)
+        PlayerAnimations.configurePlayerOutline(view, uiViewModel, this, collapseHeight)
     }
 
     private fun configureCollapsing(binding: FragmentPlayerBinding) {
-        binding.configurePlayerCollapsing(
-            uiViewModel, viewModel, adapter, this, collapseHeight, requireActivity()
+        PlayerAnimations.configurePlayerCollapsing(
+            binding, uiViewModel, viewModel, adapter, this, collapseHeight, requireActivity()
         )
         // Additional listeners kept in Fragment just in case, but moved logic to helper covers most
         binding.bgPanel.configureClicking(adapterListener, uiViewModel)
@@ -188,10 +173,10 @@ class PlayerFragment : Fragment() {
 
         val binding = binding!!
         binding.playerControls.trackHeart.addOnCheckedStateChangedListener(likeListener)
-        observe(viewModel.playerState.current) {
+        ContextUtils.observe(this, viewModel.playerState.current) {
             uiViewModel.run {
                 if (it == null) return@run changePlayerState(STATE_HIDDEN)
-                if (!isFinalState(playerSheetState.value)) return@run
+                if (!UiUtils.isFinalState(playerSheetState.value)) return@run
                 changePlayerState(
                     if (playerSheetState.value != STATE_EXPANDED) STATE_COLLAPSED
                     else STATE_EXPANDED
@@ -199,10 +184,10 @@ class PlayerFragment : Fragment() {
             }
             submit()
             it?.mediaItem ?: return@observe
-            binding.applyCurrent(it.mediaItem)
+            applyCurrent(binding, it.mediaItem)
         }
 
-        observe(viewModel.queueFlow) { submit() }
+        ContextUtils.observe(this, viewModel.queueFlow) { submit() }
 
         val playPauseListener = CheckBoxListener { viewModel.setPlaying(it) }
         binding.playerControls.trackPlayPause
@@ -212,7 +197,7 @@ class PlayerFragment : Fragment() {
         binding.playerControls.trackPlayPause.setOnClickListener {
             it.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_START)
         }
-        observe(viewModel.isPlaying) {
+        ContextUtils.observe(this, viewModel.isPlaying) {
             binding.run {
                 playPauseListener.enabled = false
                 playerControls.trackPlayPause.isChecked = it
@@ -220,12 +205,12 @@ class PlayerFragment : Fragment() {
                 playPauseListener.enabled = true
             }
         }
-        observe(viewModel.buffering) {
+        ContextUtils.observe(this, viewModel.buffering) {
             binding.playerControls.playingIndicator.alpha = if (it) 1f else 0f
             binding.playerCollapsedContainer.collapsedPlayingIndicator.alpha = if (it) 1f else 0f
         }
 
-        observe(viewModel.progress) { (curr, buff) ->
+        ContextUtils.observe(this, viewModel.progress) { (curr, buff) ->
             binding.playerCollapsedContainer.run {
                 collapsedBuffer.progress = buff.toInt()
                 collapsedSeekbar.progress = curr.toInt()
@@ -234,7 +219,7 @@ class PlayerFragment : Fragment() {
                 if (!seekBar.isPressed) {
                     bufferBar.progress = buff.toInt()
                     seekBar.value = max(0f, min(curr.toFloat(), seekBar.valueTo))
-                    trackCurrentTime.text = curr.toTimeString()
+                    trackCurrentTime.text = UiUtils.toTimeString(curr)
                 } else {
                     val value = seekBar.value.toLong()
                     if (abs(value - lastHapticTime) >= 1000) {
@@ -245,7 +230,7 @@ class PlayerFragment : Fragment() {
             }
         }
 
-        observe(viewModel.totalDuration) {
+        ContextUtils.observe(this, viewModel.totalDuration) {
             val duration = it ?: viewModel.playerState.current.value?.track?.duration ?: 0
             binding.playerCollapsedContainer.run {
                 collapsedSeekbar.max = duration.toInt()
@@ -257,7 +242,7 @@ class PlayerFragment : Fragment() {
                     value = max(0f, min(value, duration.toFloat()))
                     valueTo = 1f + duration
                 }
-                trackTotalTime.text = duration.toTimeString()
+                trackTotalTime.text = UiUtils.toTimeString(duration)
             }
         }
 
@@ -293,7 +278,7 @@ class PlayerFragment : Fragment() {
         binding.playerControls.run {
             seekBar.apply {
                 addOnChangeListener { _, value, fromUser ->
-                    if (fromUser) trackCurrentTime.text = value.toLong().toTimeString()
+                    if (fromUser) trackCurrentTime.text = UiUtils.toTimeString(value.toLong())
                 }
                 addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
                     override fun onStartTrackingTouch(slider: Slider) = Unit
@@ -307,21 +292,21 @@ class PlayerFragment : Fragment() {
                 viewModel.next()
                 (trackNext.icon as Animatable).start()
             }
-            observe(viewModel.nextEnabled) { trackNext.isEnabled = it }
+            ContextUtils.observe(this@PlayerFragment, viewModel.nextEnabled) { trackNext.isEnabled = it }
 
             trackPrevious.setOnClickListener {
                 it.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_START)
                 viewModel.previous()
                 (trackPrevious.icon as Animatable).start()
             }
-            observe(viewModel.previousEnabled) { trackPrevious.isEnabled = it }
+            ContextUtils.observe(this@PlayerFragment, viewModel.previousEnabled) { trackPrevious.isEnabled = it }
 
             val shuffleListener = CheckBoxListener { viewModel.setShuffle(it) }
             trackShuffle.addOnCheckedStateChangedListener(shuffleListener)
             trackShuffle.setOnClickListener {
                 it.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_START)
             }
-            observe(viewModel.shuffleMode) {
+            ContextUtils.observe(this@PlayerFragment, viewModel.shuffleMode) {
                 shuffleListener.enabled = false
                 trackShuffle.isChecked = it
                 shuffleListener.enabled = true
@@ -337,12 +322,12 @@ class PlayerFragment : Fragment() {
                 changeRepeatDrawable(mode)
                 viewModel.setRepeat(mode)
             }
-            observe(viewModel.repeatMode) { changeRepeatDrawable(it) }
+            ContextUtils.observe(this@PlayerFragment, viewModel.repeatMode) { changeRepeatDrawable(it) }
 
             trackSubtitle.setOnClickListener {
                 QualitySelectionBottomSheet().show(parentFragmentManager, null)
             }
-            observe(viewModel.serverAndTracks) { (tracks, server, index) ->
+            ContextUtils.observe(this@PlayerFragment, viewModel.serverAndTracks) { (tracks, server, index) ->
                 trackSubtitle.text = tracks?.getDetails(requireContext(), server, index)
                     ?.joinToString(" ⦿ ")?.takeIf { it.isNotBlank() }
             }
@@ -352,7 +337,7 @@ class PlayerFragment : Fragment() {
     private val likeListener = CheckBoxListener { viewModel.likeCurrent(it) }
 
     private fun configureColors() {
-        observe(viewModel.playerState.current) { adapter.onCurrentUpdated() }
+        ContextUtils.observe(this, viewModel.playerState.current) { adapter.onCurrentUpdated() }
         var last: Drawable? = null
         adapter.currentDrawableListener = { drawable ->
             if (last != drawable) {
@@ -360,17 +345,17 @@ class PlayerFragment : Fragment() {
                 val context = requireContext()
                 uiViewModel.playerDrawable.value = drawable
                 val colors =
-                    if (context.isDynamic()) context.getColorsFrom(drawable?.toBitmap()) else null
+                    if (isDynamic(context)) context.getColorsFrom(drawable?.toBitmap()) else null
                 uiViewModel.playerColors.value = colors
-                if (context.showBackground()) binding?.bgImage?.loadBlurred(drawable, 12f)
+                if (showBackground(context)) ImageUtils.loadBlurred(binding!!.bgImage, drawable, 12f)
                 else binding?.bgImage?.setImageDrawable(null)
             }
         }
         val bufferView =
             binding?.playerView?.findViewById<ProgressBar>(androidx.media3.ui.R.id.exo_buffering)
-        observe(uiViewModel.playerColors) {
+        ContextUtils.observe(this, uiViewModel.playerColors) {
             val context = requireContext()
-            if (context.isPlayerColor() && context.isDynamic()) {
+            if (isPlayerColor(context) && isDynamic(context)) {
                 if (uiViewModel.currentAppColor != viewModel.playerState.current.value?.track?.id) {
                     uiViewModel.currentAppColor =
                         viewModel.playerState.current.value?.track?.id
@@ -383,7 +368,7 @@ class PlayerFragment : Fragment() {
             adapter.onColorsUpdated()
 
             binding.run {
-                val color = if (requireContext().isDynamic()) colors.accent
+                val color = if (isDynamic(requireContext())) colors.accent
                 else colors.background
                 root.setBackgroundColor(color)
                 val backgroundState = ColorStateList.valueOf(colors.background)
@@ -417,10 +402,10 @@ class PlayerFragment : Fragment() {
         }
     }
 
-    private fun FragmentPlayerBinding.applyCurrent(item: MediaItem) {
+    private fun applyCurrent(binding: FragmentPlayerBinding, item: MediaItem) {
         val track = item.track
         val origin = item.origin
-        expandedToolbar.run {
+        binding.expandedToolbar.run {
             val itemContext = item.context
             title = if (itemContext != null) context.getString(R.string.playing_from) else null
             subtitle = itemContext?.title
@@ -440,12 +425,12 @@ class PlayerFragment : Fragment() {
                 }
             }
         }
-        playerControls.run {
+        binding.playerControls.run {
             trackHeart.setOnClickListener {
                 it.performHapticFeedback(HapticFeedbackConstantsCompat.GESTURE_START)
             }
             trackTitle.text = track.title
-            trackTitle.marquee()
+            UiUtils.marquee(trackTitle)
             val artists = track.artists
             val artistNames = artists.joinToString(", ") { it.name }
             val span = SpannableString(artistNames)
@@ -476,9 +461,7 @@ class PlayerFragment : Fragment() {
     }
 
     private fun openItem(source: String, item: EchoMediaItem) {
-        requireActivity().openFragment<MediaFragment>(
-            null, MediaFragment.getBundle(source, item, false)
-        )
+        UiUtils.openFragment<MediaFragment>(requireActivity(), null, MediaFragment.getBundle(source, item, false))
     }
 
     private fun onMoreClicked(item: MediaItem) {
@@ -487,13 +470,13 @@ class PlayerFragment : Fragment() {
         ).show(requireActivity().supportFragmentManager, null)
     }
 
-    private fun Player?.hasVideo() =
-        this?.currentTracks?.groups.orEmpty().any { it.type == C.TRACK_TYPE_VIDEO }
+    private fun hasVideo(player: Player?) =
+        player?.currentTracks?.groups.orEmpty().any { it.type == C.TRACK_TYPE_VIDEO }
 
     private fun applyVideoVisibility(visible: Boolean) {
         binding?.playerView?.isVisible = visible
         binding?.bgImage?.isVisible = !visible
-        if (requireContext().isLandscape()) return
+        if (UiUtils.isLandscape(requireContext())) return
         binding?.playerControls?.trackCoverPlaceHolder?.isVisible = visible
         adapter.updatePlayerVisibility(visible)
     }
@@ -505,7 +488,7 @@ class PlayerFragment : Fragment() {
     private fun applyPlayer() {
         val mainPlayer = viewModel.browser.value
         val background = viewModel.playerState.current.value?.mediaItem?.background
-        val visible = if (mainPlayer.hasVideo()) {
+        val visible = if (hasVideo(mainPlayer)) {
             binding?.playerView?.player = mainPlayer
             binding?.playerView?.resizeMode = RESIZE_MODE_FIT
             backgroundPlayer?.release()
@@ -537,18 +520,18 @@ class PlayerFragment : Fragment() {
                 EDGE_TYPE_OUTLINE, Color.BLACK, null
             )
         )
-        observe(viewModel.serverAndTracks) { applyPlayer() }
+        ContextUtils.observe(this, viewModel.serverAndTracks) { applyPlayer() }
     }
 
     companion object {
-        private fun Context.showBackground() = getSettings().showBackground()
+        private fun showBackground(context: Context) = ContextUtils.getSettings(context).showBackground()
         const val DYNAMIC_PLAYER = "dynamic_player"
         const val PLAYER_COLOR = "player_app_color"
-        fun Context.isDynamic() =
-            getSettings().getBoolean(DYNAMIC_PLAYER, true)
+        fun isDynamic(context: Context) =
+            ContextUtils.getSettings(context).getBoolean(DYNAMIC_PLAYER, true)
 
-        private fun Context.isPlayerColor() =
-            getSettings().getBoolean(PLAYER_COLOR, false)
+        private fun isPlayerColor(context: Context) =
+            ContextUtils.getSettings(context).getBoolean(PLAYER_COLOR, false)
 
         @OptIn(UnstableApi::class)
         fun getPlayer(

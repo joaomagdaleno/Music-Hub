@@ -14,9 +14,9 @@ import com.joaomagdaleno.music_hub.download.db.models.ContextEntity
 import com.joaomagdaleno.music_hub.download.db.models.DownloadEntity
 import com.joaomagdaleno.music_hub.download.db.models.TaskType
 import com.joaomagdaleno.music_hub.download.tasks.BaseTask.Companion.getTitle
-import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
+import com.joaomagdaleno.music_hub.utils.ui.ExceptionData
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
-import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadAsCircle
 import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadInto
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimListAdapter
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimViewHolder
@@ -39,7 +39,7 @@ class DownloadsAdapter(
 ), GridAdapter {
 
     interface Listener {
-        fun onExceptionClicked(data: ExceptionUtils.Data)
+        fun onExceptionClicked(data: ExceptionData)
         fun onCancel(trackId: Long)
         fun onRestart(trackId: Long)
     }
@@ -67,7 +67,7 @@ class DownloadsAdapter(
                 subtitle.text = sub
                 subtitle.isVisible = !sub.isNullOrEmpty()
 
-                exception.text = entity.exception?.title
+                exception.text = entity.exception?.let { UiUtils.getFinalExceptionTitle(root.context, it) }
                 exception.isVisible = exception.text.isNotEmpty()
 
                 remove.setOnClickListener {
@@ -96,7 +96,7 @@ class DownloadsAdapter(
             progressBar.isIndeterminate = item.progress.size == 0L
             progressBar.max = item.progress.size.toInt()
             progressBar.progress = item.progress.progress.toInt()
-            subtitle.text = item.progress.toText()
+            subtitle.text = toText(item.progress)
             title.text = root.context.run {
                 getTitle(item.taskType, getString(R.string.download))
             }
@@ -156,13 +156,13 @@ class DownloadsAdapter(
         }
 
         private val SPEED_UNITS = arrayOf("", "KB", "MB", "GB")
-        fun Progress.toText() = buildString {
-            if (size > 0) append("%.2f%% • ".format(progress.toFloat() / size * 100))
+        fun toText(progress: Progress) = buildString {
+            if (progress.size > 0) append("%.2f%% • ".format(progress.progress.toFloat() / progress.size * 100))
             append(
-                if (size > 0) "${convertBytes(progress)} / ${convertBytes(size)}"
-                else convertBytes(progress)
+                if (progress.size > 0) "${convertBytes(progress.progress)} / ${convertBytes(progress.size)}"
+                else convertBytes(progress.progress)
             )
-            if (speed > 0) append(" • ${convertBytes(speed)}/s")
+            if (progress.speed > 0) append(" • ${convertBytes(progress.speed)}/s")
         }
 
         private fun convertBytes(bytes: Long): String {

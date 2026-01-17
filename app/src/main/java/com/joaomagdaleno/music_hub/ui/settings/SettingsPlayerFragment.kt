@@ -9,38 +9,31 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
 import com.joaomagdaleno.music_hub.R
-import com.joaomagdaleno.music_hub.common.models.ImageHolder.Companion.toResourceImageHolder
-import com.joaomagdaleno.music_hub.playback.PlayerService.Companion.CACHE_SIZE
-import com.joaomagdaleno.music_hub.playback.PlayerService.Companion.CLOSE_PLAYER
-import com.joaomagdaleno.music_hub.playback.PlayerService.Companion.MORE_BRAIN_CAPACITY
-import com.joaomagdaleno.music_hub.playback.PlayerService.Companion.SKIP_SILENCE
-import com.joaomagdaleno.music_hub.playback.PlayerService.Companion.STREAM_QUALITY
-import com.joaomagdaleno.music_hub.playback.PlayerService.Companion.UNMETERED_STREAM_QUALITY
-import com.joaomagdaleno.music_hub.playback.PlayerService.Companion.streamQualities
-import com.joaomagdaleno.music_hub.playback.listener.PlayerRadio.Companion.AUTO_START_RADIO
-import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
-import com.joaomagdaleno.music_hub.ui.player.PlayerViewModel.Companion.KEEP_QUEUE
-import com.joaomagdaleno.music_hub.ui.settings.AudioEffectsFragment.Companion.AUDIO_FX
-import com.joaomagdaleno.music_hub.utils.ContextUtils.SETTINGS_NAME
+import com.joaomagdaleno.music_hub.common.models.ImageHolder
+import com.joaomagdaleno.music_hub.playback.PlayerService
+import com.joaomagdaleno.music_hub.playback.listener.PlayerRadio
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
+import com.joaomagdaleno.music_hub.ui.player.PlayerViewModel
+import com.joaomagdaleno.music_hub.utils.ContextUtils
 import com.joaomagdaleno.music_hub.utils.ui.prefs.MaterialListPreference
 import com.joaomagdaleno.music_hub.utils.ui.prefs.MaterialSliderPreference
 import com.joaomagdaleno.music_hub.utils.ui.prefs.TransitionPreference
 
 class SettingsPlayerFragment : BaseSettingsFragment() {
     override val title get() = getString(R.string.player)
-    override val icon get() = R.drawable.ic_play_circle.toResourceImageHolder()
+    override val icon get() = ImageHolder.toResourceImageHolder(R.drawable.ic_play_circle)
     override val creator = { AudioPreference() }
 
     class AudioPreference : PreferenceFragmentCompat() {
 
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             super.onViewCreated(view, savedInstanceState)
-            configure()
+            BaseSettingsFragment.configure(this)
         }
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             val context = preferenceManager.context
-            preferenceManager.sharedPreferencesName = SETTINGS_NAME
+            preferenceManager.sharedPreferencesName = ContextUtils.SETTINGS_NAME
             preferenceManager.sharedPreferencesMode = Context.MODE_PRIVATE
             val screen = preferenceManager.createPreferenceScreen(context)
             preferenceScreen = screen
@@ -53,7 +46,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                 screen.addPreference(this)
 
                 TransitionPreference(context).apply {
-                    key = AUDIO_FX
+                    key = AudioEffectsFragment.AUDIO_FX
                     title = getString(R.string.audio_fx)
                     summary = getString(R.string.audio_fx_summary)
                     layoutResource = R.layout.preference
@@ -62,24 +55,24 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                 }
 
                 MaterialListPreference(context).apply {
-                    key = STREAM_QUALITY
+                    key = PlayerService.STREAM_QUALITY
                     title = getString(R.string.stream_quality)
                     summary = getString(R.string.stream_quality_summary)
                     entries = context.resources.getStringArray(R.array.stream_qualities)
-                    entryValues = streamQualities
+                    entryValues = PlayerService.streamQualities
                     layoutResource = R.layout.preference
                     isIconSpaceReserved = false
-                    setDefaultValue(streamQualities[1])
+                    setDefaultValue(PlayerService.streamQualities[1])
                     addPreference(this)
                 }
 
                 MaterialListPreference(context).apply {
-                    key = UNMETERED_STREAM_QUALITY
+                    key = PlayerService.UNMETERED_STREAM_QUALITY
                     title = getString(R.string.unmetered_stream_quality)
                     summary = getString(R.string.unmetered_stream_quality_summary)
                     entries =
                         context.resources.getStringArray(R.array.stream_qualities) + getString(R.string.off)
-                    entryValues = streamQualities + "off"
+                    entryValues = PlayerService.streamQualities + "off"
                     layoutResource = R.layout.preference
                     isIconSpaceReserved = false
                     setDefaultValue("off")
@@ -95,7 +88,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                 screen.addPreference(this)
 
                 SwitchPreferenceCompat(context).apply {
-                    key = KEEP_QUEUE
+                    key = PlayerViewModel.KEEP_QUEUE
                     title = getString(R.string.keep_queue)
                     summary = getString(R.string.keep_queue_summary)
                     layoutResource = R.layout.preference_switch
@@ -105,7 +98,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                 }
 
                 SwitchPreferenceCompat(context).apply {
-                    key = CLOSE_PLAYER
+                    key = PlayerService.CLOSE_PLAYER
                     title = getString(R.string.stop_player)
                     summary = getString(R.string.stop_player_summary)
                     layoutResource = R.layout.preference_switch
@@ -115,7 +108,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                 }
 
                 SwitchPreferenceCompat(context).apply {
-                    key = SKIP_SILENCE
+                    key = PlayerService.SKIP_SILENCE
                     title = getString(R.string.skip_silence)
                     summary = getString(R.string.skip_silence_summary)
                     layoutResource = R.layout.preference_switch
@@ -125,7 +118,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                 }
 
                 SwitchPreferenceCompat(context).apply {
-                    key = MORE_BRAIN_CAPACITY
+                    key = PlayerService.MORE_BRAIN_CAPACITY
                     title = getString(R.string.more_brain_capacity)
                     summary = getString(R.string.more_brain_capacity_summary)
                     layoutResource = R.layout.preference_switch
@@ -135,7 +128,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                 }
 
                 SwitchPreferenceCompat(context).apply {
-                    key = AUTO_START_RADIO
+                    key = PlayerRadio.AUTO_START_RADIO
                     title = getString(R.string.auto_start_radio)
                     summary = getString(R.string.auto_start_radio_summary)
                     layoutResource = R.layout.preference_switch
@@ -145,7 +138,7 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                 }
 
                 MaterialSliderPreference(context, 200, 1000, allowOverride = true).apply {
-                    key = CACHE_SIZE
+                    key = PlayerService.CACHE_SIZE
                     title = getString(R.string.cache_size)
                     summary = getString(R.string.cache_size_summary)
                     isIconSpaceReserved = false
@@ -158,8 +151,8 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
         override fun onPreferenceTreeClick(preference: Preference): Boolean {
             val view = listView.findViewById<View>(preference.key.hashCode())
             return when (preference.key) {
-                AUDIO_FX -> {
-                    requireActivity().openFragment<AudioEffectsFragment>(view)
+                AudioEffectsFragment.AUDIO_FX -> {
+                    UiUtils.openFragment<AudioEffectsFragment>(requireActivity(), view)
                     true
                 }
 

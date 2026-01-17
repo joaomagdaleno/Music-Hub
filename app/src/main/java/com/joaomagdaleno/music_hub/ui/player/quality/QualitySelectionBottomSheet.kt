@@ -24,7 +24,7 @@ import com.joaomagdaleno.music_hub.playback.MediaItemUtils.serverIndex
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.serverWithDownloads
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.subtitleIndex
 import com.joaomagdaleno.music_hub.playback.MediaItemUtils.track
-import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
+import com.joaomagdaleno.music_hub.utils.ui.openFragment
 import com.joaomagdaleno.music_hub.ui.player.PlayerViewModel
 import com.joaomagdaleno.music_hub.ui.player.quality.FormatUtils.getDetails
 import com.joaomagdaleno.music_hub.ui.player.quality.FormatUtils.getSelected

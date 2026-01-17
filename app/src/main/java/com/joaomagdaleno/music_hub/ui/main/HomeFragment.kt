@@ -6,19 +6,16 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import com.joaomagdaleno.music_hub.common.models.Feed.Buttons.Companion.EMPTY
 import com.joaomagdaleno.music_hub.common.models.Feed.Companion.toFeed
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
 import com.joaomagdaleno.music_hub.ui.compose.screens.HomeFeed
 import com.joaomagdaleno.music_hub.ui.compose.theme.MusicHubTheme
-import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getFeedAdapter
 import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener.Companion.getFeedListener
 import com.joaomagdaleno.music_hub.ui.feed.FeedData
 import com.joaomagdaleno.music_hub.ui.feed.FeedViewModel
-import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
+import com.joaomagdaleno.music_hub.utils.ContextUtils
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -57,7 +54,8 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         // Keep observation logic for background updates
         val uiViewModel by activityViewModel<UiViewModel>()
-        observe(
+        ContextUtils.observe(
+            this,
             uiViewModel.navigation.combine(feedData.backgroundImageFlow) { a, b -> a to b }
         ) { (curr, bg) ->
             if (curr != 0) return@observe

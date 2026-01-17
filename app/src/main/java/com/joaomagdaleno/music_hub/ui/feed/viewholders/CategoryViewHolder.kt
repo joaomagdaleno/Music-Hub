@@ -14,8 +14,8 @@ import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.databinding.ItemShelfCategoryBinding
 import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
 import com.joaomagdaleno.music_hub.ui.feed.FeedType
-import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadInto
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.isNightMode
+import com.joaomagdaleno.music_hub.utils.image.ImageUtils
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import kotlin.math.roundToInt
 
 class CategoryViewHolder(
@@ -44,34 +44,34 @@ class CategoryViewHolder(
     override fun bind(feed: FeedType.Category) {
         this.feed = feed
         val category = feed.shelf
-        binding.bind(category)
+        Companion.bind(binding, category)
     }
 
     companion object {
-        fun ItemShelfCategoryBinding.bind(category: Shelf.Category) {
-            title.text = category.title
-            subtitle.text = category.subtitle
-            subtitle.isVisible = !category.subtitle.isNullOrEmpty()
-            icon.isVisible = category.image != null
-            category.image.loadInto(icon)
-            root.run {
-                val color = applyBackground(category.backgroundColor)
+        fun bind(binding: ItemShelfCategoryBinding, category: Shelf.Category) {
+            binding.title.text = category.title
+            binding.subtitle.text = category.subtitle
+            binding.subtitle.isVisible = !category.subtitle.isNullOrEmpty()
+            binding.icon.isVisible = category.image != null
+            ImageUtils.loadInto(category.image, binding.icon)
+            binding.root.run {
+                val color = applyBackground(this, category.backgroundColor)
                     ?: ResourcesCompat.getColor(resources, R.color.amoled_fg_semi, null)
                 setCardBackgroundColor(color)
             }
         }
 
-        fun CardView.applyBackground(hex: String?): Int? {
+        fun applyBackground(view: CardView, hex: String?): Int? {
             val hsv = runCatching { hex?.toColorInt() }.getOrNull()?.run {
-                val hsv = FloatArray(3)
-                Color.colorToHSV(this, hsv)
-                hsv
+                val hsvFloat = FloatArray(3)
+                Color.colorToHSV(this, hsvFloat)
+                hsvFloat
             } ?: return null
             val actualSat = (hsv[1] * 0.25).roundToInt()
-            val sat = if (context.isNightMode()) (35f + actualSat) / 100 else 0.2f
-            val value = if (context.isNightMode()) 0.5f else 0.9f
+            val sat = if (UiUtils.isNightMode(view.context)) (35f + actualSat) / 100 else 0.2f
+            val value = if (UiUtils.isNightMode(view.context)) 0.5f else 0.9f
             val color = HSVToColor(floatArrayOf(hsv[0], sat, value))
-            val with = MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary)
+            val with = MaterialColors.getColor(view, androidx.appcompat.R.attr.colorPrimary)
             return MaterialColors.harmonize(color, with)
         }
     }

@@ -9,209 +9,205 @@ import androidx.lifecycle.LifecycleOwner
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_COLLAPSED
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_HIDDEN
-import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.databinding.FragmentPlayerBinding
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyHorizontalInsets
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.getCombined
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.isFinalState
-import com.joaomagdaleno.music_hub.utils.ContextUtils.emit
-import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.animateVisibility
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.dpToPx
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.hideSystemUi
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.isLandscape
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.isRTL
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
+import com.joaomagdaleno.music_hub.utils.ContextUtils
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
 import kotlin.math.max
 import kotlin.math.min
 import androidx.fragment.app.FragmentActivity
 
-fun View.configurePlayerOutline(
-    uiViewModel: UiViewModel,
-    lifecycleOwner: LifecycleOwner,
-    collapseHeight: Int
-) {
-    val context = this.context
-    val padding = 8.dpToPx(context)
-    var currHeight = collapseHeight
-    var currRound = padding.toFloat()
-    var currRight = 0
-    var currLeft = 0
-    
-    this.outlineProvider = object : ViewOutlineProvider() {
-        override fun getOutline(view: View, outline: Outline) {
-            outline.setRoundRect(
-                currLeft, 0, currRight, currHeight, currRound
-            )
-        }
-    }
-    this.clipToOutline = true
-
-    var leftPadding = 0
-    var rightPadding = 0
-
-    val maxElevation = 4.dpToPx(context).toFloat()
-    fun updateOutline() {
-        val offset = max(0f, uiViewModel.playerSheetOffset.value)
-        val inv = 1 - offset
-        val curve = offset * offset // Non-linear for snappier finish
-        val invCurve = 1 - curve
+object PlayerAnimations {
+    fun configurePlayerOutline(
+        view: View,
+        uiViewModel: UiViewModel,
+        lifecycleOwner: LifecycleOwner,
+        collapseHeight: Int
+    ) {
+        val context = view.context
+        val padding = UiUtils.dpToPx(context, 8)
+        var currHeight = collapseHeight
+        var currRound = padding.toFloat()
+        var currRight = 0
+        var currLeft = 0
         
-        this.elevation = maxElevation * inv
-        currHeight = collapseHeight + ((this.height - collapseHeight) * offset).toInt()
-        currLeft = (leftPadding * invCurve).toInt()
-        currRight = this.width - (rightPadding * invCurve).toInt()
-        currRound = max(padding * invCurve, padding * uiViewModel.playerBackProgress.value * 2)
-        this.invalidateOutline()
-    }
-    lifecycleOwner.observe(uiViewModel.combined) {
-        leftPadding = (if (context.isRTL()) it.end else it.start) + padding
-        rightPadding = (if (context.isRTL()) it.start else it.end) + padding
-        updateOutline()
-    }
-    lifecycleOwner.observe(uiViewModel.playerBackProgress) { updateOutline() }
-    lifecycleOwner.observe(uiViewModel.playerSheetOffset) { updateOutline() }
-    this.doOnLayout { updateOutline() }
-}
-
-fun FragmentPlayerBinding.configurePlayerCollapsing(
-    uiViewModel: UiViewModel,
-    viewModel: PlayerViewModel,
-    adapter: PlayerTrackAdapter,
-    lifecycleOwner: LifecycleOwner,
-    collapseHeight: Int,
-    activity: FragmentActivity
-) {
-    playerCollapsedContainer.root.clipToOutline = true
-
-    val context = root.context
-    val collapsedTopPadding = 8.dpToPx(context)
-    var currRound = collapsedTopPadding.toFloat()
-    var currTop = 0
-    var currBottom = collapseHeight
-    var currRight = 0
-    var currLeft = 0
-
-    val view = viewPager
-    view.outlineProvider = object : ViewOutlineProvider() {
-        override fun getOutline(view: View, outline: Outline) {
-            outline.setRoundRect(
-                currLeft, currTop, currRight, currBottom, currRound
-            )
-        }
-    }
-    view.clipToOutline = true
-
-    val extraEndPadding = 108.dpToPx(context)
-    var leftPadding = 0
-    var rightPadding = 0
-    val isLandscape = context.isLandscape()
-    
-    fun updateCollapsed() {
-        val (collapsedY, offset, collapsedOffset) = uiViewModel.run {
-            if (playerSheetState.value == STATE_EXPANDED) {
-                val offset = moreSheetOffset.value
-                Triple(systemInsets.value.top, offset, if (isLandscape) 0f else offset)
-            } else {
-                val offset = 1 - max(0f, playerSheetOffset.value)
-                Triple(-collapsedTopPadding, offset, offset)
+        view.outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setRoundRect(
+                    currLeft, 0, currRight, currHeight, currRound
+                )
             }
         }
-        val collapsedInv = 1 - collapsedOffset
-        playerCollapsedContainer.root.run {
-            translationY = collapsedY - collapseHeight * collapsedInv * 2
-            alpha = collapsedOffset * 2
-            translationZ = -1f * collapsedInv
+        view.clipToOutline = true
+
+        var leftPadding = 0
+        var rightPadding = 0
+
+        val maxElevation = UiUtils.dpToPx(context, 4).toFloat()
+        fun updateOutline() {
+            val offset = max(0f, uiViewModel.playerSheetOffset.value)
+            val inv = 1 - offset
+            val curve = offset * offset // Non-linear for snappier finish
+            val invCurve = 1 - curve
+            
+            view.elevation = maxElevation * inv
+            currHeight = collapseHeight + ((view.height - collapseHeight) * offset).toInt()
+            currLeft = (leftPadding * invCurve).toInt()
+            currRight = view.width - (rightPadding * invCurve).toInt()
+            currRound = max(padding * invCurve, padding * uiViewModel.playerBackProgress.value * 2)
+            view.invalidateOutline()
         }
-        bgCollapsed.run {
-            translationY = collapsedY - collapseHeight * collapsedInv * 2
-            alpha = min(1f, collapsedOffset * 2) - 0.5f
+        ContextUtils.observe(lifecycleOwner, uiViewModel.combined) {
+            leftPadding = (if (UiUtils.isRTL(context)) it.end else it.start) + padding
+            rightPadding = (if (UiUtils.isRTL(context)) it.start else it.end) + padding
+            updateOutline()
         }
-        val alphaInv = 1 - min(1f, offset * 3)
-        expandedToolbar.run {
-            translationY = collapseHeight * offset * 2
-            alpha = alphaInv
-            isVisible = offset < 1
-            translationZ = -1f * offset
-        }
-        playerControls.root.run {
-            translationY = collapseHeight * offset * 2
-            alpha = alphaInv
-            isVisible = offset < 1
-        }
-        currTop = uiViewModel.run {
-            val top = if (playerSheetState.value != STATE_EXPANDED) 0
-            else collapsedTopPadding + systemInsets.value.top
-            (top * max(0f, (collapsedOffset - 0.75f) * 4)).toInt()
-        }
-        val bot = currTop + collapseHeight
-        currBottom = bot + ((view.height - bot) * collapsedInv).toInt()
-        currLeft = (leftPadding * collapsedOffset).toInt()
-        currRight = view.width - (rightPadding * collapsedOffset).toInt()
-        currRound = collapsedTopPadding * collapsedOffset
-        view.invalidateOutline()
+        ContextUtils.observe(lifecycleOwner, uiViewModel.playerBackProgress) { updateOutline() }
+        ContextUtils.observe(lifecycleOwner, uiViewModel.playerSheetOffset) { updateOutline() }
+        view.doOnLayout { updateOutline() }
     }
 
-    view.doOnLayout { updateCollapsed() }
-    lifecycleOwner.observe(uiViewModel.combined) {
-        val system = uiViewModel.systemInsets.value
-        constraintLayout.applyInsets(system, 64, 0)
-        expandedToolbar.applyInsets(system)
-        val insets = uiViewModel.run {
-            if (playerSheetState.value == STATE_EXPANDED) system
-            else getCombined()
+    fun configurePlayerCollapsing(
+        binding: FragmentPlayerBinding,
+        uiViewModel: UiViewModel,
+        viewModel: PlayerViewModel,
+        adapter: PlayerTrackAdapter,
+        lifecycleOwner: LifecycleOwner,
+        collapseHeight: Int,
+        activity: FragmentActivity
+    ) {
+        binding.playerCollapsedContainer.root.clipToOutline = true
+
+        val context = binding.root.context
+        val collapsedTopPadding = UiUtils.dpToPx(context, 8)
+        var currRound = collapsedTopPadding.toFloat()
+        var currTop = 0
+        var currBottom = collapseHeight
+        var currRight = 0
+        var currLeft = 0
+
+        val view = binding.viewPager
+        view.outlineProvider = object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setRoundRect(
+                    currLeft, currTop, currRight, currBottom, currRound
+                )
+            }
         }
-        playerCollapsedContainer.root.applyHorizontalInsets(insets)
-        playerControls.root.applyHorizontalInsets(
-            insets,
-            activity.isLandscape()
-        )
-        val left = if (context.isRTL()) system.end + extraEndPadding else system.start
-        leftPadding = collapsedTopPadding + left
-        val right = if (context.isRTL()) system.start else system.end + extraEndPadding
-        rightPadding = collapsedTopPadding + right
-        updateCollapsed()
-        adapter.insetsUpdated()
-    }
+        view.clipToOutline = true
 
-    lifecycleOwner.observe(uiViewModel.moreSheetOffset) {
-        updateCollapsed()
-        adapter.moreOffsetUpdated()
-    }
-    lifecycleOwner.observe(uiViewModel.playerSheetOffset) {
-        updateCollapsed()
-        adapter.playerOffsetUpdated()
+        val extraEndPadding = UiUtils.dpToPx(context, 108)
+        var leftPadding = 0
+        var rightPadding = 0
+        val isLandscape = UiUtils.isLandscape(context)
+        
+        fun updateCollapsed() {
+            val (collapsedY, offset, collapsedOffset) = uiViewModel.run {
+                if (playerSheetState.value == STATE_EXPANDED) {
+                    val offset = moreSheetOffset.value
+                    Triple(systemInsets.value.top, offset, if (isLandscape) 0f else offset)
+                } else {
+                    val offset = 1 - max(0f, playerSheetOffset.value)
+                    Triple(-collapsedTopPadding, offset, offset)
+                }
+            }
+            val collapsedInv = 1 - collapsedOffset
+            binding.playerCollapsedContainer.root.run {
+                translationY = (collapsedY - collapseHeight * collapsedInv * 2).toFloat()
+                alpha = (collapsedOffset * 2).toFloat()
+                translationZ = -1f * collapsedInv
+            }
+            binding.bgCollapsed.run {
+                translationY = (collapsedY - collapseHeight * collapsedInv * 2).toFloat()
+                alpha = (min(1f, collapsedOffset * 2) - 0.5).toFloat()
+            }
+            val alphaInv = 1 - min(1f, offset * 3)
+            binding.expandedToolbar.run {
+                translationY = (collapseHeight * offset * 2).toFloat()
+                alpha = alphaInv
+                isVisible = offset < 1
+                translationZ = -1f * offset
+            }
+            binding.playerControls.root.run {
+                translationY = (collapseHeight * offset * 2).toFloat()
+                alpha = alphaInv
+                isVisible = offset < 1
+            }
+            currTop = uiViewModel.run {
+                val top = if (playerSheetState.value != STATE_EXPANDED) 0
+                else collapsedTopPadding + systemInsets.value.top
+                (top * max(0f, (collapsedOffset - 0.75f) * 4)).toInt()
+            }
+            val bot = currTop + collapseHeight
+            currBottom = bot + ((view.height - bot) * collapsedInv).toInt()
+            currLeft = (leftPadding * collapsedOffset).toInt()
+            currRight = (view.width - (rightPadding * collapsedOffset)).toInt()
+            currRound = (collapsedTopPadding * collapsedOffset).toFloat()
+            view.invalidateOutline()
+        }
 
-        viewModel.browser.value?.volume = 1 + min(0f, it)
-        if (it < 1)
-            activity.hideSystemUi(false)
-        else if (uiViewModel.playerBgVisible.value)
-            activity.hideSystemUi(true)
-    }
+        view.doOnLayout { updateCollapsed() }
+        ContextUtils.observe(lifecycleOwner, uiViewModel.combined) {
+            val system = uiViewModel.systemInsets.value
+            UiUtils.applyInsets(binding.constraintLayout, system, 64, 0)
+            UiUtils.applyInsets(binding.expandedToolbar, system)
+            val insets = uiViewModel.run {
+                if (playerSheetState.value == STATE_EXPANDED) system
+                else getCombined()
+            }
+            UiUtils.applyHorizontalInsets(binding.playerCollapsedContainer.root, insets)
+            UiUtils.applyHorizontalInsets(
+                binding.playerControls.root,
+                insets,
+                UiUtils.isLandscape(activity)
+            )
+            val left = if (UiUtils.isRTL(context)) system.end + extraEndPadding else system.start
+            leftPadding = collapsedTopPadding + left
+            val right = if (UiUtils.isRTL(context)) system.start else system.end + extraEndPadding
+            rightPadding = collapsedTopPadding + right
+            updateCollapsed()
+            adapter.insetsUpdated()
+        }
 
-    lifecycleOwner.observe(uiViewModel.playerSheetState) {
-        updateCollapsed()
-        if (isFinalState(it)) adapter.playerSheetStateUpdated()
-        if (it == STATE_HIDDEN) viewModel.clearQueue()
-        else if (it == STATE_COLLAPSED) lifecycleOwner.emit(uiViewModel.playerBgVisible, false)
-    }
+        ContextUtils.observe(lifecycleOwner, uiViewModel.moreSheetOffset) {
+            updateCollapsed()
+            adapter.moreOffsetUpdated()
+        }
+        ContextUtils.observe(lifecycleOwner, uiViewModel.playerSheetOffset) {
+            updateCollapsed()
+            adapter.playerOffsetUpdated()
 
-    playerControls.root.doOnLayout {
-        uiViewModel.playerControlsHeight.value = it.height
-        adapter.playerControlsHeightUpdated()
-    }
-    lifecycleOwner.observe(uiViewModel.playerBgVisible) {
-        fgContainer.animateVisibility(!it)
-        playerMoreContainer.animateVisibility(!it)
-        activity.hideSystemUi(it)
-    }
-    // Note: Listeners are set in the Fragment as they involve navigation/callbacks, or can be passed if simple.
-    // For now, these were part of configureCollapsing in original code, so keeping them here
-    playerCollapsedContainer.playerClose.setOnClickListener {
-        uiViewModel.changePlayerState(STATE_HIDDEN)
-    }
-    expandedToolbar.setNavigationOnClickListener {
-        uiViewModel.collapsePlayer()
+            viewModel.browser.value?.volume = 1 + min(0f, it)
+            if (it < 1)
+                UiUtils.hideSystemUi(activity, false)
+            else if (uiViewModel.playerBgVisible.value)
+                UiUtils.hideSystemUi(activity, true)
+        }
+
+        ContextUtils.observe(lifecycleOwner, uiViewModel.playerSheetState) {
+            updateCollapsed()
+            if (UiUtils.isFinalState(it)) adapter.playerSheetStateUpdated()
+            if (it == STATE_HIDDEN) viewModel.clearQueue()
+            else if (it == STATE_COLLAPSED) ContextUtils.emit(lifecycleOwner, uiViewModel.playerBgVisible, false)
+        }
+
+        binding.playerControls.root.doOnLayout {
+            uiViewModel.playerControlsHeight.value = it.height
+            adapter.playerControlsHeightUpdated()
+        }
+        ContextUtils.observe(lifecycleOwner, uiViewModel.playerBgVisible) {
+            AnimationUtils.animateVisibility(binding.fgContainer, !it)
+            AnimationUtils.animateVisibility(binding.playerMoreContainer, !it)
+            UiUtils.hideSystemUi(activity, it)
+        }
+        // Note: Listeners are set in the Fragment as they involve navigation/callbacks, or can be passed if simple.
+        // For now, these were part of configureCollapsing in original code, so keeping them here
+        binding.playerCollapsedContainer.playerClose.setOnClickListener {
+            uiViewModel.changePlayerState(STATE_HIDDEN)
+        }
+        binding.expandedToolbar.setNavigationOnClickListener {
+            uiViewModel.collapsePlayer()
+        }
     }
 }

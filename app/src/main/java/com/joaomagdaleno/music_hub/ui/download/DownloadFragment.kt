@@ -9,27 +9,19 @@ import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.common.models.Feed
 import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.databinding.FragmentDownloadBinding
-import com.joaomagdaleno.music_hub.ui.common.ExceptionFragment
-import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils
-import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
+import com.joaomagdaleno.music_hub.utils.ui.ExceptionData
 import com.joaomagdaleno.music_hub.common.helpers.PagedData
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
-import com.joaomagdaleno.music_hub.ui.common.GridAdapter.Companion.configureGridLayout
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyBackPressCallback
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyContentInsets
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyFabInsets
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
-import com.joaomagdaleno.music_hub.ui.download.DownloadsAdapter.Companion.toItems
-import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getFeedAdapter
-import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter.Companion.getTouchHelper
-import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener.Companion.getFeedListener
+import com.joaomagdaleno.music_hub.ui.download.DownloadsAdapter
+import com.joaomagdaleno.music_hub.ui.feed.FeedAdapter
+import com.joaomagdaleno.music_hub.ui.feed.FeedClickListener
 import com.joaomagdaleno.music_hub.ui.feed.FeedData
 import com.joaomagdaleno.music_hub.ui.feed.FeedViewModel
 import com.joaomagdaleno.music_hub.ui.media.LineAdapter
-import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
+import com.joaomagdaleno.music_hub.utils.ContextUtils
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
 import com.joaomagdaleno.music_hub.utils.ui.FastScrollerHelper
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.configureAppBar
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class DownloadFragment : Fragment(R.layout.fragment_download) {
@@ -39,8 +31,8 @@ class DownloadFragment : Fragment(R.layout.fragment_download) {
         DownloadsAdapter(object : DownloadsAdapter.Listener {
             override fun onCancel(trackId: Long) = vm.cancel(trackId)
             override fun onRestart(trackId: Long) = vm.restart(trackId)
-            override fun onExceptionClicked(data: ExceptionUtils.Data) = requireActivity()
-                .openFragment<ExceptionFragment>(null, ExceptionFragment.getBundle(data))
+            override fun onExceptionClicked(data: ExceptionData) = 
+                UiUtils.openException(requireActivity(), data, null)
         })
     }
 
@@ -59,25 +51,25 @@ class DownloadFragment : Fragment(R.layout.fragment_download) {
         }
     }
 
-    private val feedListener by lazy { getFeedListener() }
+    private val feedListener by lazy { FeedClickListener.getFeedListener(this) }
     private val feedAdapter by lazy {
-        getFeedAdapter(feedData, feedListener)
+        FeedAdapter.getFeedAdapter(this, feedData, feedListener)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = FragmentDownloadBinding.bind(view)
-        setupTransition(view)
-        applyBackPressCallback()
-        binding.appBarLayout.configureAppBar { offset ->
+        AnimationUtils.setupTransition(view)
+        UiUtils.applyBackPressCallback(this)
+        UiUtils.configureAppBar(binding.appBarLayout) { offset ->
             binding.toolbarOutline.alpha = offset
             binding.iconContainer.alpha = 1 - offset
         }
         binding.toolBar.setNavigationOnClickListener {
             parentFragmentManager.popBackStack()
         }
-        applyInsets {
-            binding.recyclerView.applyContentInsets(it, 20, 8, 72)
-            binding.fabContainer.applyFabInsets(it, systemInsets.value)
+        UiUtils.applyInsets(this) { insets ->
+            UiUtils.applyContentInsets(binding.recyclerView, insets, 20, 8, 72)
+            UiUtils.applyFabInsets(binding.fabContainer, insets, systemInsets.value)
         }
         FastScrollerHelper.applyTo(binding.recyclerView)
         val lineAdapter = LineAdapter()
@@ -85,8 +77,8 @@ class DownloadFragment : Fragment(R.layout.fragment_download) {
             vm.cancelAll()
         }
         binding.recyclerView.itemAnimator = null
-        getTouchHelper(feedListener).attachToRecyclerView(binding.recyclerView)
-        configureGridLayout(
+        FeedAdapter.getTouchHelper(feedListener).attachToRecyclerView(binding.recyclerView)
+        GridAdapter.configureGridLayout(
             binding.recyclerView,
             GridAdapter.Concat(
                 downloadsAdapter,
@@ -94,11 +86,11 @@ class DownloadFragment : Fragment(R.layout.fragment_download) {
                 feedAdapter.withLoading(this)
             )
         )
-        observe(vm.flow) { infos ->
+        ContextUtils.observe(this, vm.flow) { infos ->
             binding.fabCancel.isVisible = infos.any { it.download.finalFile == null }
             lineAdapter.loadState = if (infos.isNotEmpty()) LoadState.Loading
             else LoadState.NotLoading(false)
-            downloadsAdapter.submitList(infos.toItems())
+            downloadsAdapter.submitList(DownloadsAdapter.toItems(infos))
         }
     }
 }

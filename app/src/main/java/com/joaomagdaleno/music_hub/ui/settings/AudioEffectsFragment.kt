@@ -4,18 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.databinding.FragmentAudioFxBinding
 import com.joaomagdaleno.music_hub.databinding.FragmentGenericCollapsableBinding
-import com.joaomagdaleno.music_hub.playback.listener.EffectsListener.Companion.deleteGlobalFx
-import com.joaomagdaleno.music_hub.playback.listener.EffectsListener.Companion.globalFx
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyContentInsets
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
-
-import com.joaomagdaleno.music_hub.ui.player.audiofx.AudioEffectsBottomSheet.Companion.bind
-import com.joaomagdaleno.music_hub.ui.player.audiofx.AudioEffectsBottomSheet.Companion.onEqualizerClicked
+import com.joaomagdaleno.music_hub.playback.listener.EffectsListener
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
+import com.joaomagdaleno.music_hub.ui.player.audiofx.AudioEffectsBottomSheet
 import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
 import com.joaomagdaleno.music_hub.utils.ui.FastScrollerHelper
 
@@ -41,7 +36,7 @@ class AudioEffectsFragment : Fragment() {
         binding.toolBar.inflateMenu(R.menu.refresh_menu)
         binding.toolBar.setOnMenuItemClickListener {
             val context = requireContext()
-            context.deleteGlobalFx()
+            EffectsListener.deleteGlobalFx(context)
             fragment.bind()
             true
         }
@@ -59,13 +54,15 @@ class AudioEffectsFragment : Fragment() {
             return binding.root
         }
 
-        fun bind() = binding.bind(requireContext().globalFx()) { onEqualizerClicked() }
+        fun bind() = AudioEffectsBottomSheet.bind(binding, EffectsListener.globalFx(requireContext())) { 
+            AudioEffectsBottomSheet.onEqualizerClicked(this) 
+        }
 
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             bind()
             binding.root.apply {
                 clipToPadding = false
-                applyInsets { applyContentInsets(it) }
+                UiUtils.applyInsets(this) { UiUtils.applyContentInsets(this, it) }
                 isVerticalScrollBarEnabled = false
                 FastScrollerHelper.applyTo(this)
             }

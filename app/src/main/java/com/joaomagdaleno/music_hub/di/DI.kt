@@ -1,13 +1,11 @@
 package com.joaomagdaleno.music_hub.di
 
 import com.joaomagdaleno.music_hub.data.providers.InternalDownloadProvider
-
 import com.joaomagdaleno.music_hub.download.DownloadWorker
 import com.joaomagdaleno.music_hub.download.Downloader
 import com.joaomagdaleno.music_hub.download.db.DownloadDatabase
 import com.joaomagdaleno.music_hub.playback.PlayerService
 import com.joaomagdaleno.music_hub.playback.PlayerState
-import com.joaomagdaleno.music_hub.ui.common.SnackBarHandler
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
 import com.joaomagdaleno.music_hub.ui.download.DownloadViewModel
 import com.joaomagdaleno.music_hub.ui.feed.FeedViewModel
@@ -22,7 +20,7 @@ import com.joaomagdaleno.music_hub.ui.playlist.edit.EditPlaylistViewModel
 import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
 import com.joaomagdaleno.music_hub.data.repository.MusicRepository
 import com.joaomagdaleno.music_hub.ui.playlist.save.SaveToPlaylistViewModel
-import com.joaomagdaleno.music_hub.utils.ContextUtils.getSettings
+import com.joaomagdaleno.music_hub.utils.ContextUtils
 import org.koin.android.ext.koin.androidApplication
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.androidx.workmanager.dsl.workerOf
@@ -33,7 +31,7 @@ import org.koin.dsl.module
 object DI {
 
     private val baseModule = module {
-        single { androidApplication().getSettings() }
+        single { ContextUtils.getSettings(androidApplication()) }
         singleOf(::App)
         single { com.joaomagdaleno.music_hub.data.providers.LocalSource(androidApplication()) }
         single { InternalDownloadProvider(androidApplication()) }
@@ -43,7 +41,6 @@ object DI {
 
     private val coreModule = module {
         includes(baseModule)
-        // SourceLoader removed - now using MusicRepository directly
     }
 
     private val downloadModule = module {
@@ -60,7 +57,6 @@ object DI {
     }
 
     private val uiModules = module {
-        singleOf(::SnackBarHandler)
         viewModelOf(::UiViewModel)
 
         viewModelOf(::PlayerViewModel)

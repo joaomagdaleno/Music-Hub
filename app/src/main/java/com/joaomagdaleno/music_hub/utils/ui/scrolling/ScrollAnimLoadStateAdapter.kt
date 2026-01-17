@@ -4,13 +4,13 @@ import androidx.annotation.CallSuper
 import androidx.paging.LoadState
 import androidx.paging.LoadStateAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.applyTranslationYAnimation
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
 
 abstract class ScrollAnimLoadStateAdapter<T: ScrollAnimViewHolder> : LoadStateAdapter<T>() {
 
     @CallSuper
     override fun onBindViewHolder(holder: T, loadState: LoadState) {
-        holder.itemView.applyTranslationYAnimation(scrollY)
+        AnimationUtils.applyTranslationYAnimation(holder.itemView, scrollY)
     }
 
     var recyclerView: RecyclerView? = null

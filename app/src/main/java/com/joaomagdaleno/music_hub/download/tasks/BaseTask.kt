@@ -20,7 +20,7 @@ import com.joaomagdaleno.music_hub.download.Downloader
 import com.joaomagdaleno.music_hub.download.db.models.TaskType
 import com.joaomagdaleno.music_hub.download.exceptions.DownloadException
 import com.joaomagdaleno.music_hub.data.providers.InternalDownloadProvider
-import com.joaomagdaleno.music_hub.ui.common.ExceptionUtils.toData
+import com.joaomagdaleno.music_hub.utils.ui.toExceptionData
 import com.joaomagdaleno.music_hub.utils.CoroutineUtils.throttleLatest
 import com.joaomagdaleno.music_hub.utils.Serializer.toJson
 import kotlinx.coroutines.Dispatchers
@@ -51,7 +51,7 @@ abstract class BaseTask(
         if (throwable != null && download != null) {
             val exception = DownloadException(type, download, throwable)
             val exceptionFile = context.exceptionDir().resolve("$trackId.json")
-            exceptionFile.writeText(exception.toData(context).toJson())
+            exceptionFile.writeText(exception.toExceptionData(context).toJson())
             dao.insertDownloadEntity(download.copy(exceptionFile = exceptionFile.absolutePath))
         }
         running.value = false

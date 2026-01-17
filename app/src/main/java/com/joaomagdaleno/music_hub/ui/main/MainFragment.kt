@@ -12,19 +12,15 @@ import androidx.fragment.app.commit
 import androidx.recyclerview.widget.RecyclerView
 import com.joaomagdaleno.music_hub.R
 import com.joaomagdaleno.music_hub.databinding.FragmentMainBinding
-import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.addIfNull
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel
 import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.BACKGROUND_GRADIENT
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyGradient
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
 import com.joaomagdaleno.music_hub.ui.main.search.SearchFragment
 import com.joaomagdaleno.music_hub.utils.ContextUtils.getSettings
 import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
 import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
 import com.joaomagdaleno.music_hub.utils.ui.AutoClearedValue.Companion.autoCleared
 import com.joaomagdaleno.music_hub.utils.ui.FastScrollerHelper
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.dpToPx
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.isRTL
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
@@ -42,21 +38,30 @@ class MainFragment : Fragment() {
         return binding.root
     }
 
-    private inline fun <reified F : Fragment> Fragment.addIfNull(tag: String): String {
-        addIfNull<F>(R.id.main_fragment_container_view, tag)
+    private fun addIfNullInternal(tag: String, fragmentClass: Class<out Fragment>): String {
+        UiUtils.addIfNull(this, R.id.main_fragment_container_view, tag, null)
         return tag
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setupTransition(view)
-        applyPlayerBg(view) {
+        applyPlayerBg(this, view) {
             mainBgDrawable.combine(currentNavBackground) { a, b -> b ?: a }
         }
         observe(viewModel.navigation) {
             val toShow = when (it) {
-                1 -> addIfNull<SearchFragment>("search")
-                2 -> addIfNull<LibraryFragment>("library")
-                else -> addIfNull<HomeFragment>("home")
+                1 -> {
+                    UiUtils.addIfNull<SearchFragment>(this, R.id.main_fragment_container_view, "search")
+                    "search"
+                }
+                2 -> {
+                    UiUtils.addIfNull<LibraryFragment>(this, R.id.main_fragment_container_view, "library")
+                    "library"
+                }
+                else -> {
+                    UiUtils.addIfNull<HomeFragment>(this, R.id.main_fragment_container_view, "home")
+                    "home"
+                }
             }
 
             childFragmentManager.commit(true) {
@@ -70,24 +75,26 @@ class MainFragment : Fragment() {
     }
 
     companion object {
-        fun Fragment.applyPlayerBg(
+        fun applyPlayerBg(
+            fragment: Fragment,
             view: View,
             imageFlow: UiViewModel.() -> Flow<Drawable?>
         ): UiViewModel {
-            val uiViewModel by activityViewModel<UiViewModel>()
+            val uiViewModel by fragment.activityViewModel<UiViewModel>()
             val combined = uiViewModel.imageFlow()
-            observe(combined) { applyGradient(view, it) }
+            fragment.observe(combined) { UiUtils.applyGradient(fragment, view, it) }
             return uiViewModel
         }
 
-        fun Fragment.applyInsets(
+        fun applyInsets(
+            fragment: Fragment,
             recyclerView: RecyclerView,
             outline: View,
             bottom: Int = 0,
             block: UiViewModel.(UiViewModel.Insets) -> Unit = {}
         ) {
             recyclerView.run {
-                val height = 48.dpToPx(context)
+                val height = UiUtils.dpToPx(context, 48)
                 val settings = context.getSettings()
                 val isGradient = settings.getBoolean(BACKGROUND_GRADIENT, true)
                 val extra = if (isGradient) 0.5f else 0f
@@ -98,12 +105,12 @@ class MainFragment : Fragment() {
                 }
             }
             val scroller = FastScrollerHelper.applyTo(recyclerView)
-            applyInsets {
-                recyclerView.applyInsets(it, 20, 20, bottom + 4)
+            UiUtils.applyInsets(fragment) {
+                UiUtils.applyInsets(recyclerView, it, 20, 20, bottom + 4)
                 outline.updatePadding(top = it.top)
                 scroller?.setPadding(recyclerView.run {
-                    val pad = 8.dpToPx(context)
-                    val isRtl = context.isRTL()
+                    val pad = UiUtils.dpToPx(context, 8)
+                    val isRtl = UiUtils.isRTL(context)
                     val left = if (!isRtl) it.start else it.end
                     val right = if (!isRtl) it.end else it.start
                     Rect(left + pad, it.top + pad, right + pad, it.bottom + bottom + pad)

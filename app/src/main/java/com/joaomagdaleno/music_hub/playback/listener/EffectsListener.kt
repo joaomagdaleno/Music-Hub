@@ -27,14 +27,14 @@ class EffectsListener(
 
     init {
         audioSessionFlow.value = exoPlayer.audioSessionId
-        context.broadcastAudioSession()
+        broadcastAudioSession(context, exoPlayer.audioSessionId)
     }
 
-    private val settings: SharedPreferences = context.globalFx()
+    private val settings: SharedPreferences = globalFx(context)
     private var oldSettings = settings
     private fun applyCustomEffects() {
         oldSettings.unregisterOnSharedPreferenceChangeListener(listener)
-        val current = context.getFxPrefs(settings, exoPlayer.currentMediaItem?.mediaId?.hashCode())
+        val current = getFxPrefs(context, settings, exoPlayer.currentMediaItem?.mediaId?.hashCode())
             ?: settings
         oldSettings = current
         current.registerOnSharedPreferenceChangeListener(listener)
@@ -58,7 +58,7 @@ class EffectsListener(
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = applyCustomEffects()
     override fun onAudioSessionIdChanged(audioSessionId: Int) {
         release()
-        context.broadcastAudioSession()
+        broadcastAudioSession(context, audioSessionId)
         audioSessionFlow.value = audioSessionId
         effects = createEffects()
         effects.applySettings(oldSettings)
@@ -113,15 +113,15 @@ class EffectsListener(
         const val CHANGE_PITCH = "change_pitch"
         const val CUSTOM_EFFECTS = "custom_effects"
 
-        fun Context.globalFx() = getSharedPreferences(GLOBAL_FX, Context.MODE_PRIVATE)!!
-        fun Context.deleteGlobalFx() = deleteSharedPreferences(GLOBAL_FX)
-        fun Context.getFxPrefs(settings: SharedPreferences, id: Int? = null): SharedPreferences? {
+        fun globalFx(context: Context) = context.getSharedPreferences(GLOBAL_FX, Context.MODE_PRIVATE)!!
+        fun deleteGlobalFx(context: Context) = context.deleteSharedPreferences(GLOBAL_FX)
+        fun getFxPrefs(context: Context, settings: SharedPreferences, id: Int? = null): SharedPreferences? {
             if (id == null) return null
             val string = id.toString()
             val hasCustom = settings.getStringSet(CUSTOM_EFFECTS, emptySet())?.contains(string)
                 ?: false
             return if (!hasCustom) null
-            else getSharedPreferences("fx_$string", Context.MODE_PRIVATE)!!.apply {
+            else context.getSharedPreferences("fx_$string", Context.MODE_PRIVATE)!!.apply {
                 if (getBoolean("init", false)) return@apply
                 settings.all.forEach { (key, value) ->
                     when (value) {
@@ -137,28 +137,27 @@ class EffectsListener(
             }
         }
 
-        fun Context.deleteFxPrefs(id: Int) =
-            deleteSharedPreferences("fx_$id")
-    }
+        fun deleteFxPrefs(context: Context, id: Int) =
+            context.deleteSharedPreferences("fx_$id")
 
-    private fun Context.broadcastAudioSession() {
-        val id = exoPlayer.audioSessionId
-        sendBroadcast(Intent(AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION).apply {
-            putExtra(AudioEffect.EXTRA_PACKAGE_NAME, packageName)
-            putExtra(AudioEffect.EXTRA_AUDIO_SESSION, id)
-            putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
-        })
-    }
+        fun broadcastAudioSession(context: Context, sessionId: Int) {
+            context.sendBroadcast(Intent(AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION).apply {
+                putExtra(AudioEffect.EXTRA_PACKAGE_NAME, context.packageName)
+                putExtra(AudioEffect.EXTRA_AUDIO_SESSION, sessionId)
+                putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
+            })
+        }
 
-    private fun Context.broadcastAudioSessionClose(id: Int) {
-        sendBroadcast(Intent(AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION).apply {
-            putExtra(AudioEffect.EXTRA_PACKAGE_NAME, packageName)
-            putExtra(AudioEffect.EXTRA_AUDIO_SESSION, id)
-        })
+        fun broadcastAudioSessionClose(context: Context, sessionId: Int) {
+            context.sendBroadcast(Intent(AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION).apply {
+                putExtra(AudioEffect.EXTRA_PACKAGE_NAME, context.packageName)
+                putExtra(AudioEffect.EXTRA_AUDIO_SESSION, sessionId)
+            })
+        }
     }
 
     private fun release() {
         effects.release()
-        context.broadcastAudioSessionClose(audioSessionFlow.value)
+        broadcastAudioSessionClose(context, audioSessionFlow.value)
     }
 }

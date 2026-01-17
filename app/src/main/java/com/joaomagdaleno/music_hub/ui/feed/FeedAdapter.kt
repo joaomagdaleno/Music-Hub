@@ -13,7 +13,6 @@ import com.joaomagdaleno.music_hub.databinding.ItemLoadingBinding
 import com.joaomagdaleno.music_hub.playback.PlayerState
 import com.joaomagdaleno.music_hub.ui.common.GridAdapter
 import com.joaomagdaleno.music_hub.ui.feed.FeedData.FeedTab
-import com.joaomagdaleno.music_hub.ui.feed.FeedLoadingAdapter.Companion.createListener
 import com.joaomagdaleno.music_hub.ui.feed.FeedType.Enum.Category
 import com.joaomagdaleno.music_hub.ui.feed.FeedType.Enum.CategoryGrid
 import com.joaomagdaleno.music_hub.ui.feed.FeedType.Enum.Header
@@ -27,8 +26,8 @@ import com.joaomagdaleno.music_hub.ui.feed.viewholders.HorizontalListViewHolder
 import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaGridViewHolder
 import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder
 import com.joaomagdaleno.music_hub.ui.player.PlayerViewModel
-import com.joaomagdaleno.music_hub.utils.ContextUtils.observe
-import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.animatedWithAlpha
+import com.joaomagdaleno.music_hub.utils.ContextUtils
+import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils
 import com.joaomagdaleno.music_hub.utils.ui.scrolling.ScrollAnimPagingAdapter
 import kotlinx.coroutines.flow.combine
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
@@ -55,21 +54,21 @@ class FeedAdapter(
         runCatching { getItem(position)!! }.getOrNull()?.type?.ordinal ?: 0
 
     private var isPlayButtonShown = false
-    private fun FeedType.toTrack(): Track? = when (this) {
-        is FeedType.Media -> item as? Track
-        is FeedType.MediaGrid -> item as? Track
+    private fun toTrack(feed: FeedType): Track? = when (feed) {
+        is FeedType.Media -> feed.item as? Track
+        is FeedType.MediaGrid -> feed.item as? Track
         else -> null
     }
 
     fun getAllTracks(feed: FeedType): Pair<List<Track>, Int> {
-        if (!isPlayButtonShown) return listOfNotNull(feed.toTrack()) to 0
+        if (!isPlayButtonShown) return listOfNotNull(toTrack(feed)) to 0
         val list = snapshot().mapNotNull { it }
         val index = list.indexOfFirst { it.id == feed.id }
         if (index == -1) return listOf<Track>() to -1
         val from = list.take(index).indexOfLast { it.type != feed.type }
         val to = list.drop(index + 1).indexOfFirst { it.type != feed.type }
         val feeds = list.subList(from + 1, if (to == -1) list.size else index + to + 1)
-        val tracks = feeds.mapNotNull { it.toTrack() }
+        val tracks = feeds.mapNotNull { toTrack(it) }
         val newIndex = tracks.indexOfFirst { it.id == feed.id }
         return tracks to newIndex
     }
@@ -127,9 +126,9 @@ class FeedAdapter(
             binding.textView.isVisible = false
         }
 
-        override fun bind(loadState: LoadState) {
+        fun bind(loadState: LoadState) {
             binding.root.alpha = 0f
-            binding.root.animatedWithAlpha(500)
+            AnimationUtils.animatedWithAlpha(binding.root, 500)
         }
     }
 
@@ -143,21 +142,22 @@ class FeedAdapter(
     }.flatten()
 
     fun withLoading(fragment: Fragment, vararg before: GridAdapter): GridAdapter.Concat {
-        val tabs = TabsAdapter<FeedTab>({ tab.title }) { view, index, tab ->
+        val tabs = TabsAdapter<FeedTab>({ it.title }) { view, index, tab ->
             listener.onTabSelected(view, tab.feedId, tab.origin, index)
         }
-        fragment.observe(viewModel.tabsFlow) { tabs.data = it }
-        fragment.observe(viewModel.selectedTabIndexFlow) { tabs.selected = it }
+        ContextUtils.observe(fragment, viewModel.tabsFlow) { tabs.data = it }
+        ContextUtils.observe(fragment, viewModel.selectedTabIndexFlow) { tabs.selected = it }
         val buttons = ButtonsAdapter(viewModel, listener, ::getAllTracks)
-        fragment.observe(viewModel.buttonsFlow) {
+        ContextUtils.observe(fragment, viewModel.buttonsFlow) {
             buttons.buttons = it
             isPlayButtonShown = it?.buttons?.showPlayAndShuffle == true
         }
-        val loadStateListener = fragment.createListener { retry() }
+        val loadStateListener = FeedLoadingAdapter.createListener(fragment) { retry() }
         val header = FeedLoadingAdapter(loadStateListener) { LoadingViewHolder(it) }
         val footer = FeedLoadingAdapter(loadStateListener) { LoadingViewHolder(it) }
         val empty = EmptyAdapter()
-        fragment.observe(
+        ContextUtils.observe(
+            fragment,
             loadStateFlow.combine(viewModel.shouldShowEmpty) { a, b -> a to b }
         ) { (loadStates, shouldShowEmpty) ->
             val isEmpty =
@@ -213,18 +213,19 @@ class FeedAdapter(
     }
 
     companion object {
-        fun Fragment.getFeedAdapter(
+        fun getFeedAdapter(
+            fragment: Fragment,
             viewModel: FeedData,
             listener: FeedClickListener,
             takeFullScreen: Boolean = false,
         ): FeedAdapter {
-            val playerViewModel by activityViewModel<PlayerViewModel>()
+            val playerViewModel by fragment.activityViewModel<PlayerViewModel>()
             val adapter = FeedAdapter(viewModel, listener, takeFullScreen)
-            observe(viewModel.pagingFlow) {
+            ContextUtils.observe(fragment, viewModel.pagingFlow) {
                 adapter.saveState()
                 adapter.submitData(it)
             }
-            observe(playerViewModel.playerState.current) { adapter.onCurrentChanged(it) }
+            ContextUtils.observe(fragment, playerViewModel.playerState.current) { adapter.onCurrentChanged(it) }
             return adapter
         }
 

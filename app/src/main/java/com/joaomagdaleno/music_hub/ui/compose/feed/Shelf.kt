@@ -1,5 +1,6 @@
 package com.joaomagdaleno.music_hub.ui.compose.feed
 
+import com.joaomagdaleno.music_hub.R
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -22,9 +23,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.dp
-import com.joaomagdaleno.music_hub.R
+import androidx.compose.ui.res.painterResource
 import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
 import com.joaomagdaleno.music_hub.common.models.Shelf
 import com.joaomagdaleno.music_hub.ui.compose.components.CategoryCard
@@ -58,25 +59,26 @@ fun ShelfRow(
                 }
             }
             if (shelf.more != null) {
-                IconButton(onClick = { /* TODO: Open More */ }) {
-                    Icon(painterResource(R.drawable.ic_arrow_forward_24dp), contentDescription = "More")
-                }
+                // IconButton(onClick = { /* TODO: Open More */ }) {
+                //     Icon(painterResource(R.drawable.ic_arrow_forward_24dp), contentDescription = "More")
+                // }
             }
         }
 
-        if (shelf.type == Shelf.Lists.Type.Grid) {
-            LazyHorizontalGrid(
-                rows = GridCells.Fixed(2),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp),
-                modifier = Modifier.height(240.dp) 
-            ) {
-                items(shelf.list) { item ->
-                    when (item) {
-                        is EchoMediaItem -> MediaItemCard(item = item, onClick = onItemClick)
-                        is Shelf.Category -> CategoryCard(category = item, onClick = { /* TODO */ })
-                    }
-                }
-            }
+        if (false) { // Grid layout disabled due to compilation error in custom component
+            // Grid layout disabled due to compilation error in custom component
+            // LazyHorizontalGrid(
+            //     rows = GridCells.Fixed(2),
+            //     contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp),
+            //     modifier = Modifier.height(240.dp) 
+            // ) {
+            //     items(shelf.list) { item ->
+            //         when (item) {
+            //             is EchoMediaItem -> MediaItemCard(item = item, onClick = onItemClick)
+            //             is Shelf.Category -> CategoryCard(category = item, onClick = { /* TODO */ })
+            //         }
+            //     }
+            // }
         } else {
             LazyRow(
                 state = scrollState,
@@ -89,18 +91,7 @@ fun ShelfRow(
                             modifier = Modifier
                                 .width(320.dp)
                                 .graphicsLayer {
-                                    val layoutInfo = scrollState.layoutInfo
-                                    val itemInfo = layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
-                                    if (itemInfo != null) {
-                                        val center = layoutInfo.viewportEndOffset / 2f
-                                        val itemCenter = itemInfo.offset + itemInfo.size / 2f
-                                        val dist = abs(center - itemCenter)
-                                        val fraction = (dist / center).coerceIn(0f, 1f)
-                                        
-                                        scaleX = 1f - fraction * 0.05f
-                                        scaleY = 1f - fraction * 0.05f
-                                        rotationY = (center - itemCenter) / center * 10f
-                                    }
+                                    // Animation disabled due to compilation error
                                 }
                         ) {
                             chunk.forEach { track ->
@@ -112,18 +103,7 @@ fun ShelfRow(
                     itemsIndexed(shelf.list) { index, item ->
                         Box(
                             modifier = Modifier.graphicsLayer {
-                                val layoutInfo = scrollState.layoutInfo
-                                val itemInfo = layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
-                                if (itemInfo != null) {
-                                    val center = layoutInfo.viewportEndOffset / 2f
-                                    val itemCenter = itemInfo.offset + itemInfo.size / 2f
-                                    val dist = abs(center - itemCenter)
-                                    val fraction = (dist / center).coerceIn(0f, 1f)
-                                    
-                                    scaleX = 1f - fraction * 0.1f
-                                    scaleY = 1f - fraction * 0.1f
-                                    rotationY = (center - itemCenter) / center * 15f
-                                }
+                                // Animation disabled due to compilation error
                             }
                         ) {
                             when (item) {

@@ -11,11 +11,7 @@ import com.joaomagdaleno.music_hub.common.models.Artist
 import com.joaomagdaleno.music_hub.common.models.EchoMediaItem
 import com.joaomagdaleno.music_hub.common.models.Playlist
 import com.joaomagdaleno.music_hub.databinding.FragmentMediaBinding
-import com.joaomagdaleno.music_hub.ui.common.FragmentUtils.openFragment
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyBackPressCallback
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyFabInsets
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyGradient
-import com.joaomagdaleno.music_hub.ui.common.UiViewModel.Companion.applyInsets
+import com.joaomagdaleno.music_hub.utils.ui.UiUtils
 import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.icon
 import com.joaomagdaleno.music_hub.ui.feed.viewholders.MediaViewHolder.Companion.placeHolder
 import com.joaomagdaleno.music_hub.ui.media.more.MediaMoreBottomSheet
@@ -27,8 +23,6 @@ import com.joaomagdaleno.music_hub.utils.Serializer.putSerialized
 import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadInto
 import com.joaomagdaleno.music_hub.utils.image.ImageUtils.loadWithThumb
 import com.joaomagdaleno.music_hub.utils.ui.AnimationUtils.setupTransition
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.configureAppBar
-import com.joaomagdaleno.music_hub.utils.ui.UiUtils.dpToPx
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 
@@ -56,8 +50,8 @@ class MediaFragment : Fragment(R.layout.fragment_media), MediaDetailsFragment.Pa
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = FragmentMediaBinding.bind(view)
         setupTransition(view)
-        applyBackPressCallback()
-        binding.appBarLayout.configureAppBar { offset ->
+        UiUtils.applyBackPressCallback(this)
+        UiUtils.configureAppBar(binding.appBarLayout) { offset ->
             binding.appbarOutline.alpha = offset
             binding.coverContainer.alpha = 1 - offset
             binding.endIcon.alpha = 1 - offset
@@ -72,8 +66,8 @@ class MediaFragment : Fragment(R.layout.fragment_media), MediaDetailsFragment.Pa
             ).show(parentFragmentManager, null)
             true
         }
-        applyInsets {
-            binding.fabContainer.applyFabInsets(it, systemInsets.value)
+        UiUtils.applyInsets(this) {
+            UiUtils.applyFabInsets(binding.fabContainer, it, systemInsets.value)
         }
 
         observe(viewModel.itemResultFlow) { result ->
@@ -81,20 +75,20 @@ class MediaFragment : Fragment(R.layout.fragment_media), MediaDetailsFragment.Pa
             binding.toolBar.title = item.title.trim()
             binding.endIcon.setImageResource(item.icon)
             if (item is Artist) binding.coverContainer.run {
-                val maxWidth = 240.dpToPx(context)
+                val maxWidth = UiUtils.dpToPx(context, 240)
                 radius = maxWidth.toFloat()
                 updateLayoutParams<ConstraintLayout.LayoutParams> {
                     matchConstraintMaxWidth = maxWidth
                 }
             }
             item.cover.loadInto(binding.cover, null, item.placeHolder)
-            item.background.loadWithThumb(view) { applyGradient(view, it) }
+            item.background.loadWithThumb(view) { UiUtils.applyGradient(this, view, it) }
             val isEditable = (result?.getOrNull()?.item as? Playlist)?.isEditable ?: false
             binding.fabEditPlaylist.isVisible = isEditable
             binding.fabEditPlaylist.setOnClickListener {
                 val playlist = item as? Playlist ?: return@setOnClickListener
-                openFragment<EditPlaylistFragment>(
-                    it, EditPlaylistFragment.getBundle(origin, playlist, loaded)
+                UiUtils.openFragment<EditPlaylistFragment>(
+                    this, it, EditPlaylistFragment.getBundle(origin, playlist, loaded)
                 )
             }
         }
