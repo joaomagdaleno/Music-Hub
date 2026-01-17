@@ -1,4 +1,66 @@
-2026-01-17 15:05:29.861 [FileLogger] === App started ===
-2026-01-17 15:05:29.868 [FileLogger] Log path: /storage/emulated/0/Download/music_hub_debug.txt
-2026-01-17 15:05:29.874 [MainApplication] Application onCreate() started
-2026-01-17 15:05:29.967 [MainApplication] Application onCreate() complete
+2026-01-17 15:22:02.229 [FileLogger] === App started ===
+2026-01-17 15:22:02.235 [FileLogger] Log path: /storage/emulated/0/Download/music_hub_debug.txt
+2026-01-17 15:22:02.240 [MainApplication] Application onCreate() started
+2026-01-17 15:22:02.338 [MainApplication] Application onCreate() complete
+2026-01-17 15:22:03.860 [MainActivity] onCreate() called. savedInstanceState=false
+2026-01-17 15:22:04.076 [MainActivity] Storage permission granted - refreshing all feeds
+2026-01-17 15:22:04.092 [MainActivity] Adding MainFragment and PlayerFragment
+2026-01-17 15:22:04.102 [CRASH] Uncaught exception in thread DefaultDispatcher-worker-3
+java.lang.ClassCastException: com.joaomagdaleno.music_hub.MainApplication cannot be cast to com.joaomagdaleno.music_hub.di.App
+	at com.joaomagdaleno.music_hub.ui.common.UiViewModel$checkForUpdates$1.invokeSuspend(UiViewModel.kt:232)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:124)
+	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:820)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+	Suppressed: kotlinx.coroutines.internal.DiagnosticCoroutineContextException: [StandaloneCoroutine{Cancelling}@918d65a, Dispatchers.IO]
+
+2026-01-17 15:22:04.110 [MainActivity] onCreate() complete
+2026-01-17 15:22:04.485 [FeedData] init start for feedId=home
+2026-01-17 15:22:04.493 [FeedData] refresh() called for feedId=home
+2026-01-17 15:22:04.599 [FeedData] collectLatest triggered for feedId=home
+2026-01-17 15:22:04.602 [FeedData] Loading cached for feedId=home
+2026-01-17 15:22:04.606 [FeedData] Cached result: true for feedId=home
+2026-01-17 15:22:04.610 [FeedData] Loading fresh for feedId=home
+2026-01-17 15:22:04.615 [MusicRepository] getHomeFeed start
+2026-01-17 15:22:04.620 [MusicRepository] getHomeFeed: Loading local tracks fallback
+2026-01-17 15:22:04.624 [MusicRepository] getLibraryFeed requested
+2026-01-17 15:22:04.629 [LocalProvider] getAllTracks() called
+2026-01-17 15:22:04.633 [LocalProvider] search() called with query=''
+2026-01-17 15:22:04.646 [HomeScreen] HomeFeed composable entered
+2026-01-17 15:22:04.649 [HomeScreen] Creating FeedData for home
+2026-01-17 15:22:04.651 [LocalProvider] search() complete, found 20 tracks
+2026-01-17 15:22:04.655 [MusicRepository] getHomeFeed: Fetching Piped Trending
+2026-01-17 15:22:04.659 [HomeScreen] Render: hasData=false, isRefreshing=false, shelvesCount=0
+2026-01-17 15:22:04.663 [PipedApi] getTrending for BR
+2026-01-17 15:22:04.666 [HomeScreen] No data and not refreshing - empty state
+2026-01-17 15:22:04.803 [PipedApi] Failed on https://pipedapi.kavin.rocks for trending: 403
+2026-01-17 15:22:04.880 [HomeScreen] LaunchedEffect(dataState) triggered. cached=false, loaded=false
+2026-01-17 15:22:04.885 [HomeScreen] currentData is null, no shelves to display
+2026-01-17 15:22:04.890 [HomeScreen] HomeFeed composable entered
+2026-01-17 15:22:04.895 [HomeScreen] Render: hasData=false, isRefreshing=true, shelvesCount=0
+2026-01-17 15:22:04.900 [HomeScreen] Showing loading indicator
+2026-01-17 15:22:05.004 [HomeScreen] HomeFeed composable entered
+2026-01-17 15:22:05.009 [HomeScreen] Render: hasData=false, isRefreshing=true, shelvesCount=0
+2026-01-17 15:22:05.012 [HomeScreen] Showing loading indicator
+2026-01-17 15:22:05.026 [HomeScreen] LaunchedEffect(dataState) triggered. cached=true, loaded=false
+2026-01-17 15:22:05.030 [HomeScreen] currentData is null, no shelves to display
+2026-01-17 15:22:07.342 [PipedApi] Error on https://pipedapi.adminforge.de for trending: Unable to resolve host "adminforge.detrending": No address associated with hostname
+2026-01-17 15:22:08.926 [PipedApi] Error on https://api.piped.yt for trending: Unable to resolve host "api.piped.yt": No address associated with hostname
+2026-01-17 15:22:09.330 [PipedApi] Failed on https://pipedapi.moomoo.me for trending: 502
+2026-01-17 15:22:09.341 [MusicRepository] getHomeFeed: Fetching SlavArt Discovery
+2026-01-17 15:22:10.823 [MusicRepository] getHomeFeed: SlavArt Discovery failed: Unable to resolve host "slavart.gamesdrive.net": No address associated with hostname
+
+2026-01-17 15:22:10.835 [MusicRepository] getHomeFeed complete, total shelves: 2
+2026-01-17 15:22:10.842 [FeedData] Loaded result: true for feedId=home
+2026-01-17 15:22:10.868 [HomeScreen] HomeFeed composable entered
+2026-01-17 15:22:10.875 [HomeScreen] Render: hasData=true, isRefreshing=true, shelvesCount=0
+2026-01-17 15:22:10.880 [HomeScreen] Rendering LazyColumn with 0 shelves
+2026-01-17 15:22:10.922 [HomeScreen] LaunchedEffect(dataState) triggered. cached=true, loaded=true
+2026-01-17 15:22:10.934 [HomeScreen] currentData found, loading all shelves from pagedData
+2026-01-17 15:22:10.939 [HomeScreen] shelves loaded, count=2
+2026-01-17 15:22:10.949 [HomeScreen] Render: hasData=true, isRefreshing=true, shelvesCount=2
+2026-01-17 15:22:10.954 [HomeScreen] Rendering LazyColumn with 2 shelves

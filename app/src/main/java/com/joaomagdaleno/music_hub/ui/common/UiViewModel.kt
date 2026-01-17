@@ -40,6 +40,7 @@ import androidx.lifecycle.LifecycleOwner
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class UiViewModel(
+    private val app: App,
     context: Context,
     private val playerState: PlayerState
 ) : ViewModel() {
@@ -229,7 +230,6 @@ class UiViewModel(
     }
 
     fun checkForUpdates(activity: FragmentActivity, force: Boolean = false) = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-        val app = activity.applicationContext as App
         if (!force && !shouldCheckForUpdates(activity)) return@launch
 
         CacheUtils.saveToCache(activity, "last_update_check", System.currentTimeMillis())
